@@ -28,7 +28,7 @@ Note 2: If you have special needs, you can also purchase a USB to serial cable w
 ### Hardware photos
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/hardware_photos.jpg)
 
-## 软件
+## Software
 The software client of the project is based on the source code of [KVM-Card-Mini-PySide6](https://github.com/ElluIFX/KVM-Card-Mini-PySide6) with modifications, and adapts CH9329 for keyboard and mouse input.
 
 
@@ -52,7 +52,7 @@ Note: Currently the client (console) is only supported for Windows.
 https://github.com/wevsty/KVM-over-USB/releases
 
 
-### 使用方法
+### Usage
 
 1. If you are using the CH340 USB to serial chip, you may need to install the CH340 driver first.
 
