@@ -63,6 +63,7 @@ CH340 驱动程序下载地址： https://www.wch.cn/downloads/CH341SER_EXE.html
 安装成功后可通过设备管理器查看串口端口号。
 
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/device_manager_port.png)
+
 备注：端口号可能为随机非固定。
 
 2. 执行 usb_kvm_client
