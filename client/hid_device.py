@@ -175,9 +175,9 @@ def hid_mouse_send_absolute_data(buffer):
     wheel = buffer[8]
 
     x = ((buffer[5] & 0xFF) << 8) + buffer[4]
-    xx = int(x / 0x7FFF * GLOBAL_CONTROLLER.screen_x)
+    xx = int(round(x / 0x7FFF * GLOBAL_CONTROLLER.screen_x))
     y = ((buffer[7] & 0xFF) << 8) + buffer[6]
-    yy = int(y / 0x7FFF * GLOBAL_CONTROLLER.screen_y)
+    yy = int(round(y / 0x7FFF * GLOBAL_CONTROLLER.screen_y))
 
     assert xx <= 4096
     assert yy <= 4096

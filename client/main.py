@@ -2164,8 +2164,8 @@ class MyMainWindow(QMainWindow, main_ui.Ui_MainWindow):
             self.statusBar().showMessage(f"X={x_hid * x_res:.0f}, Y={y_hid * y_res:.0f}")
             t = time.perf_counter()
             self._last_mouse_report = t
-            x_hid = int(x_hid * 0x7FFF)
-            y_hid = int(y_hid * 0x7FFF)
+            x_hid = int(round(x_hid * 0x7FFF))
+            y_hid = int(round(y_hid * 0x7FFF))
             mouse_buffer[3] = x_hid & 0xFF
             mouse_buffer[4] = x_hid >> 8
             mouse_buffer[5] = y_hid & 0xFF
