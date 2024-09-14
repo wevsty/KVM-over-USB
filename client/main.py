@@ -19,7 +19,7 @@ from PySide6.QtMultimediaWidgets import *
 from PySide6.QtWidgets import *
 from loguru import logger
 
-import hid_device
+import controller_device
 from default import default_config
 from ui import (
     device_setup_dialog_ui,
@@ -587,7 +587,7 @@ class MyMainWindow(QMainWindow, main_ui.Ui_MainWindow):
 
         if self.controller_config["controller_port"] == "auto":
             # 检测com端口
-            ports: list[str] = hid_device.detect_serial_ports()
+            ports: list[str] = controller_device.detect_serial_ports()
             if len(ports) > 0:
                 # 获取最后一个com端口
                 self.controller_config["controller_port"] = ports[-1]
@@ -1253,7 +1253,7 @@ class MyMainWindow(QMainWindow, main_ui.Ui_MainWindow):
             else:
                 self.device_event_handle("hid_ok")
         elif s == 4:  # hid
-            hid_code = hid_device.init_usb(
+            hid_code = controller_device.init_usb(
                 self.controller_config["controller_port"],
                 self.controller_config["controller_baud"],
                 self.controller_config["controller_screen_x"],
