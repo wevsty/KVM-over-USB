@@ -16,9 +16,13 @@ So this project recommends using a combination of products already available on 
 ### Hardware list
 1. Video capture card: You can use video capture cards with chips such as MS2109 or MS2130, which are sold in the market for about 5-15 USD.
 2. CH340 to CH9329 USB Connection Cable: CH340 is a common USB to serial chip, access CH9329 through the serial port, and finally connect CH9329 to the controlled device can be.
-Note 1: There are finished cables available on shopping platforms, which can be purchased directly at a market price of about 20 RMB.
+
+Note 1: There are finished cables available on shopping platforms, which can be purchased directly at a market price of about 20 CNY.
+
 Note 2: If you have special needs, you can also purchase a USB to serial cable with other chips (e.g. FT232) and then purchase a CH9329 module with a serial interface.
+
 3. HDMI cable
+
 4. If the device does not have enough USB ports, it is recommended to use it with a USB HUB.
 
 
@@ -60,6 +64,7 @@ CH340 driver download address: https://www.wch.cn/downloads/CH341SER_EXE.html
 After successful installation, you can check the serial port number through the device manager.
 
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/device_manager_port.png)
+
 Note: The port number may be randomized and not fixed.
 
 2. Execute usb_kvm_client

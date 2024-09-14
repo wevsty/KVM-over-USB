@@ -21,7 +21,9 @@ Documentation English Version: https://github.com/wevsty/KVM-over-USB/blob/main/
 备注1：在购物平台上有成品的线，可直接购买，市场售价约20元人民币。
 
 备注2：如有特殊需要，也可以自行购入使用其他芯片的USB转串口连接线（比如：FT232）然后购买带有串行接口的 CH9329 模块使用。
+
 3. HDMI连接线
+
 4. 如设备没有足够多的USB接口，建议搭配一个USB HUB使用。
 
 
