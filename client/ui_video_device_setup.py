@@ -61,10 +61,10 @@ class VideoDeviceSetupDialog(QDialog, video_device_setup_ui.Ui_dialog):
         self.setupUi(self)
         self.setWindowFlags(Qt.CustomizeWindowHint | Qt.WindowCloseButtonHint)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-        self.adjustSize()
         self.reference_video_config = VideoDeviceConfig()
         self.reference_audio_config = AudioDeviceConfig()
         self.refresh_devices()
+        self.adjustSize()
         self.combo_box_device.currentTextChanged.connect(self.refresh_video_device_info)
 
     def get_auto_string(self) -> str:
