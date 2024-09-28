@@ -160,8 +160,8 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
         }
 
         # 初始化变量
-        self.mutex = QMutex()
-        self.mutex_locker = QMutexLocker(self.mutex)
+        # self.mutex = QMutex()
+        # self.mutex_locker = QMutexLocker(self.mutex)
         self.source_directory: str = project_path.project_source_directory_path()
         self.binary_directory: str = project_path.project_binary_directory_path()
         # 获取显示器分辨率大小
@@ -1477,7 +1477,7 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
         else:
             command = "mouse_absolute_write"
         if self.mouse_need_report:
-            self.controller_event_worker.command_send_signal.emit(command, self.mouse_buffer)
+            self.controller_event_worker.command_send_signal.emit(command, self.mouse_buffer.dup())
             if self.status["mouse_relative_mode"]:
                 self.mouse_buffer.clear_point()
         self.mouse_need_report = False
@@ -1486,6 +1486,7 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
     def close_event(self):
         self.controller_worker_thread.quit()
         self.controller_worker_thread.wait()
+        self.paste_board_dialog.close()
         pass
 
     def hook_keyboard_down_event(self, event):
