@@ -30,7 +30,7 @@ Documentation English Version: https://github.com/wevsty/KVM-over-USB/blob/main/
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/hardware_photos.jpg)
 
 ## 软件
-项目软件客户端基于 [KVM-Card-Mini-PySide6](https://github.com/ElluIFX/KVM-Card-Mini-PySide6) 的源码进行了改动，适配了 CH9329 作为键盘鼠标输入使用。
+项目软件客户端基于 [KVM-Card-Mini-PySide6](https://github.com/ElluIFX/KVM-Card-Mini-PySide6) 的源码进行了改动以及重构，适配了 CH9329 作为键盘鼠标输入使用。
 
 
 ### 客户端编译
@@ -60,6 +60,7 @@ https://github.com/wevsty/KVM-over-USB/releases
 1. 如果您使用的USB转串口芯片为 CH340 ，您可能需要首先安装 CH340 的驱动程序。
 
 CH340 驱动程序下载地址： https://www.wch.cn/downloads/CH341SER_EXE.html 
+
 安装成功后可通过设备管理器查看串口端口号。
 
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/device_manager_port.png)
@@ -68,22 +69,22 @@ CH340 驱动程序下载地址： https://www.wch.cn/downloads/CH341SER_EXE.html
 
 2. 执行 usb_kvm_client
 
-视频连接：
-选择设备菜单 -> 视频设备 -> 选择正确的视频采集卡 -> 确定。
+视频连接： 
+选择设备菜单 -> 视频设备 -> 选择正确的视频采集卡 -> 确定。 
 
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/video_device_setup.png)
 
-控制器连接：
+控制器连接： 
 
-大部分情况下，默认配置会自动选择串口。但若您的设备上拥有多个串口，您可能需要手动选择串口名称。
+大部分情况下，默认配置会自动选择串口。但若您的设备上拥有多个串口，您可能需要手动选择串口名称。 
 
-选择设备菜单 -> 控制器设置 -> 选择正确的串口 -> 确定。
+选择设备菜单 -> 控制器设置 -> 选择正确的串口 -> 确定。 
 
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/controller_device_setup.png)
 
 ### 演示
 
-演示控制ASUS BIOS
+演示控制ASUS BIOS 
 
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/demo_control_bios.gif)
 
