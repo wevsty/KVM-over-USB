@@ -1,12 +1,12 @@
 import os
 import time
 from enum import IntEnum, auto
-
+from keyboard_buffer import KeyboardStateBuffer, KeyStateItem, KeyStateEnum
+from mouse_buffer import MouseStateBuffer, MousePoint, MouseButton, MouseWheelStateEnum, MouseButtonCodeEnum, MouseButtonStateEnum
 from loguru import logger
-
+from typing import Any
 from controller_ch9329 import Controller
-from controller_ch9329 import Ch9329AttachFunction
-
+from abc import ABC, abstractmethod
 if os.name == "nt":  # sys.platform == "win32":
     from serial.tools.list_ports_windows import comports as list_comports
 elif os.name == "posix":
@@ -22,7 +22,7 @@ class DebugOutputOptions(IntEnum):
     KEYBOARD: bool = True
 
 
-GLOBAL_CONTROLLER: Controller = Controller()
+GLOBAL_CONTROLLER_DEVICE: None = None
 
 
 def detect_serial_ports() -> list[str]:
@@ -33,220 +33,221 @@ def detect_serial_ports() -> list[str]:
     port_info_list.sort()
     return port_name_list
 
+class ControllerDeviceBase(ABC):
+    @abstractmethod
+    def device_open(self) -> bool:
+        pass
 
-# 初始化HID设备设置
-# 返回0为成功
-# 返回非0为失败
-def init_usb(controller_port: str, baud: int = 9600, screen_x: int = 1920, screen_y: int = 1080):
-    global GLOBAL_CONTROLLER
-    if controller_port == "auto":
-        # 检测com端口
-        ports: list[str] = detect_serial_ports()
-        if len(ports) > 0:
-            # 获取最后一个com端口
-            controller_port = ports[-1]
-        else:
-            return 1
-    GLOBAL_CONTROLLER.set_connection_params(controller_port, baud, screen_x, screen_y)
-    status = GLOBAL_CONTROLLER.create_connection()
-    if status is True:
-        info = GLOBAL_CONTROLLER.product_info()
-        if DebugOutputOptions.DEVICE:
-            logger.debug(f"controller product info: {info}")
-        return 0
-    else:
-        return 1
+    @abstractmethod
+    def device_close(self) -> None:
+        pass
 
+    @abstractmethod
+    def device_check(self) -> bool:
+        pass
 
-def check_connection() -> bool:
-    return GLOBAL_CONTROLLER.check_connection()
+    @abstractmethod
+    def device_event(self, command: str, buffer: dict) -> tuple[int, dict]:
+        pass
 
+class ControllerDevice(ControllerDeviceBase):
+    FUNCTION_KEYS = [
+        "ctrl_left", "ctrl_right",
+        "shift_left", "shift_right",
+        "alt_left", "alt_right",
+        "win_left", "win_right", "win_app"
+    ]
+    def __init__(self):
+        self.port: str = "auto"
+        self.baud: int = 9600
+        self.screen_x: int = 1920
+        self.screen_y: int = 1080
+        self.controller:Controller = Controller()
 
-# 读写HID设备
-# 返回0为成功
-# 返回非0值为失败或特殊含义
-def hid_event(buffer: list, read_mode: bool = False):
-    status_code: int = 0
-    reply: list = list()
-    if DebugOutputOptions.EVENT:
-        logger.debug(f"hid_report(buffer={buffer}, read_mode={read_mode})")
-        # return status_code, replay
-    if GLOBAL_CONTROLLER.check_connection() is False:
-        status_code = 1
-        if DebugOutputOptions.DEVICE:
-            logger.debug(f"check connection failed.")
-        return status_code, reply
-    buffer = buffer[-1:] + buffer[:-1]
-    buffer[0] = 0
-    # buffer[1] 为信息类型判断标志
-    match buffer[1]:
-        case 1:
-            hid_keyboard_key_event(buffer)
-        case 2:
-            hid_mouse_event(buffer)
-        case 7:
-            hid_mouse_event(buffer)
-        case 3:
-            status_code, reply = hid_keyboard_key_event(buffer)
-        case 4:
-            if DebugOutputOptions.DEVICE:
-                logger.debug("reload MCU")
-            GLOBAL_CONTROLLER.reset_connection()
-            # GLOBAL_CONTROLLER.reset_controller()
-        case 5:
-            if ((buffer[5] == 30) | (buffer[3] == 30)) & (buffer[4] == 30):
-                GLOBAL_CONTROLLER.release("all")
+    @staticmethod
+    def detect_serial_ports() -> list[str]:
+        port_name_list: list[str] = []
+        port_info_list: serial.tools.list_ports.ListPortInfo = list_comports(include_links=False)
+        for port_info in port_info_list:
+            port_name_list.append(port_info.name)
+        port_info_list.sort()
+        return port_name_list
+
+    def device_init(self, port: str, baud: int, screen_x: int, screen_y: int) -> None:
+        self.port = port
+        self.baud = baud
+        self.screen_x = screen_x
+        self.screen_y = screen_y
+
+    def device_open(self) -> bool:
+        status: bool = False
+        if self.port == "auto":
+            # 检测com端口
+            ports: list[str] = self.detect_serial_ports()
+            if len(ports) > 0:
+                # 获取最后一个com端口
+                self.port = ports[-1]
             else:
-                if DebugOutputOptions.DEVICE:
-                    logger.debug("reset keyboard and mouse code error")
-                status_code = 1
-        case _:
-            if DebugOutputOptions.EVENT:
-                logger.debug(f"unknown buffer {buffer[1]}")
-            status_code = 1
-    return status_code, reply
+                self.port = ""
+        if self.port == "":
+            return status
+        self.controller.set_connection_params(self.port, self.baud, self.screen_x, self.screen_y)
+        status = self.controller.create_connection()
+        return status
 
+    def device_close(self) -> None:
+        self.controller.release("all")
+        self.controller.close_connection()
 
-# 按键事件
-def hid_keyboard_key_event(buffer):
-    status_code: int = 0
-    reply: list = list()
-    if buffer[1] == 1:
-        hid_keyboard_key_button_event(buffer)
-    elif buffer[1] == 3:
-        reply = [3, 0, 0]
-        status, reply[2] = GLOBAL_CONTROLLER.keyboard_light_status()
-        if status is False:
-            reply[0] = 1
-        if DebugOutputOptions.KEYBOARD:
-            logger.debug(f"Reporting the Keyboard indicator lights status: {reply[2]}")
-    else:
-        if DebugOutputOptions.KEYBOARD:
-            logger.debug(f"unknown buffer {buffer[1]}")
-        status_code = 1
-    return status_code, reply
+    def device_check(self) -> bool:
+        return self.controller.check_connection()
 
-
-def hid_keyboard_key_button_event(buffer):
-    if DebugOutputOptions.KEYBOARD:
-        byte_as_hex = [hex(x).split("x")[-1] for x in list(buffer)]
-        logger.debug(f"buffer : {byte_as_hex}")
-    function_keys = []
-    if buffer[3] != 0:
-        # 存在组合键
-        if (buffer[3] & 1) or (buffer[3] & 16):
-            function_keys.append("ctrl")
-        if (buffer[3] & 2) or (buffer[3] & 32):
-            function_keys.append("shift")
-        if (buffer[3] & 4) or (buffer[3] & 64):
-            function_keys.append("alt")
-        if (buffer[3] & 8) or (buffer[3] & 128):
-            function_keys.append("win")
-    keys: list = list()
-    for i in range(5, len(buffer)):
-        hid_key_code = buffer[i]
-        if hid_key_code == 0:
-            # 按键弹起
-            keys.append("")
+    def device_release(self, device_type: str) -> None:
+        known_type = ["mouse", "keyboard", "all", "any"]
+        if device_type in known_type:
+            self.controller.release(device_type)
         else:
-            # 根据hid找keyname
-            key_name = GLOBAL_CONTROLLER.convert_hid_key_code_to_ch9329_key_code(hid_key_code)
-            keys.append(key_name)
-            # logger.debug(f"key_name : {key_name}")
-    GLOBAL_CONTROLLER.keyboard_keys_trigger(keys, function_keys)
-    function_keys.clear()
+            raise ValueError(f"unknown release type: {device_type}")
 
+    def device_reset(self) -> None:
+        self.controller.release("all")
+        self.controller.reset_controller()
 
-def hid_mouse_event(buffer):
-    if DebugOutputOptions.MOUSE:
-        logger.debug(f"buffer: {buffer}")
-    # 绝对坐标模式
-    if buffer[1] == 2:
-        hid_mouse_send_absolute_data(buffer)
-    # 相对坐标模式
-    elif buffer[1] == 7:
-        hid_mouse_send_relative_data(buffer)
-    else:
-        if DebugOutputOptions.MOUSE:
-            logger.debug(f"buffer: {buffer}")
+    # 设备事件
+    # 返回0为成功
+    # 返回非0为失败
+    def device_event(self, command: str, buffer: object) -> tuple[str, int, object]:
+        status_code: int = 0
+        reply: object = None
 
+        if command == "keyboard_write":
+            self.keyboard_send_event(buffer)
+        elif command == "keyboard_read":
+            status_code, reply = self.keyboard_recv_event(command)
+        elif command == "mouse_absolute_write":
+            self.mouse_send_event(command, buffer)
+        elif command == "mouse_relative_write":
+            self.mouse_send_event(command, buffer)
+        elif command == "device_open":
+            status = self.device_open()
+            if status is False:
+                status_code = 1
+        elif command == "device_close":
+            self.device_close()
+        elif command == "device_check":
+            status = self.device_check()
+            if status is False:
+                status_code = 1
+        elif command == "device_release":
+            self.device_release(buffer)
+        elif command == "device_reset":
+            self.device_reset()
+        else:
+            logger.debug(f"Unhandled command: {command}")
+            pass
+        return command, status_code, reply
 
-def hid_mouse_send_absolute_data(buffer):
-    wheel = buffer[8]
+    def keyboard_recv_event(self, _command: str) -> tuple[int, dict]:
+        status, reply = self.controller.keyboard_receive_status()
+        if status is True:
+            status_code = 0
+        else:
+            status_code = 1
+        return status_code, reply
 
-    x = ((buffer[5] & 0xFF) << 8) + buffer[4]
-    xx = int(round(x / 0x7FFF * GLOBAL_CONTROLLER.screen_x))
-    y = ((buffer[7] & 0xFF) << 8) + buffer[6]
-    yy = int(round(y / 0x7FFF * GLOBAL_CONTROLLER.screen_y))
+    def keyboard_send_event(self, buffer: KeyboardStateBuffer):
+        keys = buffer.buffer()
+        press_keys = list()
+        press_function_keys = list()
+        for key in keys:
+            if key.state == KeyStateEnum.PRESS:
+                key_name = self.controller.convert_hid_key_code_to_ch9329_key(key.code)
+                if key_name in self.FUNCTION_KEYS:
+                    press_function_keys.append(key_name)
+                else:
+                    press_keys.append(key_name)
+        self.controller.keyboard_send_data(press_keys, press_function_keys)
 
-    assert xx <= 4096
-    assert yy <= 4096
+    def mouse_send_event(self, command: str, buffer: MouseStateBuffer):
+        if command == "mouse_absolute_write":
+            self.mouse_send_absolute_data(buffer)
+        elif command == "mouse_relative_write":
+            self.mouse_send_relative_data(buffer)
+        else:
+            pass
 
-    if wheel == 255:
-        # 滚轮向上
-        wheel = -1
-    elif wheel == 1:
-        # 滚轮向下
-        wheel = 1
-    else:
-        # 滚轮不动
-        wheel = 0
+    def mouse_send_absolute_data(self,buffer: MouseStateBuffer):
+        x, y = buffer.point.get()
+        real_x = int(round(x * self.screen_x))
+        real_y = int(round(y * self.screen_y))
 
-    if buffer[3] == 0:
-        GLOBAL_CONTROLLER.mouse_send_data("null", xx, yy, wheel, False)
-    elif buffer[3] == 1:
-        GLOBAL_CONTROLLER.mouse_send_data("left", xx, yy, wheel, False)
-    elif buffer[3] == 2:
-        GLOBAL_CONTROLLER.mouse_send_data("right", xx, yy, wheel, False)
-    elif buffer[3] == 4:
-        GLOBAL_CONTROLLER.mouse_send_data("center", xx, yy, wheel, False)
-    else:
-        if DebugOutputOptions.MOUSE:
-            logger.debug(f"unknown mouse button {buffer[3]}")
+        if buffer.wheel == MouseWheelStateEnum.UP:
+            # 滚轮向上
+            wheel = -1
+        elif buffer.wheel == MouseWheelStateEnum.DOWN:
+            # 滚轮向下
+            wheel = 1
+        else:
+            # 滚轮不动
+            wheel = 0
 
+        if buffer.button.state == MouseButtonStateEnum.RELEASE:
+            self.controller.mouse_send_data("null", real_x, real_y, wheel, False)
+        elif buffer.button.code == MouseButtonCodeEnum.LEFT_BUTTON:
+            self.controller.mouse_send_data("left", real_x, real_y, wheel, False)
+        elif buffer.button.code == MouseButtonCodeEnum.RIGHT_BUTTON:
+            self.controller.mouse_send_data("right", real_x, real_y, wheel, False)
+        elif buffer.button.code == MouseButtonCodeEnum.MIDDLE_BUTTON:
+            self.controller.mouse_send_data("center", real_x, real_y, wheel, False)
+        elif buffer.button.code == MouseButtonCodeEnum.UNKNOWN_BUTTON:
+            self.controller.mouse_send_data("null", x, y, wheel, True)
+        else:
+            if DebugOutputOptions.MOUSE:
+                logger.debug(f"unknown mouse button {buffer.button.code}")
 
-def hid_mouse_send_relative_data(buffer):
-    x = buffer[4]
-    y = buffer[5]
-    wheel = buffer[6]
+    def mouse_send_relative_data(self,buffer: MouseStateBuffer):
+        x, y = buffer.point.get()
 
-    # 计算坐标
-    x -= 0xFF if x > 127 else 0
-    y -= 0xFF if y > 127 else 0
+        if x > 127:
+            x = 127
+        elif x < -128:
+            x = -128
+        else:
+            pass
 
-    """
-    # 加速移动鼠标需要放大坐标
-    if -128 <= x * 2 <= 127:
-        x = x * 2
-    if -128 <= y * 2 <= 127:
-        y = y * 2
-    """
+        if y > 127:
+            y = 127
+        elif y < -128:
+            y = -128
+        else:
+            pass
 
-    assert -128 <= x <= 127
-    assert -128 <= y <= 127
+        assert -128 <= x <= 127
+        assert -128 <= y <= 127
 
-    if wheel == 255:
-        # 滚轮向上
-        wheel = -1
-    elif wheel == 1:
-        # 滚轮向下
-        wheel = 1
-    else:
-        # 滚轮不动
-        wheel = 0
+        if buffer.wheel == MouseWheelStateEnum.UP:
+            # 滚轮向上
+            wheel = -1
+        elif buffer.wheel == MouseWheelStateEnum.DOWN:
+            # 滚轮向下
+            wheel = 1
+        else:
+            # 滚轮不动
+            wheel = 0
 
-    if buffer[3] == 0:
-        GLOBAL_CONTROLLER.mouse_send_data("null", x, y, wheel, True)
-    elif buffer[3] == 1:
-        GLOBAL_CONTROLLER.mouse_send_data("left", x, y, wheel, True)
-    elif buffer[3] == 2:
-        GLOBAL_CONTROLLER.mouse_send_data("right", x, y, wheel, True)
-    elif buffer[3] == 4:
-        GLOBAL_CONTROLLER.mouse_send_data("center", x, y, wheel, True)
-    else:
-        if DebugOutputOptions.MOUSE:
-            logger.debug(f"unknown mouse button {buffer[3]}")
-
+        if buffer.button.state == MouseButtonStateEnum.RELEASE:
+            self.controller.mouse_send_data("null", x, y, wheel, True)
+        elif buffer.button.code == MouseButtonCodeEnum.LEFT_BUTTON:
+            self.controller.mouse_send_data("left", x, y, wheel, True)
+        elif buffer.button.code == MouseButtonCodeEnum.RIGHT_BUTTON:
+            self.controller.mouse_send_data("right", x, y, wheel, True)
+        elif buffer.button.code == MouseButtonCodeEnum.MIDDLE_BUTTON:
+            self.controller.mouse_send_data("center", x, y, wheel, True)
+        elif buffer.button.code == MouseButtonCodeEnum.UNKNOWN_BUTTON:
+            self.controller.mouse_send_data("null", x, y, wheel, True)
+        else:
+            if DebugOutputOptions.MOUSE:
+                logger.debug(f"unknown mouse button {buffer.button.code}")
 
 if __name__ == "__main__":
     pass

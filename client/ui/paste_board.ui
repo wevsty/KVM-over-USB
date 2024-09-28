@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>PasteBoardDialog</class>
+ <widget class="QDialog" name="PasteBoardDialog">
   <property name="windowModality">
-   <enum>Qt::WindowModal</enum>
+   <enum>Qt::WindowModality::WindowModal</enum>
   </property>
   <property name="geometry">
    <rect>
@@ -23,17 +23,44 @@
    <string>Paste board</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="1" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <property name="topMargin">
+      <number>5</number>
+     </property>
+     <item>
+      <widget class="QPushButton" name="push_button_send">
+       <property name="focusPolicy">
+        <enum>Qt::FocusPolicy::NoFocus</enum>
+       </property>
+       <property name="text">
+        <string>Send</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="push_button_stop">
+       <property name="focusPolicy">
+        <enum>Qt::FocusPolicy::NoFocus</enum>
+       </property>
+       <property name="text">
+        <string>Stop</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
    <item row="0" column="0">
-    <widget class="QTabWidget" name="tabWidget">
+    <widget class="QTabWidget" name="tab_widget">
      <property name="acceptDrops">
       <bool>true</bool>
      </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
-     <widget class="QWidget" name="tab_1">
+     <widget class="QWidget" name="tab_text">
       <attribute name="title">
-       <string>T1</string>
+       <string>Text</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout">
        <property name="spacing">
@@ -52,211 +79,11 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QPlainTextEdit" name="plainTextEdit_1"/>
+        <widget class="QPlainTextEdit" name="plain_text_edit"/>
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_2">
-      <attribute name="title">
-       <string>T2</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QPlainTextEdit" name="plainTextEdit_2"/>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_3">
-      <attribute name="title">
-       <string>T3</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_3">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QPlainTextEdit" name="plainTextEdit_3"/>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_4">
-      <attribute name="title">
-       <string>T4</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_4">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QPlainTextEdit" name="plainTextEdit_4"/>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_5">
-      <attribute name="title">
-       <string>T5</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_5">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QPlainTextEdit" name="plainTextEdit_5"/>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_6">
-      <attribute name="title">
-       <string>T6</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_6">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QPlainTextEdit" name="plainTextEdit_6"/>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_7">
-      <attribute name="title">
-       <string>T7</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_7">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QPlainTextEdit" name="plainTextEdit_7"/>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_8">
-      <attribute name="title">
-       <string>T8</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_8">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QPlainTextEdit" name="plainTextEdit_8"/>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_9">
-      <attribute name="title">
-       <string>T9</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_9">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QPlainTextEdit" name="plainTextEdit_9"/>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_f">
+     <widget class="QWidget" name="tab_file_transfer">
       <property name="acceptDrops">
        <bool>true</bool>
       </property>
@@ -265,18 +92,18 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_10">
        <item>
-        <widget class="QLabel" name="label">
+        <widget class="QLabel" name="label_note">
          <property name="acceptDrops">
           <bool>true</bool>
          </property>
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;This magic can only be used in Linux Terminal&lt;/span&gt;&lt;/p&gt;&lt;p&gt;1. Open a terminal, chdir(cd) to target dir&lt;/p&gt;&lt;p&gt;2. Keep focus on terminal, select a file on this page&lt;/p&gt;&lt;p&gt;3. Click send, wait and see the magic&lt;/p&gt;&lt;p&gt;4: Filename must be ascii, check MD5 after transfer&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;This function can only be used in Linux Terminal&lt;/span&gt;&lt;/p&gt;&lt;p&gt;1. Open a terminal, chdir(cd) to target dir.&lt;/p&gt;&lt;p&gt;2. Keep focus on terminal, select a file on this page.&lt;/p&gt;&lt;p&gt;3. Click send, wait and see.&lt;/p&gt;&lt;p&gt;Note: Filename must be ascii, check hash after transfer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::MarkdownText</enum>
+          <enum>Qt::TextFormat::MarkdownText</enum>
          </property>
          <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
          </property>
          <property name="margin">
           <number>0</number>
@@ -289,7 +116,7 @@
        <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -300,7 +127,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QLabel" name="label_2">
+        <widget class="QLabel" name="label_target_file">
          <property name="font">
           <font>
            <bold>true</bold>
@@ -315,7 +142,7 @@
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
+        <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0">
          <property name="spacing">
           <number>0</number>
          </property>
@@ -326,17 +153,10 @@
           <number>4</number>
          </property>
          <item>
-          <widget class="QLabel" name="labelFile">
-           <property name="acceptDrops">
-            <bool>true</bool>
-           </property>
-           <property name="text">
-            <string>N/A</string>
-           </property>
-          </widget>
+          <widget class="QLineEdit" name="line_edit_file_path"/>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButtonFile">
+          <widget class="QPushButton" name="push_button_file_select">
            <property name="text">
             <string>Select</string>
            </property>
@@ -345,7 +165,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QProgressBar" name="progressBar">
+        <widget class="QProgressBar" name="progress_bar">
          <property name="value">
           <number>0</number>
          </property>
@@ -354,122 +174,7 @@
        <item>
         <spacer name="verticalSpacer_2">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="0">
-         <property name="spacing">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>4</number>
-         </property>
-         <property name="bottomMargin">
-          <number>4</number>
-         </property>
-         <item>
-          <widget class="QCheckBox" name="checkBoxEcho">
-           <property name="text">
-            <string>Use &quot;echo&quot; only (2x Slower, but better compatibility)</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tab_set">
-      <attribute name="title">
-       <string>Settings</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_12">
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
-         <item>
-          <widget class="QLabel" name="label_3">
-           <property name="text">
-            <string>Click Interval / ms</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_ci">
-           <property name="maximum">
-            <number>1000</number>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_9">
-         <property name="text">
-          <string>*Delay between two key inputs</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_6">
-         <item>
-          <widget class="QLabel" name="label_6">
-           <property name="text">
-            <string>Packet Size / Bytes</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_ps">
-           <property name="maximum">
-            <number>102400</number>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_7">
-         <property name="text">
-          <string>*Depends on Linux Terminal stdin size limitaion (1K~4K)</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_5">
-         <item>
-          <widget class="QLabel" name="label_5">
-           <property name="text">
-            <string>Packet Wait / ms</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_pw">
-           <property name="maximum">
-            <number>1000</number>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_8">
-         <property name="text">
-          <string>*Delay between two commands for processing</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_3">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -482,33 +187,6 @@
       </layout>
      </widget>
     </widget>
-   </item>
-   <item row="1" column="0">
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <property name="topMargin">
-      <number>5</number>
-     </property>
-     <item>
-      <widget class="QPushButton" name="pushButtonSend">
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
-       </property>
-       <property name="text">
-        <string>Send</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushButtonStop">
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
-       </property>
-       <property name="text">
-        <string>Stop</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
   </layout>
  </widget>

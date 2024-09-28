@@ -1,19 +1,16 @@
-import yaml
 import os
+
+import yaml
 from loguru import logger
 
-import main_default_config
+from data.default_config import MAIN_DEFAULT_CONFIG_DATA
 
 
 class RequiredConfig:
     def __init__(self, file_path: str):
-        self.data: dict = dict()
         self.file_path: str = file_path
-        self.create_default_config()
+        self.data: dict = dict()
         self.load_from_file()
-
-    def create_default_config(self) -> None:
-        pass
 
     def load_from_file(self) -> None:
         try:
@@ -30,20 +27,19 @@ class RequiredConfig:
         with open(self.file_path, "w", encoding="utf-8") as fp:
             yaml.dump(self.data, fp)
 
+    def config(self) -> dict:
+        return self.data
+
 
 class MainConfig(RequiredConfig):
     def __init__(self, file_path: str = "config.yaml"):
         super().__init__(file_path)
 
-    def create_default_config(self) -> None:
-        if os.path.exists(self.file_path):
-            return
-        with open(self.file_path, "w", encoding="utf-8") as fp:
-            fp.write(main_default_config.DATA)
-
-class DataConfig(RequiredConfig):
-    def __init__(self, file_path: str):
-        super().__init__(file_path)
+    def load_from_file(self) -> None:
+        if not os.path.exists(self.file_path):
+            with open(self.file_path, "w", encoding="utf-8") as fp:
+                fp.write(MAIN_DEFAULT_CONFIG_DATA)
+        super().load_from_file()
 
 
 if __name__ == '__main__':

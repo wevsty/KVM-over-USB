@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ControllerSetupDialog</class>
- <widget class="QDialog" name="ControllerSetupDialog">
+ <class>ControllerDeviceSetupDialog</class>
+ <widget class="QDialog" name="ControllerDeviceSetupDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>320</width>
-    <height>240</height>
+    <width>240</width>
+    <height>120</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Controller Setup</string>
+   <string>Controller device setup</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -43,48 +43,12 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QLabel" name="label_screen_x">
-       <property name="text">
-        <string>Screen size X :</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="line_edit_screen_x_size">
-       <property name="text">
-        <string>1920</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_3">
-     <item>
-      <widget class="QLabel" name="label_screen_y">
-       <property name="text">
-        <string>Screen size Y :</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="line_edit_screen_y_size">
-       <property name="text">
-        <string>1080</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
      </property>
     </widget>
    </item>
@@ -95,7 +59,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>ControllerSetupDialog</receiver>
+   <receiver>ControllerDeviceSetupDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -111,7 +75,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>ControllerSetupDialog</receiver>
+   <receiver>ControllerDeviceSetupDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

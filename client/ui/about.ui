@@ -28,7 +28,7 @@
        <item>
         <widget class="QLabel" name="label_project_name_value">
          <property name="text">
-          <string notr="true">&lt;a href=&quot;https://github.com/binnehot/KVM-over-USB&quot;&gt;KVM-over-USB&lt;/a&gt;</string>
+          <string notr="true">&lt;a href=&quot;https://github.com/wevsty/KVM-over-USB&quot;&gt;KVM-over-USB&lt;/a&gt;</string>
          </property>
          <property name="wordWrap">
           <bool>false</bool>
@@ -76,6 +76,24 @@
        </property>
        <property name="openExternalLinks">
         <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <item>
+      <widget class="QLabel" name="label_python_version_key">
+       <property name="text">
+        <string>Python version:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_python_version_value">
+       <property name="text">
+        <string notr="true">3.12.0</string>
        </property>
       </widget>
      </item>

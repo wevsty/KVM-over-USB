@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>main_window</class>
+ <widget class="QMainWindow" name="main_window">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>842</width>
-    <height>582</height>
+    <width>960</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="focusPolicy">
@@ -22,104 +22,111 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>842</width>
+     <width>960</width>
      <height>33</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menu_video_menu">
+   <widget class="QMenu" name="menu_device_menu">
     <property name="title">
      <string>Device</string>
     </property>
-    <addaction name="action_video_devices"/>
+    <addaction name="action_video_device_setup"/>
     <addaction name="action_video_device_connect"/>
     <addaction name="action_video_device_disconnect"/>
     <addaction name="separator"/>
-    <addaction name="action_control_setup"/>
-    <addaction name="actionReload_MCU"/>
-    <addaction name="actionReload_Key_Mouse"/>
+    <addaction name="action_controller_device_setup"/>
+    <addaction name="action_device_reload"/>
+    <addaction name="action_device_reset"/>
     <addaction name="separator"/>
-    <addaction name="actionMinimize"/>
-    <addaction name="actionexit"/>
+    <addaction name="action_minimize"/>
+    <addaction name="action_exit"/>
    </widget>
-   <widget class="QMenu" name="menuKeyboard">
+   <widget class="QMenu" name="menu_keyboard">
     <property name="title">
      <string>Keyboard</string>
     </property>
-    <widget class="QMenu" name="menuShortcut_key">
+    <widget class="QMenu" name="menu_shortcut_keys">
      <property name="title">
-      <string>Shortcut key</string>
+      <string>Shortcut keys</string>
      </property>
     </widget>
-    <addaction name="actionResetKeyboard"/>
+    <addaction name="action_pause_keyboard"/>
+    <addaction name="action_reload_keyboard"/>
     <addaction name="separator"/>
-    <addaction name="menuShortcut_key"/>
-    <addaction name="actionCustomKey"/>
+    <addaction name="menu_shortcut_keys"/>
+    <addaction name="action_custom_key"/>
     <addaction name="separator"/>
-    <addaction name="actionPaste_board"/>
-    <addaction name="actionQuick_paste"/>
+    <addaction name="action_paste_board"/>
+    <addaction name="action_quick_paste"/>
     <addaction name="separator"/>
-    <addaction name="actionSystem_hook"/>
+    <addaction name="action_system_hook"/>
     <addaction name="separator"/>
-    <addaction name="actionIndicator_light"/>
-    <addaction name="actionNum_Keyboard"/>
+    <addaction name="action_indicator_light"/>
    </widget>
-   <widget class="QMenu" name="menuMouse">
+   <widget class="QMenu" name="menu_mouse">
     <property name="title">
      <string>Mouse</string>
     </property>
-    <addaction name="actionResetMouse"/>
+    <addaction name="action_pause_mouse"/>
+    <addaction name="action_reload_mouse"/>
     <addaction name="separator"/>
-    <addaction name="actionCapture_mouse"/>
-    <addaction name="actionRelease_mouse"/>
+    <addaction name="action_capture_mouse"/>
+    <addaction name="action_release_mouse"/>
     <addaction name="separator"/>
-    <addaction name="actionRelative_mouse"/>
-    <addaction name="actionHide_cursor"/>
+    <addaction name="action_relative_mouse"/>
+    <addaction name="action_hide_cursor"/>
    </widget>
-   <widget class="QMenu" name="menuTools">
+   <widget class="QMenu" name="menu_tools">
     <property name="title">
      <string>Tools</string>
     </property>
-    <addaction name="actionWindows_Device_Manager"/>
-    <addaction name="actionWindows_Audio_Setting"/>
-    <addaction name="actionOn_screen_Keyboard"/>
-    <addaction name="actionCalculator"/>
-    <addaction name="actionSnippingTool"/>
-    <addaction name="actionNotepad"/>
+    <addaction name="action_open_windows_device_manager"/>
+    <addaction name="action_open_on_screen_keyboard"/>
+    <addaction name="action_open_calculator"/>
+    <addaction name="action_open_snipping_tool"/>
+    <addaction name="action_open_notepad"/>
    </widget>
-   <widget class="QMenu" name="menuVideo">
+   <widget class="QMenu" name="menu_video">
     <property name="title">
      <string>Video</string>
     </property>
     <addaction name="action_fullscreen"/>
-    <addaction name="action_Resize_window"/>
-    <addaction name="actionKeep_on_top"/>
+    <addaction name="action_resize_window"/>
+    <addaction name="action_topmost"/>
     <addaction name="separator"/>
-    <addaction name="actionKeep_ratio"/>
-    <addaction name="actionCapture_frame"/>
-    <addaction name="actionRecord_video"/>
+    <addaction name="action_keep_ratio"/>
+    <addaction name="action_capture_frame"/>
+    <addaction name="action_record_video"/>
    </widget>
-   <widget class="QMenu" name="menuAbout">
+   <widget class="QMenu" name="menu_about">
     <property name="title">
      <string>About</string>
     </property>
-    <addaction name="actionAbout"/>
-    <addaction name="actionAboutQt"/>
+    <addaction name="action_about"/>
+    <addaction name="separator"/>
+    <addaction name="action_about_qt"/>
    </widget>
-   <addaction name="menu_video_menu"/>
-   <addaction name="menuVideo"/>
-   <addaction name="menuKeyboard"/>
-   <addaction name="menuMouse"/>
-   <addaction name="menuTools"/>
-   <addaction name="menuAbout"/>
+   <addaction name="menu_device_menu"/>
+   <addaction name="menu_video"/>
+   <addaction name="menu_keyboard"/>
+   <addaction name="menu_mouse"/>
+   <addaction name="menu_tools"/>
+   <addaction name="menu_about"/>
   </widget>
   <widget class="QStatusBar" name="statusbar">
+   <property name="styleSheet">
+    <string notr="true">padding: 0px;</string>
+   </property>
    <property name="sizeGripEnabled">
     <bool>false</bool>
    </property>
   </widget>
-  <action name="action_video_devices">
+  <action name="action_video_device_setup">
    <property name="text">
-    <string>Video devices</string>
+    <string>Video device setup</string>
+   </property>
+   <property name="statusTip">
+    <string>Video device setup</string>
    </property>
    <property name="shortcut">
     <string/>
@@ -129,72 +136,53 @@
    <property name="text">
     <string>Connect</string>
    </property>
+   <property name="statusTip">
+    <string>Connect device</string>
+   </property>
   </action>
   <action name="action_video_device_disconnect">
    <property name="text">
     <string>Disconnect</string>
    </property>
+   <property name="statusTip">
+    <string>Disconnect device</string>
+   </property>
   </action>
-  <action name="actionexit">
+  <action name="action_exit">
    <property name="text">
     <string>Exit</string>
    </property>
+   <property name="statusTip">
+    <string>Exit program</string>
+   </property>
   </action>
-  <action name="actionfullscreen">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
+  <action name="action_reload_keyboard">
    <property name="text">
-    <string>Full screen</string>
-   </property>
-   <property name="shortcutVisibleInContextMenu">
-    <bool>false</bool>
+    <string>Reload</string>
    </property>
   </action>
-  <action name="actionScreen_recording">
+  <action name="action_reload_mouse">
    <property name="text">
-    <string>Screen recording</string>
+    <string>Reload</string>
    </property>
   </action>
-  <action name="actionResize_window">
-   <property name="text">
-    <string>Resize window</string>
-   </property>
-  </action>
-  <action name="actionResetKeyboard">
-   <property name="text">
-    <string>Reset</string>
-   </property>
-  </action>
-  <action name="actionResetMouse">
-   <property name="text">
-    <string>Reset</string>
-   </property>
-  </action>
-  <action name="action_quickkey_1">
-   <property name="text">
-    <string>Ctrl+Alt+Del</string>
-   </property>
-  </action>
-  <action name="action_quickkey_2">
-   <property name="text">
-    <string>Alt+Tab</string>
-   </property>
-  </action>
-  <action name="actionMinimize">
+  <action name="action_minimize">
    <property name="text">
     <string>Minimize</string>
    </property>
-  </action>
-  <action name="actionReload_Key_Mouse">
-   <property name="text">
-    <string>Reload Key/Mouse</string>
+   <property name="statusTip">
+    <string>Minimize Window</string>
    </property>
   </action>
-  <action name="actionRelease_mouse">
+  <action name="action_device_reload">
+   <property name="text">
+    <string>Reload</string>
+   </property>
+   <property name="statusTip">
+    <string>Reload device</string>
+   </property>
+  </action>
+  <action name="action_release_mouse">
    <property name="text">
     <string>Release mouse</string>
    </property>
@@ -202,104 +190,39 @@
     <string>Press Ctrl+Alt+F12 release mouse</string>
    </property>
   </action>
-  <action name="actionDisplay_System_Mouse">
-   <property name="text">
-    <string>Display system mouse</string>
-   </property>
-  </action>
-  <action name="actionCapture_mouse">
+  <action name="action_capture_mouse">
    <property name="text">
     <string>Capture mouse</string>
    </property>
   </action>
-  <action name="actionCustomKey">
+  <action name="action_custom_key">
    <property name="text">
     <string>Custom key</string>
    </property>
   </action>
-  <action name="actionq1">
-   <property name="text">
-    <string>q1</string>
-   </property>
-  </action>
-  <action name="actionq2">
-   <property name="text">
-    <string>q2</string>
-   </property>
-  </action>
-  <action name="actionq3">
-   <property name="text">
-    <string>q3</string>
-   </property>
-  </action>
-  <action name="actionq4">
-   <property name="text">
-    <string>q4</string>
-   </property>
-  </action>
-  <action name="actionq5">
-   <property name="text">
-    <string>q5</string>
-   </property>
-  </action>
-  <action name="actionq6">
-   <property name="text">
-    <string>q6</string>
-   </property>
-  </action>
-  <action name="actionq7">
-   <property name="text">
-    <string>q7</string>
-   </property>
-  </action>
-  <action name="actionq8">
-   <property name="text">
-    <string>q8</string>
-   </property>
-  </action>
-  <action name="actionq_8">
-   <property name="text">
-    <string>q8</string>
-   </property>
-  </action>
-  <action name="actionq9">
-   <property name="text">
-    <string>q9</string>
-   </property>
-  </action>
-  <action name="actionq10">
-   <property name="text">
-    <string>q10</string>
-   </property>
-  </action>
-  <action name="actionOn_screen_Keyboard">
+  <action name="action_open_on_screen_keyboard">
    <property name="text">
     <string>On-screen Keyboard</string>
    </property>
   </action>
-  <action name="actionCalculator">
+  <action name="action_open_calculator">
    <property name="text">
     <string>Calculator</string>
    </property>
   </action>
-  <action name="actionSnippingTool">
+  <action name="action_open_snipping_tool">
    <property name="text">
     <string>SnippingTool</string>
    </property>
   </action>
-  <action name="actionNotepad">
+  <action name="action_open_notepad">
    <property name="text">
     <string>Notepad</string>
    </property>
   </action>
-  <action name="actionIndicator_light">
+  <action name="action_indicator_light">
    <property name="text">
     <string>Indicator light</string>
-   </property>
-  </action>
-  <action name="actionReload_MCU">
-   <property name="text">
-    <string>Reload MCU</string>
    </property>
   </action>
   <action name="action_fullscreen">
@@ -310,12 +233,12 @@
     <string>Fullscreen</string>
    </property>
   </action>
-  <action name="action_Resize_window">
+  <action name="action_resize_window">
    <property name="text">
     <string>Resize window</string>
    </property>
   </action>
-  <action name="actionKeep_ratio">
+  <action name="action_keep_ratio">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -323,20 +246,20 @@
     <string>Keep aspect ratio</string>
    </property>
   </action>
-  <action name="actionKeep_on_top">
+  <action name="action_topmost">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Always on top</string>
+    <string>Topmost</string>
    </property>
   </action>
-  <action name="actionPaste_board">
+  <action name="action_paste_board">
    <property name="text">
     <string>Pasteboard</string>
    </property>
   </action>
-  <action name="actionHide_cursor">
+  <action name="action_hide_cursor">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -344,35 +267,12 @@
     <string>Hide cursor</string>
    </property>
   </action>
-  <action name="actionCaps_Lock">
-   <property name="text">
-    <string>Caps Lock</string>
-   </property>
-  </action>
-  <action name="actionScroll_Lock">
-   <property name="text">
-    <string>Scroll Lock</string>
-   </property>
-  </action>
-  <action name="actionNum_Lock">
-   <property name="text">
-    <string>Num Lock</string>
-   </property>
-  </action>
-  <action name="actionDark_theme">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Dark theme</string>
-   </property>
-  </action>
-  <action name="actionCapture_frame">
+  <action name="action_capture_frame">
    <property name="text">
     <string>Capture frame</string>
    </property>
   </action>
-  <action name="actionQuick_paste">
+  <action name="action_quick_paste">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -383,27 +283,25 @@
     <string>Press Ctrl+Alt+V to quickly send clipboard contents</string>
    </property>
   </action>
-  <action name="actionWindows_Audio_Setting">
-   <property name="text">
-    <string>Windows Audio Settings</string>
-   </property>
-  </action>
-  <action name="actionWindows_Device_Manager">
+  <action name="action_open_windows_device_manager">
    <property name="text">
     <string>Windows Device Manager</string>
    </property>
   </action>
-  <action name="actionNum_Keyboard">
+  <action name="action_num_keyboard">
    <property name="text">
     <string>Num Keyboard</string>
    </property>
   </action>
-  <action name="actionRecord_video">
+  <action name="action_record_video">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Record video</string>
    </property>
   </action>
-  <action name="actionSystem_hook">
+  <action name="action_system_hook">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -414,7 +312,7 @@
     <string>Blocks the system from responding to user input</string>
    </property>
   </action>
-  <action name="actionRelative_mouse">
+  <action name="action_relative_mouse">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -422,19 +320,46 @@
     <string>Relative mouse</string>
    </property>
   </action>
-  <action name="action_control_setup">
+  <action name="action_controller_device_setup">
    <property name="text">
-    <string>Control setup</string>
+    <string>Controller device setup</string>
+   </property>
+   <property name="statusTip">
+    <string>Controller setup</string>
    </property>
   </action>
-  <action name="actionAboutQt">
+  <action name="action_about_qt">
    <property name="text">
     <string>About Qt</string>
    </property>
   </action>
-  <action name="actionAbout">
+  <action name="action_about">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="action_device_reset">
+   <property name="text">
+    <string>Reset</string>
+   </property>
+   <property name="statusTip">
+    <string>Reset device</string>
+   </property>
+  </action>
+  <action name="action_pause_keyboard">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Pause</string>
+   </property>
+  </action>
+  <action name="action_pause_mouse">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Pause</string>
    </property>
   </action>
  </widget>

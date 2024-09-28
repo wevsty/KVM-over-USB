@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>dialog</class>
+ <widget class="QDialog" name="dialog">
   <property name="windowModality">
    <enum>Qt::NonModal</enum>
   </property>
@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>279</width>
-    <height>259</height>
+    <width>340</width>
+    <height>300</height>
    </rect>
   </property>
   <property name="maximumSize">
@@ -27,31 +27,90 @@
   </property>
   <layout class="QFormLayout" name="formLayout">
    <item row="2" column="0">
-    <widget class="QLabel" name="label">
+    <widget class="QLabel" name="label_device">
      <property name="text">
       <string>Device</string>
      </property>
     </widget>
    </item>
    <item row="2" column="1">
-    <widget class="QComboBox" name="comboBox">
+    <widget class="QComboBox" name="combo_box_device">
      <property name="mouseTracking">
       <bool>false</bool>
      </property>
     </widget>
    </item>
    <item row="3" column="0">
-    <widget class="QLabel" name="label_2">
+    <widget class="QLabel" name="label_resolution">
      <property name="text">
       <string>Resolution</string>
      </property>
     </widget>
    </item>
    <item row="3" column="1">
-    <widget class="QComboBox" name="comboBox_2"/>
+    <widget class="QComboBox" name="combo_box_resolution"/>
    </item>
-   <item row="10" column="1">
-    <widget class="QDialogButtonBox" name="buttonBox">
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_format">
+     <property name="text">
+      <string>Format</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QComboBox" name="combo_box_format"/>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_audio_in">
+     <property name="text">
+      <string>Audio IN</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QComboBox" name="combo_box_audio_in">
+     <property name="mouseTracking">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_audio_out">
+     <property name="text">
+      <string>Audio OUT</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QComboBox" name="combo_box_audio_out">
+     <property name="mouseTracking">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0" colspan="2">
+    <widget class="QLabel" name="label_tips">
+     <property name="text">
+      <string>* Audio routing only work in video recording</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0" colspan="2">
+    <widget class="QCheckBox" name="check_box_auto_connect">
+     <property name="text">
+      <string>Auto Connect on startup</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="0" colspan="2">
+    <widget class="QCheckBox" name="check_box_audio_support">
+     <property name="text">
+      <string>Audio support</string>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="0" colspan="2">
+    <widget class="QDialogButtonBox" name="button_box">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -60,73 +119,14 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="label_3">
-     <property name="text">
-      <string>Format</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="1">
-    <widget class="QComboBox" name="comboBox_3"/>
-   </item>
-   <item row="9" column="1">
-    <widget class="QCheckBox" name="checkBoxAudio">
-     <property name="text">
-      <string>Audio support</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="label_4">
-     <property name="text">
-      <string>Audio IN</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="1">
-    <widget class="QComboBox" name="comboBox_4">
-     <property name="mouseTracking">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="6" column="0">
-    <widget class="QLabel" name="label_5">
-     <property name="text">
-      <string>Audio OUT</string>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="1">
-    <widget class="QCheckBox" name="checkBoxAutoConnect">
-     <property name="text">
-      <string>Auto Connect on startup</string>
-     </property>
-    </widget>
-   </item>
-   <item row="6" column="1">
-    <widget class="QComboBox" name="comboBox_5">
-     <property name="mouseTracking">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="0" colspan="2">
-    <widget class="QLabel" name="label_7">
-     <property name="text">
-      <string>* Audio routing only work in video recording</string>
-     </property>
-    </widget>
-   </item>
   </layout>
  </widget>
  <resources/>
  <connections>
   <connection>
-   <sender>buttonBox</sender>
+   <sender>button_box</sender>
    <signal>accepted()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>dialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -140,9 +140,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>buttonBox</sender>
+   <sender>button_box</sender>
    <signal>rejected()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>dialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

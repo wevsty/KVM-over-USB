@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'about.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.2
+## Created by: Qt User Interface Compiler version 6.7.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -36,7 +36,7 @@ class Ui_AboutDialog(object):
 
         self.label_project_name_value = QLabel(AboutDialog)
         self.label_project_name_value.setObjectName(u"label_project_name_value")
-        self.label_project_name_value.setText(u"<a href=\"https://github.com/binnehot/KVM-over-USB\">KVM-over-USB</a>")
+        self.label_project_name_value.setText(u"<a href=\"https://github.com/wevsty/KVM-over-USB\">KVM-over-USB</a>")
         self.label_project_name_value.setWordWrap(False)
         self.label_project_name_value.setOpenExternalLinks(True)
 
@@ -80,6 +80,22 @@ class Ui_AboutDialog(object):
 
         self.verticalLayout.addLayout(self.horizontalLayout_3)
 
+        self.horizontalLayout_4 = QHBoxLayout()
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.label_python_version_key = QLabel(AboutDialog)
+        self.label_python_version_key.setObjectName(u"label_python_version_key")
+
+        self.horizontalLayout_4.addWidget(self.label_python_version_key)
+
+        self.label_python_version_value = QLabel(AboutDialog)
+        self.label_python_version_value.setObjectName(u"label_python_version_value")
+        self.label_python_version_value.setText(u"3.12.0")
+
+        self.horizontalLayout_4.addWidget(self.label_python_version_value)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_4)
+
         self.label_build_info = QLabel(AboutDialog)
         self.label_build_info.setObjectName(u"label_build_info")
 
@@ -103,6 +119,7 @@ class Ui_AboutDialog(object):
         self.label_project_description_value.setText(QCoreApplication.translate("AboutDialog", u"Project description:", None))
         self.label_project_description_key.setText(QCoreApplication.translate("AboutDialog", u"A simple KVM client", None))
         self.label_fork_from_key.setText(QCoreApplication.translate("AboutDialog", u"Fork from:", None))
+        self.label_python_version_key.setText(QCoreApplication.translate("AboutDialog", u"Python version:", None))
         self.label_build_info.setText(QCoreApplication.translate("AboutDialog", u"Build info:", None))
     # retranslateUi
 

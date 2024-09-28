@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>IndicatorLightsDialog</class>
+ <widget class="QDialog" name="IndicatorLightsDialog">
   <property name="windowModality">
-   <enum>Qt::WindowModal</enum>
+   <enum>Qt::WindowModality::WindowModal</enum>
   </property>
   <property name="geometry">
    <rect>
@@ -32,32 +32,41 @@
    <item row="0" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QPushButton" name="pushButtonNum">
+      <widget class="QPushButton" name="push_button_num_lock">
        <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
+        <enum>Qt::FocusPolicy::NoFocus</enum>
        </property>
        <property name="text">
         <string>Num Lock</string>
        </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButtonCaps">
+      <widget class="QPushButton" name="push_button_caps_lock">
        <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
+        <enum>Qt::FocusPolicy::NoFocus</enum>
        </property>
        <property name="text">
         <string>Caps Lock</string>
        </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButtonScroll">
+      <widget class="QPushButton" name="push_button_scroll_lock">
        <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
+        <enum>Qt::FocusPolicy::NoFocus</enum>
        </property>
        <property name="text">
         <string>Scroll Lock</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
