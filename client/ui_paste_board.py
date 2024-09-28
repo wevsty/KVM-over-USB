@@ -94,6 +94,13 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
     def send_text(self) -> None:
         text = self.plain_text_edit.toPlainText()
         text = text.replace(os.sep, "\n")
+        if text.isascii() is False:
+            QMessageBox.critical(
+                self,
+                self.tr("Error"),
+                self.tr("Text send only supports ASCII characters\n")
+            )
+            return
         if self.send_worker.flag_sending:
             return
         self.send_worker.send_text_signal.emit(text)
