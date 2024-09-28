@@ -23,10 +23,9 @@ class Ui_dialog(object):
     def setupUi(self, dialog):
         if not dialog.objectName():
             dialog.setObjectName(u"dialog")
-        dialog.setWindowModality(Qt.NonModal)
-        dialog.resize(340, 300)
-        dialog.setMaximumSize(QSize(16777215, 300))
-        dialog.setLayoutDirection(Qt.LeftToRight)
+        dialog.setWindowModality(Qt.WindowModality.NonModal)
+        dialog.resize(300, 265)
+        dialog.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.formLayout = QFormLayout(dialog)
         self.formLayout.setObjectName(u"formLayout")
         self.label_device = QLabel(dialog)
@@ -99,8 +98,8 @@ class Ui_dialog(object):
 
         self.button_box = QDialogButtonBox(dialog)
         self.button_box.setObjectName(u"button_box")
-        self.button_box.setOrientation(Qt.Horizontal)
-        self.button_box.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
+        self.button_box.setOrientation(Qt.Orientation.Horizontal)
+        self.button_box.setStandardButtons(QDialogButtonBox.StandardButton.Cancel|QDialogButtonBox.StandardButton.Ok)
 
         self.formLayout.setWidget(10, QFormLayout.SpanningRole, self.button_box)
 
