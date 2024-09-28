@@ -385,6 +385,7 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
         self.custom_key_dialog.setWindowIcon(self.load_icon("keyboard-outline"))
         self.paste_board_dialog.setWindowIcon(self.load_icon("paste"))
         self.indicator_lights_dialog.setWindowIcon(self.load_icon("capslock"))
+        self.about_dialog.setWindowIcon(self.load_icon("python"))
 
     def init_shortcut_keys(self) -> None:
         self.menu_shortcut_keys.clear()
@@ -1126,6 +1127,9 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
         assert shift_hid_code != 0
         shift_flag = False
         for character in data:
+            if character.isascii() is False:
+                logger.critical(f"Character not supported: {character}")
+                continue
             # 如果是需要shift的符号
             if character in SHIFT_SYMBOL:
                 shift_flag = True
@@ -1216,9 +1220,9 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
             )
             return
         self.status["hook_state"] = not self.status["hook_state"]
-        self.action_system_hook.setChecked(self.hook_state)
+        self.action_system_hook.setChecked(self.status["hook_state"])
         self.statusBar().showMessage(
-            self.tr("System hook: ") + self.bool_to_behavior_string(self.hook_state)
+            self.tr("System hook: ") + self.bool_to_behavior_string(self.status["hook_state"])
         )
         if self.status["hook_state"]:
             self.pythoncom_timer.start(5)
@@ -1630,14 +1634,9 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
     def changeEvent(self, event):
         # 窗口失焦事件
         if event.type() == QEvent.WindowDeactivate:
-            try:
-                if self.status is None:
-                    return
-            except AttributeError:
-                logger.debug("status not initialized")
-            if not self.isActiveWindow() and self.status["init_ok"]:
+            if not self.isActiveWindow() and self.status["controller_opened"]:
                 # 窗口失去焦点时重置键盘，防止卡键
-                self.reset_keymouse(1)
+                self.controller_device_reload("all")
         # logger.debug(f"window change event: {event}")
 
     def closeEvent(self, event: QCloseEvent):
