@@ -25,14 +25,6 @@ class DebugOutputOptions(IntEnum):
 GLOBAL_CONTROLLER_DEVICE: None = None
 
 
-def detect_serial_ports() -> list[str]:
-    port_name_list: list[str] = []
-    port_info_list: serial.tools.list_ports.ListPortInfo = list_comports(include_links=False)
-    for port_info in port_info_list:
-        port_name_list.append(port_info.name)
-    port_info_list.sort()
-    return port_name_list
-
 class ControllerDeviceBase(ABC):
     @abstractmethod
     def device_open(self) -> bool:
