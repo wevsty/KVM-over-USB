@@ -86,13 +86,17 @@ Demo control ASUS BIOS
 ### FAQ
 
 Q: Why doesn't the mouse work when the console is Linux? 
+
 A: Some operating systems do not support absolute coordinate mode, please try to switch to relative coordinate mode. 
 
 Q: How do I send the Ctrl + Alt + Delete key combination? 
+
 A: Due to the Windows mechanism it is difficult to intercept these key combinations. To send these combinations to the console, use the shortcut function in the keyboard menu. 
 
 Q: What should I do if a key jam occurs when using the software? 
+
 A: Please use the reload or reset function in the software device menu, which can restore to normal in most cases. If a similar key jam still occurs after use, it is recommended to restart the operating system of the controlled end. 
+
 
 ## Thanks
 
