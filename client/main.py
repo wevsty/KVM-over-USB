@@ -527,6 +527,7 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
         self.action_indicator_light.triggered.connect(self.indicator_lights_action)
         self.indicator_lights_dialog.lock_key_clicked_signal.connect(self.change_indicator_lights_state)
         self.action_system_hook.triggered.connect(self.system_hook_func)
+        self.action_sync_indicator.triggered.connect(self.sync_indicator_action)
 
         # mouse
         self.action_pause_mouse.triggered.connect(self.input_pause_state)
@@ -1172,6 +1173,10 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
         )
         self.keyboard_send_string(text)
 
+    # 发送请求同步键盘指示灯状态
+    def sync_indicator_action(self):
+        self.controller_event_worker.command_send_signal.emit("keyboard_read", None)
+
     def indicator_lights_action(self):
         if self.indicator_lights_dialog.isVisible():
             self.indicator_lights_dialog.activateWindow()
@@ -1605,7 +1610,7 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
             # Ctrl+Alt+F12 关闭鼠标捕获
             elif keyboard_key == Qt.Key.Key_F12:
                 self.clear_keyboard_buffer()
-                self.mouse_relative_mouse()
+                self.mouse_release()
                 self.controller_device_reload("mouse")
                 self.statusBar().showMessage(self.tr("Mouse capture off"))
             # Ctrl+Alt+V quick paste
