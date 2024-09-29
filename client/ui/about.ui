@@ -100,9 +100,9 @@
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="label_requirements">
+    <widget class="QLabel" name="label_dependencies">
      <property name="text">
-      <string>Requirements:</string>
+      <string>Dependencies:</string>
      </property>
     </widget>
    </item>
