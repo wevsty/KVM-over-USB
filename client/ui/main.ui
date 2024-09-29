@@ -61,6 +61,7 @@
     <addaction name="separator"/>
     <addaction name="action_system_hook"/>
     <addaction name="separator"/>
+    <addaction name="action_sync_indicator"/>
     <addaction name="action_indicator_light"/>
    </widget>
    <widget class="QMenu" name="menu_mouse">
@@ -360,6 +361,11 @@
    </property>
    <property name="text">
     <string>Pause</string>
+   </property>
+  </action>
+  <action name="action_sync_indicator">
+   <property name="text">
+    <string>Sync indicator</string>
    </property>
   </action>
  </widget>
