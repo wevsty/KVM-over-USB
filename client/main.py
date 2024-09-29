@@ -357,8 +357,8 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
         self.action_paste_board.setIcon(self.load_icon("paste"))
         self.action_quick_paste.setIcon(self.load_icon("quick_paste"))
         self.action_system_hook.setIcon(self.load_icon("hook"))
+        self.action_sync_indicator.setIcon(self.load_icon("sync"))
         self.action_indicator_light.setIcon(self.load_icon("capslock"))
-        self.action_num_keyboard.setIcon(self.load_icon("num_key"))
 
         # menu_mouse
         self.action_pause_mouse.setIcon(self.load_icon("pause"))
