@@ -96,10 +96,10 @@ class Ui_AboutDialog(object):
 
         self.verticalLayout.addLayout(self.horizontalLayout_4)
 
-        self.label_build_info = QLabel(AboutDialog)
-        self.label_build_info.setObjectName(u"label_build_info")
+        self.label_requirements = QLabel(AboutDialog)
+        self.label_requirements.setObjectName(u"label_requirements")
 
-        self.verticalLayout.addWidget(self.label_build_info)
+        self.verticalLayout.addWidget(self.label_requirements)
 
         self.text_edit_info = QTextEdit(AboutDialog)
         self.text_edit_info.setObjectName(u"text_edit_info")
@@ -120,6 +120,6 @@ class Ui_AboutDialog(object):
         self.label_project_description_key.setText(QCoreApplication.translate("AboutDialog", u"A simple KVM client", None))
         self.label_fork_from_key.setText(QCoreApplication.translate("AboutDialog", u"Fork from:", None))
         self.label_python_version_key.setText(QCoreApplication.translate("AboutDialog", u"Python version:", None))
-        self.label_build_info.setText(QCoreApplication.translate("AboutDialog", u"Build info:", None))
+        self.label_requirements.setText(QCoreApplication.translate("AboutDialog", u"Requirements:", None))
     # retranslateUi
 
