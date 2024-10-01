@@ -517,7 +517,7 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
 
         # keyboard
         self.action_pause_keyboard.triggered.connect(self.input_pause_state)
-        self.action_reload_mouse.triggered.connect(lambda: self.controller_device_reload("keyboard"))
+        self.action_reload_keyboard.triggered.connect(lambda: self.controller_device_reload("keyboard"))
         self.action_custom_key.triggered.connect(lambda: self.custom_key_dialog.exec())
         self.custom_key_dialog.custom_key_send_signal.connect(self.custom_key_send)
         self.custom_key_dialog.custom_key_save_signal.connect(self.custom_key_save)
@@ -1054,6 +1054,7 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
         if release_type == "keyboard":
             self.controller_event_worker.command_send_signal.emit('device_release', "keyboard")
             self.keyboard_key_buffer.clear()
+            self.update_status_bar()
         elif release_type == "mouse":
             self.controller_event_worker.command_send_signal.emit('device_release', "mouse")
             self.mouse_buffer.clear()
@@ -1063,6 +1064,7 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
             self.mouse_buffer.clear()
             self.controller_device_disconnect()
             self.controller_device_connect()
+            self.update_status_bar()
 
     # 重置设备
     def controller_device_reset(self):
