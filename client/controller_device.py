@@ -1,12 +1,13 @@
 import os
-import time
-from enum import IntEnum, auto
-from keyboard_buffer import KeyboardStateBuffer, KeyStateItem, KeyStateEnum
-from mouse_buffer import MouseStateBuffer, MousePoint, MouseButton, MouseWheelStateEnum, MouseButtonCodeEnum, MouseButtonStateEnum
-from loguru import logger
-from typing import Any
-from controller_ch9329 import Controller
 from abc import ABC, abstractmethod
+
+from loguru import logger
+
+from controller_ch9329 import Controller
+from keyboard_buffer import KeyboardStateBuffer, KeyStateEnum
+from mouse_buffer import MouseStateBuffer, MouseWheelStateEnum, MouseButtonCodeEnum, \
+    MouseButtonStateEnum
+
 if os.name == "nt":  # sys.platform == "win32":
     from serial.tools.list_ports_windows import comports as list_comports
 elif os.name == "posix":
@@ -15,11 +16,10 @@ else:
     raise ImportError("Sorry: no implementation for your platform {} available".format(os.name))
 
 
-class DebugOutputOptions(IntEnum):
-    DEVICE: bool = True
-    EVENT: bool = True
-    MOUSE: bool = True
-    KEYBOARD: bool = True
+class ControllerDebugOptions:
+    DEVICE: bool = False
+    MOUSE: bool = False
+    KEYBOARD: bool = False
 
 
 GLOBAL_CONTROLLER_DEVICE: None = None
@@ -42,6 +42,7 @@ class ControllerDeviceBase(ABC):
     def device_event(self, command: str, buffer: dict) -> tuple[int, dict]:
         pass
 
+
 class ControllerDevice(ControllerDeviceBase):
     FUNCTION_KEYS = [
         "ctrl_left", "ctrl_right",
@@ -49,12 +50,13 @@ class ControllerDevice(ControllerDeviceBase):
         "alt_left", "alt_right",
         "win_left", "win_right", "win_app"
     ]
+
     def __init__(self):
         self.port: str = "auto"
         self.baud: int = 9600
         self.screen_x: int = 1920
         self.screen_y: int = 1080
-        self.controller:Controller = Controller()
+        self.controller: Controller = Controller()
 
     @staticmethod
     def detect_serial_ports() -> list[str]:
@@ -84,7 +86,19 @@ class ControllerDevice(ControllerDeviceBase):
         if self.port == "":
             return status
         self.controller.set_connection_params(self.port, self.baud, self.screen_x, self.screen_y)
+        if ControllerDebugOptions.DEVICE:
+            logger.debug(
+                f"create_connection({self.port}, {self.baud}, " +
+                f"{self.screen_x}, {self.screen_y})"
+            )
         status = self.controller.create_connection()
+        if ControllerDebugOptions.DEVICE:
+            if status:
+                logger.debug(f"create_connection -> succeed")
+                info = self.controller.product_info()
+                logger.debug(f"product info: {info}")
+            else:
+                logger.debug(f"create_connection -> failed")
         return status
 
     def device_close(self) -> None:
@@ -159,6 +173,9 @@ class ControllerDevice(ControllerDeviceBase):
                 else:
                     press_keys.append(key_name)
         self.controller.keyboard_send_data(press_keys, press_function_keys)
+        if ControllerDebugOptions.KEYBOARD:
+            print_keys = press_keys + press_function_keys
+            logger.debug(f"keyboard send: {print_keys}")
 
     def mouse_send_event(self, command: str, buffer: MouseStateBuffer):
         if command == "mouse_absolute_write":
@@ -168,7 +185,7 @@ class ControllerDevice(ControllerDeviceBase):
         else:
             pass
 
-    def mouse_send_absolute_data(self,buffer: MouseStateBuffer):
+    def mouse_send_absolute_data(self, buffer: MouseStateBuffer):
         x, y = buffer.point.get()
         real_x = int(round(x * self.screen_x))
         real_y = int(round(y * self.screen_y))
@@ -194,10 +211,10 @@ class ControllerDevice(ControllerDeviceBase):
         elif buffer.button.code == MouseButtonCodeEnum.UNKNOWN_BUTTON:
             self.controller.mouse_send_data("null", x, y, wheel, True)
         else:
-            if DebugOutputOptions.MOUSE:
+            if ControllerDebugOptions.MOUSE:
                 logger.debug(f"unknown mouse button {buffer.button.code}")
 
-    def mouse_send_relative_data(self,buffer: MouseStateBuffer):
+    def mouse_send_relative_data(self, buffer: MouseStateBuffer):
         x, y = buffer.point.get()
 
         if x > 127:
@@ -238,8 +255,9 @@ class ControllerDevice(ControllerDeviceBase):
         elif buffer.button.code == MouseButtonCodeEnum.UNKNOWN_BUTTON:
             self.controller.mouse_send_data("null", x, y, wheel, True)
         else:
-            if DebugOutputOptions.MOUSE:
+            if ControllerDebugOptions.MOUSE:
                 logger.debug(f"unknown mouse button {buffer.button.code}")
+
 
 if __name__ == "__main__":
     pass

@@ -1023,6 +1023,7 @@ class MyMainWindow(MainWindow):
             cc = self.controller_device_setup_dialog.get_controller_device_config()
             self.config_controller["port"] = cc.port
             self.config_controller["baud"] = cc.baud
+            self.save_config()
             self.controller_device_disconnect()
             self.controller_device_connect()
 
@@ -1669,6 +1670,9 @@ def debug_mode(mode: bool):
             format="{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {name} - {message}",
             level="DEBUG",
         )
+        controller_device.ControllerDebugOptions.DEVICE = True
+        controller_device.ControllerDebugOptions.MOUSE = True
+        controller_device.ControllerDebugOptions.KEYBOARD = True
     else:
         logger.add(
             sys.stdout,

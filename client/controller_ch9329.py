@@ -1,23 +1,17 @@
-# import hid #换了硬件，改用串口,删除了所有hid相关代码
-#
-import os
 import random
-import sys
 import threading
-from typing import List
+from abc import ABC, abstractmethod
 
-import yaml
+import ch9329.exceptions
 from ch9329 import keyboard
 from ch9329 import mouse
 from ch9329.config import get_product
-from ch9329.keyboard import Modifier
-import ch9329.exceptions
 from loguru import logger
 from serial import Serial
 from serial import SerialException
-from abc import ABC, abstractmethod
-from data.keyboard_ch9329_hid_map import CH9329_HID_MAP
+
 from data.hex_data import HexData
+from data.keyboard_ch9329_hid_map import CH9329_HID_MAP
 
 
 class ControllerBase(ABC):
@@ -91,10 +85,6 @@ class ControllerCh9329(ControllerBase):
         self.screen_y: int = screen_y
 
     def create_connection(self) -> bool:
-        logger.debug(
-            f"init_connection({self.port}, {self.baud}, "
-            f"{self.screen_x}, {self.screen_y})"
-        )
         connection_status: bool = False
         if self.port == "":
             return connection_status
@@ -108,9 +98,7 @@ class ControllerCh9329(ControllerBase):
                     timeout=self.timeout
                 )
                 connection_status = True
-                logger.debug(f"create_connection succeed")
             except SerialException:
-                logger.debug(f"create_connection failed")
                 self.connection = None
         return connection_status
 
@@ -208,7 +196,7 @@ class ControllerCh9329(ControllerBase):
             if len(function_keys) > 8:
                 function_keys = function_keys[0:8]
             keyboard.trigger_keys(self.connection, keys, function_keys)
-            logger.debug(f"keyboard keys press : {keys}")
+            # logger.debug(f"keyboard keys trigger : {keys}")
         return True
 
     # 获取键盘状态（指示灯状态）
