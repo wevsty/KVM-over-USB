@@ -1697,6 +1697,9 @@ def os_init():
     if system_name == "windows":  # sys.platform == "win32":
         app_id = "open_source_software.usb_kvm_client.gui.1"
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+        # 4K分辨率下字体发虚
+        # 设置环境变量让渲染使用 freetype
+        os.environ["QT_QPA_PLATFORM"] = "windows:fontengine=freetype"
     elif system_name == "linux":
         pass
     else:
