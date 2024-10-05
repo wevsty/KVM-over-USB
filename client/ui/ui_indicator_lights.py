@@ -2,7 +2,7 @@ from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import QDialog
 
 from keyboard_buffer import KeyboardIndicatorLightsState
-from ui import indicator_lights_ui
+from ui.ui_resource import indicator_lights_ui
 
 
 class IndicatorLightsDialog(QDialog, indicator_lights_ui.Ui_IndicatorLightsDialog):

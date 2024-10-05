@@ -4,9 +4,7 @@ from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import QDialog, QInputDialog
 
 from data.keyboard_shift_symbol import SHIFT_SYMBOL
-from ui import (
-    custom_key_ui,
-)
+from ui.ui_resource import custom_key_ui
 
 
 class CustomKeyDialog(QDialog, custom_key_ui.Ui_CustomKeyDialog):

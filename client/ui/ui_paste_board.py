@@ -6,9 +6,7 @@ from PySide6.QtCore import Signal, Qt, QThread, QObject
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QDialog, QFileDialog, QMessageBox
 
-from ui import (
-    paste_board_ui,
-)
+from ui.ui_resource import paste_board_ui
 
 
 class SendDataWorker(QObject):

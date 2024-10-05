@@ -4,9 +4,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtMultimedia import QMediaDevices
 from PySide6.QtWidgets import QDialog
 
-from ui import (
-    video_device_setup_ui
-)
+from ui.ui_resource import video_device_setup_ui
 
 
 @dataclass

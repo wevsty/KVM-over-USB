@@ -5,7 +5,7 @@ from PySide6.QtGui import QIntValidator
 from PySide6.QtWidgets import QDialog
 
 from controller_device import ControllerDevice
-from ui import controller_device_setup_ui
+from ui.ui_resource import controller_device_setup_ui
 
 
 @dataclass

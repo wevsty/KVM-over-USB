@@ -20,7 +20,6 @@ from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
     QLabel,
-    QMainWindow,
     QWidget,
     QMessageBox,
 )
@@ -72,15 +71,13 @@ import pythoncom
 import controller_device
 import project_path
 from project_config import MainConfig
-from ui import (
-    main_ui,
-)
-from ui_video_device_setup import VideoDeviceConfig, AudioDeviceConfig, VideoDeviceSetupDialog
-from ui_controller_device_setup import ControllerDeviceSetupDialog, ControllerDeviceConfig
-from ui_custom_key import CustomKeyDialog
-from ui_paste_board import PasteBoardDialog
-from ui_indicator_lights import IndicatorLightsDialog
-from ui_about import AboutDialog
+from ui.ui_main import MainWindow
+from ui.ui_video_device_setup import VideoDeviceConfig, AudioDeviceConfig, VideoDeviceSetupDialog
+from ui.ui_controller_device_setup import ControllerDeviceSetupDialog, ControllerDeviceConfig
+from ui.ui_custom_key import CustomKeyDialog
+from ui.ui_paste_board import PasteBoardDialog
+from ui.ui_indicator_lights import IndicatorLightsDialog
+from ui.ui_about import AboutDialog
 from keyboard_buffer import KeyboardStateBuffer, KeyStateEnum, KeyboardIndicatorLightsState
 from mouse_buffer import MouseStateBuffer, MouseButtonStateEnum, MouseButtonCodeEnum, \
     MouseWheelStateEnum
@@ -121,7 +118,7 @@ class ControllerEventWorker(QObject):
         return command, status_code, reply
 
 
-class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
+class MyMainWindow(MainWindow):
     WINDOW_TITLE_STRING: str = "USB KVM Client"
     # 定时器默认延迟
     DEFAULT_TIMER_DELAY: int = 1000
@@ -137,8 +134,6 @@ class MyMainWindow(QMainWindow, main_ui.Ui_main_window):
     def __init__(self, parent: Optional[QWidget] = None):
         # 初始化UI
         super().__init__(parent)
-
-        self.setupUi(self)
 
         # 初始化状态
         self.status = {
