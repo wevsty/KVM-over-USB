@@ -112,6 +112,9 @@ SCANCODE_TO_HID_CODE = {
     '0xE01D': '0xE4',  # Right Control
     '0xE035': '0x54',  # Keypad /
     '0xE038': '0xE6',  # Right Alt
+    '0xE03A': '0x39',  # Caps Lock
+    '0xE045': '0x53',  # Num Lock
+    '0xE046': '0x47',  # Scroll Lock
     '0xE047': '0x4B',  # Page Up
     '0xE048': '0x52',  # Up
     '0xE049': '0x4C',  # Delete
