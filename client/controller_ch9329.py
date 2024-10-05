@@ -217,15 +217,15 @@ class ControllerCh9329(ControllerBase):
                 keyboard_light_status = buffer[7]
                 status = True
             logger.debug(f"keyboard status 0x{keyboard_light_status:02x}")
-            if keyboard_light_status & (1 << 0) == 1:
+            if keyboard_light_status & (1 << 0) != 0:
                 num_lock = True
             else:
                 num_lock = False
-            if keyboard_light_status & (1 << 1) == 1:
+            if keyboard_light_status & (1 << 1) != 0:
                 caps_lock = True
             else:
                 caps_lock = False
-            if keyboard_light_status & (1 << 2) == 1:
+            if keyboard_light_status & (1 << 2) != 0:
                 scroll_lock = True
             else:
                 scroll_lock = False
