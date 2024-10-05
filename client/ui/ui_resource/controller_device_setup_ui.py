@@ -16,14 +16,14 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QComboBox, QDialog,
-    QDialogButtonBox, QHBoxLayout, QLabel, QLineEdit,
-    QSizePolicy, QVBoxLayout, QWidget)
+    QDialogButtonBox, QHBoxLayout, QLabel, QSizePolicy,
+    QVBoxLayout, QWidget)
 
 class Ui_ControllerDeviceSetupDialog(object):
     def setupUi(self, ControllerDeviceSetupDialog):
         if not ControllerDeviceSetupDialog.objectName():
             ControllerDeviceSetupDialog.setObjectName(u"ControllerDeviceSetupDialog")
-        ControllerDeviceSetupDialog.resize(240, 120)
+        ControllerDeviceSetupDialog.resize(240, 160)
         self.verticalLayout = QVBoxLayout(ControllerDeviceSetupDialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.horizontalLayout = QHBoxLayout()
@@ -48,10 +48,17 @@ class Ui_ControllerDeviceSetupDialog(object):
 
         self.horizontalLayout_4.addWidget(self.label_baud_rate)
 
-        self.line_edit_baud = QLineEdit(ControllerDeviceSetupDialog)
-        self.line_edit_baud.setObjectName(u"line_edit_baud")
+        self.combobox_baud = QComboBox(ControllerDeviceSetupDialog)
+        self.combobox_baud.addItem("")
+        self.combobox_baud.addItem("")
+        self.combobox_baud.addItem("")
+        self.combobox_baud.addItem("")
+        self.combobox_baud.addItem("")
+        self.combobox_baud.addItem("")
+        self.combobox_baud.setObjectName(u"combobox_baud")
+        self.combobox_baud.setEditable(True)
 
-        self.horizontalLayout_4.addWidget(self.line_edit_baud)
+        self.horizontalLayout_4.addWidget(self.combobox_baud)
 
 
         self.verticalLayout.addLayout(self.horizontalLayout_4)
@@ -75,5 +82,12 @@ class Ui_ControllerDeviceSetupDialog(object):
         ControllerDeviceSetupDialog.setWindowTitle(QCoreApplication.translate("ControllerDeviceSetupDialog", u"Controller device setup", None))
         self.label_com_select.setText(QCoreApplication.translate("ControllerDeviceSetupDialog", u"Select COM port :", None))
         self.label_baud_rate.setText(QCoreApplication.translate("ControllerDeviceSetupDialog", u"Baud :", None))
+        self.combobox_baud.setItemText(0, QCoreApplication.translate("ControllerDeviceSetupDialog", u"9600", None))
+        self.combobox_baud.setItemText(1, QCoreApplication.translate("ControllerDeviceSetupDialog", u"14400", None))
+        self.combobox_baud.setItemText(2, QCoreApplication.translate("ControllerDeviceSetupDialog", u"19200", None))
+        self.combobox_baud.setItemText(3, QCoreApplication.translate("ControllerDeviceSetupDialog", u"38400", None))
+        self.combobox_baud.setItemText(4, QCoreApplication.translate("ControllerDeviceSetupDialog", u"57600", None))
+        self.combobox_baud.setItemText(5, QCoreApplication.translate("ControllerDeviceSetupDialog", u"115200", None))
+
     # retranslateUi
 

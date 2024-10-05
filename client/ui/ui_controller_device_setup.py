@@ -31,7 +31,7 @@ class ControllerDeviceSetupDialog(QDialog, controller_device_setup_ui.Ui_Control
         self.setupUi(self)
         self.setWindowFlags(Qt.CustomizeWindowHint | Qt.WindowCloseButtonHint)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-        self.line_edit_baud.setValidator(QIntValidator())
+        self.combobox_baud.setValidator(QIntValidator())
 
     def set_controller_device_config(self, data: ControllerDeviceConfig) -> None:
         port_name_list = ControllerDevice.detect_serial_ports()
@@ -40,14 +40,14 @@ class ControllerDeviceSetupDialog(QDialog, controller_device_setup_ui.Ui_Control
         for port_name in port_name_list:
             self.combobox_com_port.addItem(port_name)
         self.combobox_com_port.setCurrentIndex(0)
-        self.line_edit_baud.setText(str(data.baud))
+        self.combobox_baud.setCurrentText(str(data.baud))
 
     def get_controller_device_config(self) -> ControllerDeviceConfig:
         config = ControllerDeviceConfig()
         config.port = self.combobox_com_port.currentText()
         if config.port == self.tr("auto"):
             config.port = "auto"
-        config.baud = int(self.line_edit_baud.text())
+        config.baud = int(self.combobox_baud.currentText())
         return config
 
 
