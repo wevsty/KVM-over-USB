@@ -24,7 +24,14 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="combobox_com_port"/>
+      <widget class="QComboBox" name="combobox_com_port">
+       <property name="editable">
+        <bool>true</bool>
+       </property>
+       <property name="currentIndex">
+        <number>-1</number>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

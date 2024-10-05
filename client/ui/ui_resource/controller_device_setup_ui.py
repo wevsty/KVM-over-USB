@@ -35,6 +35,7 @@ class Ui_ControllerDeviceSetupDialog(object):
 
         self.combobox_com_port = QComboBox(ControllerDeviceSetupDialog)
         self.combobox_com_port.setObjectName(u"combobox_com_port")
+        self.combobox_com_port.setEditable(True)
 
         self.horizontalLayout.addWidget(self.combobox_com_port)
 
@@ -74,6 +75,9 @@ class Ui_ControllerDeviceSetupDialog(object):
         self.retranslateUi(ControllerDeviceSetupDialog)
         self.buttonBox.accepted.connect(ControllerDeviceSetupDialog.accept)
         self.buttonBox.rejected.connect(ControllerDeviceSetupDialog.reject)
+
+        self.combobox_com_port.setCurrentIndex(-1)
+
 
         QMetaObject.connectSlotsByName(ControllerDeviceSetupDialog)
     # setupUi

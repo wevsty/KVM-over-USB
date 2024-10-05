@@ -45,7 +45,7 @@ class ControllerDeviceSetupDialog(QDialog, controller_device_setup_ui.Ui_Control
     def get_controller_device_config(self) -> ControllerDeviceConfig:
         config = ControllerDeviceConfig()
         config.port = self.combobox_com_port.currentText()
-        if config.port == self.tr("auto"):
+        if config.port == self.tr("auto") or config.port.lower() == "auto":
             config.port = "auto"
         config.baud = int(self.combobox_baud.currentText())
         return config
