@@ -206,7 +206,7 @@ class MyMainWindow(MainWindow):
         # 定时检查控制器连接
         self.device_check_timer = QTimer()
         self.device_check_timer.timeout.connect(self.controller_device_check_connection)
-        self.device_check_timer.start(1000)
+        self.device_check_timer.start(10000)
 
         # 视频设备
         self.video_device: QMediaDevices | None = None
@@ -1622,7 +1622,17 @@ class MyMainWindow(MainWindow):
                 return
         if self.status["pause_keyboard"] is True:
             return
+        # 如果是状态键则更新状态buffer
+        if keyboard_key == Qt.Key.Key_CapsLock:
+            self.keyboard_indicator_lights.caps_lock = not self.keyboard_indicator_lights.caps_lock
+        elif keyboard_key == Qt.Key.Key_ScrollLock:
+            self.keyboard_indicator_lights.scroll_lock = not self.keyboard_indicator_lights.scroll_lock
+        elif keyboard_key == Qt.Key.Key_NumLock:
+            self.keyboard_indicator_lights.num_lock = not self.keyboard_indicator_lights.num_lock
+        else:
+            pass
         self.update_keyboard_buffer_with_scancode(event.nativeScanCode(), KeyStateEnum.PRESS)
+        self.update_status_bar()
         super().keyPressEvent(event)
 
     # 键盘松开事件
