@@ -23,7 +23,7 @@ class Ui_ControllerDeviceSetupDialog(object):
     def setupUi(self, ControllerDeviceSetupDialog):
         if not ControllerDeviceSetupDialog.objectName():
             ControllerDeviceSetupDialog.setObjectName(u"ControllerDeviceSetupDialog")
-        ControllerDeviceSetupDialog.resize(240, 160)
+        ControllerDeviceSetupDialog.resize(240, 100)
         self.verticalLayout = QVBoxLayout(ControllerDeviceSetupDialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.horizontalLayout = QHBoxLayout()
