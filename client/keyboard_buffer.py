@@ -6,7 +6,6 @@ from enum import IntEnum, auto
 class KeyStateEnum(IntEnum):
     PRESS = auto()
     RELEASE = auto()
-    TEMP = auto()
 
 
 @dataclass
@@ -15,7 +14,7 @@ class KeyStateItem:
     state: KeyStateEnum
 
 
-class KeyboardStateBuffer:
+class KeyboardKeyBuffer:
     def __init__(self):
         self.keyboard_buffer: list[KeyStateItem] = list()
 
@@ -55,16 +54,21 @@ class KeyboardStateBuffer:
         return self.keyboard_buffer
 
     def dup(self):
-        copy_self = KeyboardStateBuffer()
+        copy_self = KeyboardKeyBuffer()
         copy_self.keyboard_buffer = deepcopy(self.keyboard_buffer)
         return copy_self
 
 
-class KeyboardIndicatorLightsState:
+class KeyboardIndicatorBuffer:
     def __init__(self):
         self.caps_lock: bool = False
         self.scroll_lock: bool = False
         self.num_lock: bool = False
+
+    def clear(self):
+        self.caps_lock = False
+        self.scroll_lock = False
+        self.num_lock = False
 
     def from_dict(self, data: dict[str, bool]):
         self.caps_lock = data.get("caps_lock", False)

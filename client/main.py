@@ -78,7 +78,7 @@ from ui.ui_custom_key import CustomKeyDialog
 from ui.ui_paste_board import PasteBoardDialog
 from ui.ui_indicator_lights import IndicatorLightsDialog
 from ui.ui_about import AboutDialog
-from keyboard_buffer import KeyboardStateBuffer, KeyStateEnum, KeyboardIndicatorLightsState
+from keyboard_buffer import KeyboardKeyBuffer, KeyStateEnum, KeyboardIndicatorBuffer
 from mouse_buffer import MouseStateBuffer, MouseButtonStateEnum, MouseButtonCodeEnum, \
     MouseWheelStateEnum
 from data.hex_data import HexData
@@ -223,8 +223,8 @@ class MyMainWindow(MainWindow):
         self.audio_output: QAudioOutput = QAudioOutput()
 
         # 键盘设置
-        self.keyboard_key_buffer: KeyboardStateBuffer = KeyboardStateBuffer()
-        self.keyboard_indicator_lights: KeyboardIndicatorLightsState = KeyboardIndicatorLightsState()
+        self.keyboard_key_buffer: KeyboardKeyBuffer = KeyboardKeyBuffer()
+        self.keyboard_indicator_buffer: KeyboardIndicatorBuffer = KeyboardIndicatorBuffer()
         self.init_shortcut_keys()
 
         # 键盘钩子
@@ -520,7 +520,7 @@ class MyMainWindow(MainWindow):
         self.paste_board_dialog.send_string_signal.connect(self.keyboard_send_string)
         self.action_quick_paste.triggered.connect(self.quick_paste_toggle)
         self.action_indicator_light.triggered.connect(self.indicator_lights_action)
-        self.indicator_lights_dialog.lock_key_clicked_signal.connect(self.change_indicator_lights_state)
+        self.indicator_lights_dialog.lock_key_clicked_signal.connect(self.update_keyboard_indicator_buffer)
         self.action_system_hook.triggered.connect(self.system_hook_func)
         self.action_sync_indicator.triggered.connect(self.sync_indicator_action)
 
@@ -994,7 +994,7 @@ class MyMainWindow(MainWindow):
                 self.controller_device_connect()
         elif command == "keyboard_read":
             if status == 0:
-                self.keyboard_indicator_lights.from_dict(data)
+                self.keyboard_indicator_buffer.from_dict(data)
                 self.update_status_bar()
         elif command in ignored_command:
             pass
@@ -1050,7 +1050,6 @@ class MyMainWindow(MainWindow):
         if release_type == "keyboard":
             self.controller_event_worker.command_send_signal.emit('device_release', "keyboard")
             self.keyboard_key_buffer.clear()
-            self.update_status_bar()
         elif release_type == "mouse":
             self.controller_event_worker.command_send_signal.emit('device_release', "mouse")
             self.mouse_buffer.clear()
@@ -1060,11 +1059,12 @@ class MyMainWindow(MainWindow):
             self.mouse_buffer.clear()
             self.controller_device_disconnect()
             self.controller_device_connect()
-            self.update_status_bar()
 
     # 重置设备
     def controller_device_reset(self):
         self.controller_event_worker.command_send_signal.emit('device_reset', None)
+        self.keyboard_key_buffer.clear()
+        self.mouse_buffer.clear()
 
     # 最小化窗口
     def window_minimized(self) -> None:
@@ -1124,6 +1124,9 @@ class MyMainWindow(MainWindow):
     def keyboard_send_string(self, data: str):
         shift_hid_code: int = self.keyboard_key_name_to_hid_code.get("shift", 0)
         assert shift_hid_code != 0
+        # 强制关闭 capslock
+        if self.keyboard_indicator_buffer.caps_lock:
+            self.update_keyboard_indicator_buffer("caps_lock")
         shift_flag = False
         for character in data:
             if character.isascii() is False:
@@ -1173,7 +1176,7 @@ class MyMainWindow(MainWindow):
 
     # 发送请求同步键盘指示灯状态
     def sync_indicator_action(self):
-        self.controller_event_worker.command_send_signal.emit("keyboard_read", None)
+        self.clear_keyboard_indicator_buffer()
 
     def indicator_lights_action(self):
         if self.indicator_lights_dialog.isVisible():
@@ -1187,28 +1190,9 @@ class MyMainWindow(MainWindow):
             wm_pos.y()
             + (wm_size.height() - self.indicator_lights_dialog.height() - add_height),
         )
-        self.indicator_lights_dialog.update_buffer(self.keyboard_indicator_lights)
+        self.indicator_lights_dialog.update_buffer(self.keyboard_indicator_buffer)
         self.indicator_lights_dialog.refresh_status_from_buffer()
         self.indicator_lights_dialog.exec()
-
-    def change_indicator_lights_state(self, key_name: str) -> None:
-        if key_name == "num_lock":
-            key_code = self.keyboard_key_name_to_hid_code.get("num_lock", 0)
-            assert key_code != 0
-            self.keyboard_indicator_lights.num_lock = not self.keyboard_indicator_lights.num_lock
-        elif key_name == "caps_lock":
-            key_code = self.keyboard_key_name_to_hid_code.get("caps_lock", 0)
-            assert key_code != 0
-            self.keyboard_indicator_lights.caps_lock = not self.keyboard_indicator_lights.caps_lock
-        elif key_name == "scroll_lock":
-            key_code = self.keyboard_key_name_to_hid_code.get("scroll_lock", 0)
-            assert key_code != 0
-            self.keyboard_indicator_lights.scroll_lock = not self.keyboard_indicator_lights.scroll_lock
-        else:
-            logger.error(f"unknown key name: {key_name}")
-            return
-        self.update_keyboard_buffer_with_hid_code(key_code, KeyStateEnum.PRESS)
-        self.update_keyboard_buffer_with_hid_code(key_code, KeyStateEnum.RELEASE)
 
     # 系统钩子
     def system_hook_func(self):
@@ -1340,17 +1324,17 @@ class MyMainWindow(MainWindow):
         else:
             self.statusbar_label_meta.setStyleSheet("color: grey")
 
-        if self.keyboard_indicator_lights.num_lock:
+        if self.keyboard_indicator_buffer.num_lock:
             self.statusbar_label_num_lock.setStyleSheet("color: black")
         else:
             self.statusbar_label_num_lock.setStyleSheet("color: grey")
 
-        if self.keyboard_indicator_lights.caps_lock:
+        if self.keyboard_indicator_buffer.caps_lock:
             self.statusbar_label_caps_lock.setStyleSheet("color: black")
         else:
             self.statusbar_label_caps_lock.setStyleSheet("color: grey")
 
-        if self.keyboard_indicator_lights.scroll_lock:
+        if self.keyboard_indicator_buffer.scroll_lock:
             self.statusbar_label_scr_lock.setStyleSheet("color: black")
         else:
             self.statusbar_label_scr_lock.setStyleSheet("color: grey")
@@ -1376,13 +1360,38 @@ class MyMainWindow(MainWindow):
             return
         self.update_keyboard_buffer_with_hid_code(hid_code, state)
 
-    # 清空键盘缓冲区
-    def clear_keyboard_buffer(self):
+    def update_keyboard_indicator_buffer(self, key_name: str) -> None:
+        if key_name == "num_lock":
+            key_code = self.keyboard_key_name_to_hid_code.get("num_lock", 0)
+            assert key_code != 0
+            self.keyboard_indicator_buffer.num_lock = not self.keyboard_indicator_buffer.num_lock
+        elif key_name == "caps_lock":
+            key_code = self.keyboard_key_name_to_hid_code.get("caps_lock", 0)
+            assert key_code != 0
+            self.keyboard_indicator_buffer.caps_lock = not self.keyboard_indicator_buffer.caps_lock
+        elif key_name == "scroll_lock":
+            key_code = self.keyboard_key_name_to_hid_code.get("scroll_lock", 0)
+            assert key_code != 0
+            self.keyboard_indicator_buffer.scroll_lock = not self.keyboard_indicator_buffer.scroll_lock
+        else:
+            logger.error(f"Error key name: {key_name}")
+            raise ValueError(f"Error key name: {key_name}")
+        self.update_keyboard_buffer_with_hid_code(key_code, KeyStateEnum.PRESS)
+        self.update_keyboard_buffer_with_hid_code(key_code, KeyStateEnum.RELEASE)
+        self.update_status_bar()
+
+    # 清空键盘按键缓冲区
+    def clear_keyboard_key_buffer(self):
         self.keyboard_key_buffer.clear()
         self.controller_event_worker.command_send_signal.emit(
             "keyboard_write",
             self.keyboard_key_buffer.dup()
         )
+
+    # 清空键盘指示器缓冲区
+    def clear_keyboard_indicator_buffer(self):
+        self.keyboard_indicator_buffer.clear()
+        self.controller_event_worker.command_send_signal.emit("keyboard_read", None)
 
     # 更新鼠标坐标缓冲区
     def update_mouse_pos(self, x: int, y: int):
@@ -1603,36 +1612,33 @@ class MyMainWindow(MainWindow):
             is_register_function_keys: bool = True
             # Ctrl+Alt+F11 退出全屏
             if keyboard_key == Qt.Key.Key_F11:
-                self.clear_keyboard_buffer()
                 self.fullscreen_state_toggle()
             # Ctrl+Alt+F12 关闭鼠标捕获
             elif keyboard_key == Qt.Key.Key_F12:
-                self.clear_keyboard_buffer()
                 self.mouse_release()
                 self.controller_device_reload("mouse")
                 self.statusBar().showMessage(self.tr("Mouse capture off"))
             # Ctrl+Alt+V quick paste
             elif keyboard_key == Qt.Key.Key_V and self.status["quick_paste_enabled"]:
-                self.clear_keyboard_buffer()
                 self.quick_paste_trigger()
             else:
                 is_register_function_keys = False
             # 如果是已注册的功能键则不传递给被控端
             if is_register_function_keys:
+                self.clear_keyboard_key_buffer()
                 return
         if self.status["pause_keyboard"] is True:
             return
-        # 如果是状态键则更新状态buffer
+        # 如果是指示器按键则更新指示器buffer
         if keyboard_key == Qt.Key.Key_CapsLock:
-            self.keyboard_indicator_lights.caps_lock = not self.keyboard_indicator_lights.caps_lock
+            self.update_keyboard_indicator_buffer("caps_lock")
         elif keyboard_key == Qt.Key.Key_ScrollLock:
-            self.keyboard_indicator_lights.scroll_lock = not self.keyboard_indicator_lights.scroll_lock
+            self.update_keyboard_indicator_buffer("scroll_lock")
         elif keyboard_key == Qt.Key.Key_NumLock:
-            self.keyboard_indicator_lights.num_lock = not self.keyboard_indicator_lights.num_lock
+            self.update_keyboard_indicator_buffer("num_lock")
         else:
-            pass
-        self.update_keyboard_buffer_with_scancode(event.nativeScanCode(), KeyStateEnum.PRESS)
-        self.update_status_bar()
+            # 如果是非指示器按键则更新普通buffer
+            self.update_keyboard_buffer_with_scancode(event.nativeScanCode(), KeyStateEnum.PRESS)
         super().keyPressEvent(event)
 
     # 键盘松开事件

@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from loguru import logger
 
 from controller_ch9329 import Controller
-from keyboard_buffer import KeyboardStateBuffer, KeyStateEnum
+from keyboard_buffer import KeyboardKeyBuffer, KeyStateEnum
 from mouse_buffer import MouseStateBuffer, MouseWheelStateEnum, MouseButtonCodeEnum, \
     MouseButtonStateEnum
 
@@ -161,7 +161,7 @@ class ControllerDevice(ControllerDeviceBase):
             status_code = 1
         return status_code, reply
 
-    def keyboard_send_event(self, buffer: KeyboardStateBuffer):
+    def keyboard_send_event(self, buffer: KeyboardKeyBuffer):
         keys = buffer.buffer()
         press_keys = list()
         press_function_keys = list()

@@ -1,7 +1,7 @@
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import QDialog
 
-from keyboard_buffer import KeyboardIndicatorLightsState
+from keyboard_buffer import KeyboardIndicatorBuffer
 from ui.ui_resource import indicator_lights_ui
 
 
@@ -13,12 +13,12 @@ class IndicatorLightsDialog(QDialog, indicator_lights_ui.Ui_IndicatorLightsDialo
         self.setupUi(self)
         self.setWindowFlags(Qt.CustomizeWindowHint | Qt.WindowCloseButtonHint)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-        self.keyboard_indicator_lights = KeyboardIndicatorLightsState()
+        self.keyboard_indicator_lights = KeyboardIndicatorBuffer()
         self.push_button_num_lock.clicked.connect(lambda clicked: self.lock_key_clicked_signal.emit("num_lock"))
         self.push_button_caps_lock.clicked.connect(lambda clicked: self.lock_key_clicked_signal.emit("caps_lock"))
         self.push_button_scroll_lock.clicked.connect(lambda clicked: self.lock_key_clicked_signal.emit("scroll_lock"))
 
-    def update_buffer(self, buffer: KeyboardIndicatorLightsState):
+    def update_buffer(self, buffer: KeyboardIndicatorBuffer):
         self.keyboard_indicator_lights = buffer
         pass
 
