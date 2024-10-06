@@ -53,9 +53,10 @@ jobs:
           onefile-windows-splash-screen-image: .\icons\splash.png
           onefile: true
           quiet: true
-      # Compressed files
+      # Archive files
       - run: |
           Compress-Archive -Path ./client/build/*.exe -Destination ./client/build/usb_kvm_client_windows_latest.zip
+          Get-FileHash ./client/build/*.zip -Algorithm SHA256 | Format-List
       # Push release
       - name: Release Action
         uses: ncipollo/release-action@v1
