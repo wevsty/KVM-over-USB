@@ -206,7 +206,7 @@ class MyMainWindow(MainWindow):
         # 定时检查控制器连接
         self.device_check_timer = QTimer()
         self.device_check_timer.timeout.connect(self.controller_device_check_connection)
-        self.device_check_timer.start(10000)
+        self.device_check_timer.start(1000)
 
         # 视频设备
         self.video_device: QMediaDevices | None = None
