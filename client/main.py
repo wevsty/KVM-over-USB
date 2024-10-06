@@ -994,8 +994,11 @@ class MyMainWindow(MainWindow):
                 self.controller_device_connect()
         elif command == "keyboard_read":
             if status == 0:
+                logger.debug(f"keyboard indicator read succeed")
                 self.keyboard_indicator_buffer.from_dict(data)
                 self.update_status_bar()
+            else:
+                logger.debug(f"keyboard indicator read failed")
         elif command in ignored_command:
             pass
         else:
