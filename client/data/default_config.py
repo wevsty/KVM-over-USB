@@ -10,8 +10,8 @@ video:
   resolution_x: 1920
   resolution_y: 1080
 audio:
-  audio_device_in: Default
-  audio_device_out: Default
+  audio_device_in: auto
+  audio_device_out: auto
   audio_support: false
 video_record:
   encoding_bitrate: 10000000
