@@ -1,4 +1,4 @@
-name: usb_kvm_client-release
+name: usb_kvm_client_release
 "on":
   # Sequence of patterns matched against refs/tags
   push:
