@@ -63,6 +63,4 @@ jobs:
         with:
           artifacts: "./client/build/*.zip"
           allowUpdates: true
-          draft: true
           token: ${{ secrets.PROJECT_TOKEN }}
-          
