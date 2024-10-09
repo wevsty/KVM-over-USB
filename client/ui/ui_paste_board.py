@@ -17,27 +17,30 @@ class SendDataWorker(QObject):
 
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
-        self.flag_sending = False
         self.flag_stop = False
+        self.flag_sending = False
         self.send_text_signal.connect(self.send_text)
         self.send_file_signal.connect(self.send_file)
 
-    def send_string(self, data: str) -> None:
+    def is_sending(self):
+        return self.flag_sending
+
+    def send_string_data(self, data: str) -> None:
         for character in data:
-            QThread.msleep(50)
             self.send_string_signal.emit(character)
+            QThread.msleep(50)
             if self.flag_stop:
                 break
 
     def send_text(self, data: str) -> None:
-        self.flag_sending = True
         self.flag_stop = False
-        self.send_string(data)
+        self.flag_sending = True
+        self.send_string_data(data)
         self.flag_sending = False
 
     def send_file(self, file_path: str) -> None:
-        self.flag_sending = True
         self.flag_stop = False
+        self.flag_sending = True
         file_name = os.path.basename(file_path)
         buffer_size = 512
         command_template = "echo -e -n \"{}\" | base64 -d >> ./{}\n"
@@ -52,7 +55,7 @@ class SendDataWorker(QObject):
                     break
                 base64_data = base64.b64encode(binary_data).decode()
                 write_buffer = command_template.format(base64_data, file_name)
-                self.send_string(write_buffer)
+                self.send_string_data(write_buffer)
                 sent_bytes += len(binary_data)
                 progress_value = int(sent_bytes / total_bytes * 100)
                 if display_progress_value < progress_value:
@@ -81,10 +84,17 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
         self.progress_bar.setValue(0)
         self.file_path = None
         self.thread = QThread()
-        self.thread.start()
         self.send_worker = SendDataWorker()
         self.send_worker.send_progress_value_signal.connect(self.update_progress_bar)
         self.send_worker.send_string_signal.connect(self.send_string_signal)
+        self.send_worker.moveToThread(self.thread)
+
+    def exec(self):
+        self.thread.start()
+        super().exec()
+        self.send_worker.flag_stop = True
+        self.thread.quit()
+        self.thread.wait()
 
     def update_progress_bar(self, value: int) -> None:
         self.progress_bar.setValue(value)
@@ -99,7 +109,7 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
                 self.tr("Text send only supports ASCII characters\n")
             )
             return
-        if self.send_worker.flag_sending:
+        if self.send_worker.is_sending():
             return
         self.send_worker.send_text_signal.emit(text)
 
@@ -108,7 +118,7 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
             return
         if os.path.isfile(self.file_path) is False:
             return
-        if self.send_worker.flag_sending:
+        if self.send_worker.is_sending():
             return
         total_bytes = os.path.getsize(self.file_path)
         if total_bytes > 1 * 1024:
@@ -144,9 +154,10 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
                 )
 
     def send_button_clicked(self) -> None:
-        if self.tab_widget.currentIndex() == 0:
+        current_index = self.tab_widget.currentIndex()
+        if current_index == 0:
             self.send_text()
-        elif self.tab_widget.currentIndex() == 1:
+        elif current_index == 1:
             self.send_file()
         else:
             pass
@@ -154,12 +165,6 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
 
     def stop_button_clicked(self) -> None:
         self.send_worker.flag_stop = True
-
-    def closeEvent(self, event: QCloseEvent):
-        self.send_worker.flag_stop = True
-        self.thread.quit()
-        self.thread.wait()
-        super().closeEvent(event)
 
 
 if __name__ == "__main__":
