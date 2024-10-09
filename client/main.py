@@ -1540,7 +1540,10 @@ class MyMainWindow(MainWindow):
         if not self.status["mouse_captured"]:
             self.setCursor(Qt.ArrowCursor)
             return
-
+        # 暂停鼠标的状态下不响应移动事件
+        if self.status["pause_mouse"] is True:
+            self.setCursor(Qt.ArrowCursor)
+            return
         if self.status["hide_cursor_enabled"] or self.status["mouse_relative_mode"]:
             self.setCursor(Qt.BlankCursor)
         else:
