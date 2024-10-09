@@ -94,7 +94,6 @@ class ControllerEventWorker(QObject):
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
         self.mutex = QMutex()
-        self.mutex_locker = QMutexLocker(self.mutex)
         if controller_device.GLOBAL_CONTROLLER_DEVICE is None:
             controller_device.GLOBAL_CONTROLLER_DEVICE = controller_device.ControllerDevice()
         self.command_send_signal.connect(self.command_event)
@@ -112,7 +111,8 @@ class ControllerEventWorker(QObject):
         "mouse_relative_write"
         "mouse_absolute_write"
         """
-        with self.mutex_locker:
+        mutex_locker = QMutexLocker(self.mutex)
+        with mutex_locker:
             _, status_code, reply = controller_device.GLOBAL_CONTROLLER_DEVICE.device_event(command, buffer)
             self.command_reply_signal.emit(command, status_code, reply)
         return command, status_code, reply
@@ -122,7 +122,6 @@ class MyMainWindow(MainWindow):
     WINDOW_TITLE_STRING: str = "USB KVM Client"
     # 定时器默认延迟
     DEFAULT_TIMER_DELAY: int = 1000
-    KEYBOARD_KEY_BUFFER: list
 
     SCANCODE_REMAP = {
         "Lcontrol": 0x001D,
@@ -222,9 +221,12 @@ class MyMainWindow(MainWindow):
         self.audio_input: QAudioInput = QAudioInput()
         self.audio_output: QAudioOutput = QAudioOutput()
 
-        # 键盘设置
+        # buffer
         self.keyboard_key_buffer: KeyboardKeyBuffer = KeyboardKeyBuffer()
         self.keyboard_indicator_buffer: KeyboardIndicatorBuffer = KeyboardIndicatorBuffer()
+        self.mouse_buffer = MouseStateBuffer()
+
+        # 键盘设置
         self.init_shortcut_keys()
 
         # 键盘钩子
@@ -234,7 +236,6 @@ class MyMainWindow(MainWindow):
         self.init_system_hook()
 
         # 鼠标设置
-        self.mouse_buffer = MouseStateBuffer()
         self.mouse_last_pos: None | QPoint = None
         self.relative_mouse_speed = self.config_mouse["mouse_relative_speed"]
         if self.config_mouse["mouse_report_freq"] != 0:
@@ -513,7 +514,7 @@ class MyMainWindow(MainWindow):
         # keyboard
         self.action_pause_keyboard.triggered.connect(self.input_pause_state)
         self.action_reload_keyboard.triggered.connect(lambda: self.controller_device_reload("keyboard"))
-        self.action_custom_key.triggered.connect(lambda: self.custom_key_dialog.exec())
+        self.action_custom_key.triggered.connect(self.custom_key_dialog_show)
         self.custom_key_dialog.custom_key_send_signal.connect(self.custom_key_send)
         self.custom_key_dialog.custom_key_save_signal.connect(self.custom_key_save)
         self.action_paste_board.triggered.connect(lambda: self.paste_board_dialog.exec())
@@ -1111,6 +1112,9 @@ class MyMainWindow(MainWindow):
             pass
         pass
 
+    def custom_key_dialog_show(self):
+        self.custom_key_dialog.exec()
+
     def custom_key_send(self, keys: list[str]):
         self.shortcut_key_send(keys)
 
@@ -1121,7 +1125,6 @@ class MyMainWindow(MainWindow):
         self.config_root["shortcut_keys"].update(custom_key_data)
         self.save_config()
         self.init_shortcut_keys()
-        pass
 
     # 使用键盘发送字符串
     def keyboard_send_string(self, data: str):
@@ -1175,6 +1178,7 @@ class MyMainWindow(MainWindow):
         self.statusBar().showMessage(
             self.tr("Quick pasting") + f" {len(text)} " + self.tr("characters")
         )
+        self.clear_keyboard_key_buffer()
         self.keyboard_send_string(text)
 
     # 发送请求同步键盘指示灯状态
@@ -1396,70 +1400,78 @@ class MyMainWindow(MainWindow):
         self.keyboard_indicator_buffer.clear()
         self.controller_event_worker.command_send_signal.emit("keyboard_read", None)
 
-    # 更新鼠标坐标缓冲区
-    def update_mouse_pos(self, x: int, y: int):
-        if not self.status["mouse_relative_mode"]:
-            self.mouse_last_pos = None
-            if not self.status["camera_opened"]:
-                x_res = self.disconnect_label.width()
-                y_res = self.disconnect_label.height()
-                width = self.disconnect_label.width()
-                height = self.disconnect_label.height()
-                x_pos = self.disconnect_label.pos().x()
-                y_pos = self.disconnect_label.pos().y()
-            else:
-                x_res = self.config_video["resolution_x"]
-                y_res = self.config_video["resolution_y"]
-                width = self.video_widget.width()
-                height = self.video_widget.height()
-                x_pos = self.video_widget.pos().x()
-                y_pos = self.video_widget.pos().y()
-            x_diff = 0
-            y_diff = 0
-            if self.config_video["keep_aspect_ratio"]:
-                cam_scale = y_res / x_res
-                finder_scale = height / width
-                if finder_scale > cam_scale:
-                    x_diff = 0
-                    y_diff = height - width * cam_scale
-                elif finder_scale < cam_scale:
-                    x_diff = width - height / cam_scale
-                    y_diff = 0
-            x_hid = (x - x_diff / 2 - x_pos) / (width - x_diff)
-            y_hid = (y - y_diff / 2 - y_pos) / (height - y_diff)
-            x_hid = max(min(x_hid, 1), 0)
-            y_hid = max(min(y_hid, 1), 0)
-            self.mouse_buffer.set_point(x_hid, y_hid)
-            self.statusBar().showMessage(f"X={x_hid * x_res:.0f}, Y={y_hid * y_res:.0f}")
-            # logger.debug(f"X={x_hid * x_res:.0f}, Y={y_hid * y_res:.0f}")
+    # 更新鼠标坐标缓冲区(绝对坐标模式)
+    def update_mouse_absolute_position(self, x: int, y: int):
+        self.mouse_last_pos = None
+        if not self.status["camera_opened"]:
+            x_res = self.disconnect_label.width()
+            y_res = self.disconnect_label.height()
+            width = self.disconnect_label.width()
+            height = self.disconnect_label.height()
+            x_pos = self.disconnect_label.pos().x()
+            y_pos = self.disconnect_label.pos().y()
         else:
-            middle_pos = self.mapToGlobal(QPoint(int(self.width() / 2), int(self.height() / 2)))
-            mouse_pos = QCursor.pos()
-            if self.mouse_last_pos is not None:
-                rel_x, rel_y = self.mouse_buffer.get_point()
-                rel_x += (
-                                 mouse_pos.x() - self.mouse_last_pos.x()
-                         ) * self.relative_mouse_speed
-                rel_y += (
-                                 mouse_pos.y() - self.mouse_last_pos.y()
-                         ) * self.relative_mouse_speed
-                self.mouse_last_pos = mouse_pos
-                self.mouse_buffer.set_point(
-                    int(round(rel_x)),
-                    int(round(rel_y))
-                )
-                # logger.debug(f"relative mode X={rel_x}, Y={rel_y}")
-                self.statusBar().showMessage(self.tr(f"Press Ctrl+Alt+F12 to release mouse"))
-                if (
-                        abs(mouse_pos.x() - middle_pos.x()) > 25
-                        or abs(mouse_pos.y() - middle_pos.y()) > 25
-                ):
-                    QCursor.setPos(middle_pos)
-                    self.mouse_last_pos = middle_pos
-            else:
-                self.mouse_last_pos = middle_pos
-                self.mouse_buffer.clear_point()
+            x_res = self.config_video["resolution_x"]
+            y_res = self.config_video["resolution_y"]
+            width = self.video_widget.width()
+            height = self.video_widget.height()
+            x_pos = self.video_widget.pos().x()
+            y_pos = self.video_widget.pos().y()
+        x_diff = 0
+        y_diff = 0
+        if self.config_video["keep_aspect_ratio"]:
+            cam_scale = y_res / x_res
+            finder_scale = height / width
+            if finder_scale > cam_scale:
+                x_diff = 0
+                y_diff = height - width * cam_scale
+            elif finder_scale < cam_scale:
+                x_diff = width - height / cam_scale
+                y_diff = 0
+        x_hid = (x - x_diff / 2 - x_pos) / (width - x_diff)
+        y_hid = (y - y_diff / 2 - y_pos) / (height - y_diff)
+        x_hid = max(min(x_hid, 1), 0)
+        y_hid = max(min(y_hid, 1), 0)
+        self.mouse_buffer.set_point(x_hid, y_hid)
+        self.statusBar().showMessage(f"X={x_hid * x_res:.0f}, Y={y_hid * y_res:.0f}")
+        # logger.debug(f"X={x_hid * x_res:.0f}, Y={y_hid * y_res:.0f}")
+
+    # 更新鼠标坐标缓冲区(相对坐标模式)
+    def update_mouse_relative_position(self, x: int, y: int):
+        middle_pos = self.mapToGlobal(QPoint(int(self.width() / 2), int(self.height() / 2)))
+        mouse_pos = QCursor.pos()
+        if self.mouse_last_pos is not None:
+            rel_x, rel_y = self.mouse_buffer.get_point()
+            rel_x += (
+                             mouse_pos.x() - self.mouse_last_pos.x()
+                     ) * self.relative_mouse_speed
+            rel_y += (
+                             mouse_pos.y() - self.mouse_last_pos.y()
+                     ) * self.relative_mouse_speed
+            self.mouse_last_pos = mouse_pos
+            self.mouse_buffer.set_point(
+                int(round(rel_x)),
+                int(round(rel_y))
+            )
+            # logger.debug(f"relative mode X={rel_x}, Y={rel_y}")
+            self.statusBar().showMessage(self.tr(f"Press Ctrl+Alt+F12 to release mouse"))
+            if (
+                    abs(mouse_pos.x() - middle_pos.x()) > 25
+                    or abs(mouse_pos.y() - middle_pos.y()) > 25
+            ):
                 QCursor.setPos(middle_pos)
+                self.mouse_last_pos = middle_pos
+        else:
+            self.mouse_last_pos = middle_pos
+            self.mouse_buffer.clear_point()
+            QCursor.setPos(middle_pos)
+
+    # 更新鼠标坐标缓冲区
+    def update_mouse_position(self, x: int, y: int):
+        if not self.status["mouse_relative_mode"]:
+            self.update_mouse_absolute_position(x, y)
+        else:
+            self.update_mouse_relative_position(x, y)
         self.mouse_need_report = True
 
     @staticmethod
@@ -1501,7 +1513,6 @@ class MyMainWindow(MainWindow):
     def close_event(self):
         self.controller_worker_thread.quit()
         self.controller_worker_thread.wait()
-        self.paste_board_dialog.close()
         pass
 
     def hook_keyboard_down_event(self, event):
@@ -1548,7 +1559,7 @@ class MyMainWindow(MainWindow):
             self.setCursor(Qt.BlankCursor)
         else:
             self.setCursor(Qt.ArrowCursor)
-        self.update_mouse_pos(x, y)
+        self.update_mouse_position(x, y)
 
     # 鼠标按下事件
     def mousePressEvent(self, event: QMouseEvent):
