@@ -1401,7 +1401,7 @@ class MyMainWindow(MainWindow):
         self.controller_event_worker.command_send_signal.emit("keyboard_read", None)
 
     # 更新鼠标坐标缓冲区(绝对坐标模式)
-    def update_mouse_absolute_position(self, x: int, y: int):
+    def update_mouse_position_buffer_with_absolute_mode(self, x: int, y: int):
         self.mouse_last_pos = None
         if not self.status["camera_opened"]:
             x_res = self.disconnect_label.width()
@@ -1437,7 +1437,7 @@ class MyMainWindow(MainWindow):
         # logger.debug(f"X={x_hid * x_res:.0f}, Y={y_hid * y_res:.0f}")
 
     # 更新鼠标坐标缓冲区(相对坐标模式)
-    def update_mouse_relative_position(self, x: int, y: int):
+    def update_mouse_position_buffer_with_relative_mode(self):
         middle_pos = self.mapToGlobal(QPoint(int(self.width() / 2), int(self.height() / 2)))
         mouse_pos = QCursor.pos()
         if self.mouse_last_pos is not None:
@@ -1467,11 +1467,11 @@ class MyMainWindow(MainWindow):
             QCursor.setPos(middle_pos)
 
     # 更新鼠标坐标缓冲区
-    def update_mouse_position(self, x: int, y: int):
+    def update_mouse_position_buffer(self, x: int, y: int):
         if not self.status["mouse_relative_mode"]:
-            self.update_mouse_absolute_position(x, y)
+            self.update_mouse_position_buffer_with_absolute_mode(x, y)
         else:
-            self.update_mouse_relative_position(x, y)
+            self.update_mouse_position_buffer_with_relative_mode()
         self.mouse_need_report = True
 
     @staticmethod
@@ -1559,7 +1559,7 @@ class MyMainWindow(MainWindow):
             self.setCursor(Qt.BlankCursor)
         else:
             self.setCursor(Qt.ArrowCursor)
-        self.update_mouse_position(x, y)
+        self.update_mouse_position_buffer(x, y)
 
     # 鼠标按下事件
     def mousePressEvent(self, event: QMouseEvent):
