@@ -40,6 +40,7 @@ from PySide6.QtGui import (
     QSurfaceFormat,
 )
 from PySide6.QtMultimedia import (
+    QAudioDevice,
     QAudioInput,
     QAudioOutput,
     QCamera,
@@ -52,7 +53,14 @@ from PySide6.QtMultimedia import (
     QVideoSink,
 )
 from PySide6.QtMultimediaWidgets import QVideoWidget
-from PySide6.QtWidgets import QApplication, QFileDialog, QLabel, QMessageBox, QWidget
+from PySide6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QFileDialog,
+    QLabel,
+    QMessageBox,
+    QWidget,
+)
 
 import controller_device
 from data.hex_data import HexData
@@ -791,7 +799,11 @@ class MyMainWindow(MainWindow):
         self.disconnect_label.hide()
         self.video_widget.show()
         self.setWindowTitle(
-            f"{self.WINDOW_TITLE_STRING} - {self.config_video["resolution_x"]}x{self.config_video["resolution_y"]} @ {fps:.1f}"
+            f"{self.WINDOW_TITLE_STRING}"
+            + " - "
+            + f"{self.config_video["resolution_x"]}x{self.config_video["resolution_y"]}"
+            + " @ "
+            + f"{fps:.1f}"
         )
         if self.dynamic_mouse_report_interval:
             self.mouse_report_interval = 1000 / fps
@@ -1053,11 +1065,11 @@ class MyMainWindow(MainWindow):
                 self.controller_device_connect()
         elif command == "keyboard_read":
             if status == 0:
-                logger.debug(f"keyboard indicator read succeed")
+                logger.debug("keyboard indicator read succeed")
                 self.keyboard_indicator_buffer.from_dict(data)
                 self.update_status_bar()
             else:
-                logger.debug(f"keyboard indicator read failed")
+                logger.debug("keyboard indicator read failed")
         elif command in ignored_command:
             pass
         else:
@@ -1291,7 +1303,7 @@ class MyMainWindow(MainWindow):
             pass
         else:
             QMessageBox.critical(
-                self, self.tr("Error"), self.tr("system hook only supports windows")
+                self, self.tr("Error"), self.tr("system hook only support windows")
             )
             return
         self.status["hook_state"] = not self.status["hook_state"]
@@ -1338,14 +1350,13 @@ class MyMainWindow(MainWindow):
             + self.bool_to_behavior_string(self.status["hide_cursor_enabled"])
         )
 
-    @staticmethod
-    def menu_tools_actions(action_name: str):
+    def menu_tools_actions(self, action_name: str):
         system_name = platform.system().lower()
         if system_name == "windows":  # sys.platform == "win32":
             pass
         else:
             QMessageBox.critical(
-                self, self.tr("Error"), self.tr("system hook only supports windows")
+                self, self.tr("Error"), self.tr("This tool only support windows")
             )
             return
         if action_name == "devmgmt.msc":
@@ -1550,9 +1561,7 @@ class MyMainWindow(MainWindow):
             self.mouse_last_pos = mouse_pos
             self.mouse_buffer.set_point(int(round(rel_x)), int(round(rel_y)))
             # logger.debug(f"relative mode X={rel_x}, Y={rel_y}")
-            self.statusBar().showMessage(
-                self.tr(f"Press Ctrl+Alt+F12 to release mouse")
-            )
+            self.statusBar().showMessage(self.tr("Press Ctrl+Alt+F12 to release mouse"))
             if (
                 abs(mouse_pos.x() - middle_pos.x()) > 25
                 or abs(mouse_pos.y() - middle_pos.y()) > 25

@@ -108,7 +108,7 @@ class ControllerCh9329(ControllerBase):
             self.connection = None
 
     def reset_connection(self):
-        logger.debug(f"reset_connection")
+        logger.debug("reset_connection")
         self.close_connection()
         self.create_connection()
 
@@ -215,7 +215,8 @@ class ControllerCh9329(ControllerBase):
             if self.connection.is_open is False:
                 return status, reply_dict
             cmd_get_info_packet = b"\x57\xab\x00\x01\x00\x03"
-            __clear_buffer__: bytes = self.connection.readall()
+            # clear connection buffer
+            self.connection.readall()
             self.connection.write(cmd_get_info_packet)
             buffer: bytes = self.connection.readall()
             if len(buffer) == 14:

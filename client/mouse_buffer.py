@@ -1,7 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import IntEnum, auto
-from typing import Tuple
 
 
 class MouseButtonStateEnum(IntEnum):

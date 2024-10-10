@@ -1,8 +1,7 @@
 import codecs
 import sys
 
-from PySide6.QtCore import Qt, Signal, Slot
-from PySide6.QtWidgets import QApplication, QDialog
+from PySide6.QtWidgets import QDialog
 
 from project_path import project_source_directory_path
 from ui.ui_resource import about_ui

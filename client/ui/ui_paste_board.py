@@ -3,7 +3,6 @@ import os
 from typing import Optional
 
 from PySide6.QtCore import QObject, Qt, QThread, Signal
-from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QDialog, QFileDialog, QMessageBox
 
 from ui.ui_resource import paste_board_ui

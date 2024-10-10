@@ -14,8 +14,10 @@ from mouse_buffer import (
 
 if os.name == "nt":  # sys.platform == "win32":
     from serial.tools.list_ports_windows import comports as list_comports
+    from serial.tools.list_ports_common import ListPortInfo
 elif os.name == "posix":
     from serial.tools.list_ports_posix import comports as list_comports
+    from serial.tools.list_ports_common import ListPortInfo
 else:
     raise ImportError(
         "Sorry: no implementation for your platform {} available".format(os.name)
@@ -72,9 +74,7 @@ class ControllerDevice(ControllerDeviceBase):
     @staticmethod
     def detect_serial_ports() -> list[str]:
         port_name_list: list[str] = []
-        port_info_list: serial.tools.list_ports.ListPortInfo = list_comports(
-            include_links=False
-        )
+        port_info_list: list[ListPortInfo] = list_comports(include_links=False)
         for port_info in port_info_list:
             port_name_list.append(port_info.name)
         port_info_list.sort()
@@ -109,11 +109,11 @@ class ControllerDevice(ControllerDeviceBase):
         status = self.controller.create_connection()
         if ControllerDebugOptions.DEVICE:
             if status:
-                logger.debug(f"create_connection -> succeed")
+                logger.debug("create_connection -> succeed")
                 info = self.controller.product_info()
                 logger.debug(f"product info: {info}")
             else:
-                logger.debug(f"create_connection -> failed")
+                logger.debug("create_connection -> failed")
         return status
 
     def device_close(self) -> None:
