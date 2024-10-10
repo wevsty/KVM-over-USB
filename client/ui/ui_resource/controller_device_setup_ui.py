@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'controller_device_setup.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.3
+## Created by: Qt User Interface Compiler version 6.8.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -50,14 +50,15 @@ class Ui_ControllerDeviceSetupDialog(object):
         self.horizontalLayout_4.addWidget(self.label_baud_rate)
 
         self.combobox_baud = QComboBox(ControllerDeviceSetupDialog)
-        self.combobox_baud.addItem("")
-        self.combobox_baud.addItem("")
-        self.combobox_baud.addItem("")
-        self.combobox_baud.addItem("")
-        self.combobox_baud.addItem("")
-        self.combobox_baud.addItem("")
+        self.combobox_baud.addItem(u"9600")
+        self.combobox_baud.addItem(u"14400")
+        self.combobox_baud.addItem(u"19200")
+        self.combobox_baud.addItem(u"38400")
+        self.combobox_baud.addItem(u"57600")
+        self.combobox_baud.addItem(u"115200")
         self.combobox_baud.setObjectName(u"combobox_baud")
         self.combobox_baud.setEditable(True)
+        self.combobox_baud.setCurrentText(u"9600")
 
         self.horizontalLayout_4.addWidget(self.combobox_baud)
 
@@ -86,12 +87,6 @@ class Ui_ControllerDeviceSetupDialog(object):
         ControllerDeviceSetupDialog.setWindowTitle(QCoreApplication.translate("ControllerDeviceSetupDialog", u"Controller device setup", None))
         self.label_com_select.setText(QCoreApplication.translate("ControllerDeviceSetupDialog", u"Select COM port :", None))
         self.label_baud_rate.setText(QCoreApplication.translate("ControllerDeviceSetupDialog", u"Baud :", None))
-        self.combobox_baud.setItemText(0, QCoreApplication.translate("ControllerDeviceSetupDialog", u"9600", None))
-        self.combobox_baud.setItemText(1, QCoreApplication.translate("ControllerDeviceSetupDialog", u"14400", None))
-        self.combobox_baud.setItemText(2, QCoreApplication.translate("ControllerDeviceSetupDialog", u"19200", None))
-        self.combobox_baud.setItemText(3, QCoreApplication.translate("ControllerDeviceSetupDialog", u"38400", None))
-        self.combobox_baud.setItemText(4, QCoreApplication.translate("ControllerDeviceSetupDialog", u"57600", None))
-        self.combobox_baud.setItemText(5, QCoreApplication.translate("ControllerDeviceSetupDialog", u"115200", None))
 
     # retranslateUi
 
