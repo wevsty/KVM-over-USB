@@ -52,13 +52,13 @@
         <translation>选择串行接口：</translation>
     </message>
     <message>
-        <location filename="../ui/ui_resource/controller_device_setup.ui" line="36"/>
+        <location filename="../ui/ui_resource/controller_device_setup.ui" line="43"/>
         <source>Baud :</source>
         <translation>波特率：</translation>
     </message>
     <message>
-        <location filename="../ui/ui_controller_device_setup.py" line="39"/>
-        <location filename="../ui/ui_controller_device_setup.py" line="49"/>
+        <location filename="../ui/ui_controller_device_setup.py" line="41"/>
+        <location filename="../ui/ui_controller_device_setup.py" line="50"/>
         <source>auto</source>
         <translation>自动</translation>
     </message>
@@ -121,12 +121,12 @@
         <translation>保存</translation>
     </message>
     <message>
-        <location filename="../ui/ui_custom_key.py" line="110"/>
+        <location filename="../ui/ui_custom_key.py" line="108"/>
         <source>Save shortcut key</source>
         <translation>保存快捷键</translation>
     </message>
     <message>
-        <location filename="../ui/ui_custom_key.py" line="111"/>
+        <location filename="../ui/ui_custom_key.py" line="109"/>
         <source>Shortcut name:</source>
         <translation>快捷键名称：</translation>
     </message>
@@ -157,40 +157,45 @@
 <context>
     <name>MyMainWindow</name>
     <message>
-        <location filename="../main.py" line="310"/>
-        <location filename="../main.py" line="1220"/>
-        <location filename="../main.py" line="1274"/>
+        <location filename="../main.py" line="322"/>
+        <location filename="../main.py" line="1306"/>
+        <location filename="../main.py" line="1359"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1612"/>
+        <location filename="../main.py" line="1360"/>
+        <source>This tool only support windows</source>
+        <translation>该工具仅支持windows</translation>
+    </message>
+    <message>
+        <location filename="../main.py" line="1754"/>
         <source>Mouse capture off</source>
         <translation>鼠标捕捉关闭</translation>
     </message>
     <message>
-        <location filename="../main.py" line="644"/>
-        <location filename="../main.py" line="653"/>
+        <location filename="../main.py" line="704"/>
+        <location filename="../main.py" line="713"/>
         <source>auto</source>
         <translation>自动</translation>
     </message>
     <message>
-        <location filename="../main.py" line="616"/>
+        <location filename="../main.py" line="673"/>
         <source>Target video device not found</source>
         <translation>目标视频设备未找到</translation>
     </message>
     <message>
-        <location filename="../main.py" line="294"/>
+        <location filename="../main.py" line="306"/>
         <source>Enable</source>
         <translation>启用</translation>
     </message>
     <message>
-        <location filename="../main.py" line="297"/>
+        <location filename="../main.py" line="309"/>
         <source>Disable</source>
         <translation>禁用</translation>
     </message>
     <message>
-        <location filename="../main.py" line="311"/>
+        <location filename="../main.py" line="323"/>
         <source>Import config error:
 {}
 </source>
@@ -199,175 +204,174 @@
 </translation>
     </message>
     <message>
-        <location filename="../main.py" line="582"/>
+        <location filename="../main.py" line="636"/>
         <source>Invalid device selected</source>
         <translation>选择的设备无效</translation>
     </message>
     <message>
-        <location filename="../main.py" line="593"/>
+        <location filename="../main.py" line="646"/>
         <source>Device disconnected</source>
         <translation>设备已断开连接</translation>
     </message>
     <message>
-        <location filename="../main.py" line="595"/>
+        <location filename="../main.py" line="648"/>
         <source>Device Error</source>
         <translation>设备错误</translation>
     </message>
     <message>
-        <location filename="../main.py" line="662"/>
+        <location filename="../main.py" line="723"/>
         <source>Audio device not found</source>
         <translation>音频设备未找到</translation>
     </message>
     <message>
-        <location filename="../main.py" line="672"/>
+        <location filename="../main.py" line="734"/>
         <source>Video device connect failed</source>
         <translation>视频设备连接失败</translation>
     </message>
     <message>
-        <location filename="../main.py" line="966"/>
+        <location filename="../main.py" line="1035"/>
         <source>Stop recording</source>
         <translation>停止录制</translation>
     </message>
     <message>
-        <location filename="../main.py" line="968"/>
+        <location filename="../main.py" line="1037"/>
         <source>Video recording started</source>
         <translation>视频录制已开始</translation>
     </message>
     <message>
-        <location filename="../main.py" line="951"/>
+        <location filename="../main.py" line="1020"/>
         <source>Record video</source>
         <translation>视频录制</translation>
     </message>
     <message>
-        <location filename="../main.py" line="608"/>
+        <location filename="../main.py" line="663"/>
         <source>Target video device is empty</source>
         <translation>目标视频设备为空</translation>
     </message>
     <message>
-        <location filename="../main.py" line="635"/>
+        <location filename="../main.py" line="694"/>
         <source>Unsupported combination of resolution or format</source>
         <translation>不支持的分辨率或格式</translation>
     </message>
     <message>
-        <location filename="../main.py" line="781"/>
+        <location filename="../main.py" line="845"/>
         <source>Don&apos;t show again</source>
         <translation>不要再显示</translation>
     </message>
     <message>
-        <location filename="../main.py" line="783"/>
+        <location filename="../main.py" line="847"/>
         <source>Fullscreen mode alert</source>
         <translation>全屏模式警报</translation>
     </message>
     <message>
-        <location filename="../main.py" line="786"/>
+        <location filename="../main.py" line="850"/>
         <source>Press Ctrl+Alt+F11 to toggle fullscreen
 </source>
         <translation>按 Ctrl+Alt+F11 切换全屏模式
 </translation>
     </message>
     <message>
-        <location filename="../main.py" line="787"/>
+        <location filename="../main.py" line="851"/>
         <source>Stay cursor at left top corner to show toolbar</source>
         <translation>将光标停留在左上角以显示工具栏</translation>
     </message>
     <message>
-        <location filename="../main.py" line="899"/>
+        <location filename="../main.py" line="968"/>
         <source>Window topmost: </source>
         <translation>窗口置顶： </translation>
     </message>
     <message>
-        <location filename="../main.py" line="925"/>
+        <location filename="../main.py" line="994"/>
         <source>Image Save</source>
         <translation>图片保存</translation>
     </message>
     <message>
-        <location filename="../main.py" line="953"/>
+        <location filename="../main.py" line="1022"/>
         <source>Video recording stopped</source>
         <translation>视频录制已停止</translation>
     </message>
     <message>
-        <location filename="../main.py" line="932"/>
+        <location filename="../main.py" line="1001"/>
         <source>Image saved to</source>
         <translation>截图已保存至</translation>
     </message>
     <message>
-        <location filename="../main.py" line="582"/>
-        <location filename="../main.py" line="608"/>
-        <location filename="../main.py" line="616"/>
-        <location filename="../main.py" line="634"/>
-        <location filename="../main.py" line="661"/>
-        <location filename="../main.py" line="671"/>
+        <location filename="../main.py" line="635"/>
+        <location filename="../main.py" line="662"/>
+        <location filename="../main.py" line="672"/>
+        <location filename="../main.py" line="693"/>
+        <location filename="../main.py" line="722"/>
+        <location filename="../main.py" line="733"/>
         <source>Video Error</source>
         <translation>视频设备错误</translation>
     </message>
     <message>
-        <location filename="../main.py" line="916"/>
+        <location filename="../main.py" line="985"/>
         <source>Keep aspect ratio: </source>
         <translation>按比例缩放： </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1158"/>
+        <location filename="../main.py" line="1263"/>
         <source>Quick paste: </source>
         <translation>快速粘贴： </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1227"/>
+        <location filename="../main.py" line="1307"/>
+        <source>system hook only support windows</source>
+        <translation>系统钩子仅支持windows</translation>
+    </message>
+    <message>
+        <location filename="../main.py" line="1313"/>
         <source>System hook: </source>
         <translation>系统按键拦截： </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1251"/>
+        <location filename="../main.py" line="1338"/>
         <source>Relative mouse: </source>
         <translation>相对鼠标模式： </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1263"/>
+        <location filename="../main.py" line="1350"/>
         <source>Hide cursor when capture mouse: </source>
         <translation>隐藏鼠标指针： </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1439"/>
+        <location filename="../main.py" line="1564"/>
         <source>Press Ctrl+Alt+F12 to release mouse</source>
         <translation>按下 Ctrl+Alt+F12 释放鼠标</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1166"/>
+        <location filename="../main.py" line="1271"/>
         <source>Clipboard is empty</source>
         <translation>剪贴板是空的</translation>
     </message>
     <message>
-        <location filename="../main.py" line="957"/>
+        <location filename="../main.py" line="1026"/>
         <source>Video save</source>
         <translation>视频保存</translation>
     </message>
     <message>
-        <location filename="../main.py" line="982"/>
+        <location filename="../main.py" line="1051"/>
         <source>Controller connected</source>
         <translation>控制器已连接</translation>
     </message>
     <message>
-        <location filename="../main.py" line="987"/>
+        <location filename="../main.py" line="1058"/>
         <source>Controller connect failure</source>
         <translation>控制器连接失败</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1222"/>
-        <location filename="../main.py" line="1276"/>
-        <source>system hook only supports windows</source>
-        <translation>系统钩子仅支持windows</translation>
-    </message>
-    <message>
-        <location filename="../main.py" line="1241"/>
+        <location filename="../main.py" line="1327"/>
         <source>Mouse capture on (Press Ctrl+Alt+F12 to release)</source>
         <translation>鼠标捕获打开（按下 Ctrl+Alt+F12 释放）</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1169"/>
+        <location filename="../main.py" line="1274"/>
         <source>Quick pasting</source>
         <translation>正在快速粘贴</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1170"/>
+        <location filename="../main.py" line="1275"/>
         <source>characters</source>
         <translation>个字符</translation>
     </message>
@@ -415,44 +419,44 @@
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../ui/ui_paste_board.py" line="98"/>
-        <location filename="../ui/ui_paste_board.py" line="142"/>
+        <location filename="../ui/ui_paste_board.py" line="107"/>
+        <location filename="../ui/ui_paste_board.py" line="149"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../ui/ui_paste_board.py" line="100"/>
+        <location filename="../ui/ui_paste_board.py" line="108"/>
         <source>Text send only supports ASCII characters
 </source>
         <translation>文本发送仅支持 ASCII 字符
 </translation>
     </message>
     <message>
-        <location filename="../ui/ui_paste_board.py" line="117"/>
+        <location filename="../ui/ui_paste_board.py" line="126"/>
         <source>Warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="../ui/ui_paste_board.py" line="119"/>
+        <location filename="../ui/ui_paste_board.py" line="128"/>
         <source>Selected file that is too large may take a long time.
 </source>
         <translation>选定的文件太大可能需要很长时间。
 </translation>
     </message>
     <message>
-        <location filename="../ui/ui_paste_board.py" line="119"/>
+        <location filename="../ui/ui_paste_board.py" line="128"/>
         <source>Please confirm to continue.
 </source>
         <translation>请确认后再继续。
 </translation>
     </message>
     <message>
-        <location filename="../ui/ui_paste_board.py" line="129"/>
+        <location filename="../ui/ui_paste_board.py" line="138"/>
         <source>Select file</source>
         <translation>选择文件</translation>
     </message>
     <message>
-        <location filename="../ui/ui_paste_board.py" line="143"/>
+        <location filename="../ui/ui_paste_board.py" line="150"/>
         <source>The file name contains non-ascii characters</source>
         <translation>文件名包含非 ASCII 字符</translation>
     </message>
