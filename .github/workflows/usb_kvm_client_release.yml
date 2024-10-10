@@ -16,6 +16,13 @@ jobs:
       # Check-out repository
       - name: Check-out
         uses: actions/checkout@v4
+      # Code Style Check
+      - name: Code Style Check
+        uses: psf/black@stable
+        with:
+          options: "--check --verbose"
+          src: "./client"
+          use_pyproject: true
       # Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
