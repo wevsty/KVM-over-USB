@@ -8,24 +8,17 @@ import sys
 import tempfile
 from typing import Optional
 
-"""
-from PySide6 import *
-from PySide6.QtCore import *
-from PySide6.QtGui import *
-from PySide6.QtMultimedia import *
-from PySide6.QtMultimediaWidgets import *
-from PySide6.QtWidgets import *
-"""
-from PySide6.QtWidgets import (
-    QApplication,
-    QFileDialog,
-    QLabel,
-    QWidget,
-    QMessageBox,
-)
+import pythoncom
+import pyWinhook as pyHook
+from loguru import logger
 from PySide6.QtCore import (
     QEvent,
+    QEventLoop,
     QLocale,
+    QMutex,
+    QMutexLocker,
+    QObject,
+    QPoint,
     QSize,
     Qt,
     QThread,
@@ -33,23 +26,18 @@ from PySide6.QtCore import (
     QTranslator,
     QUrl,
     Signal,
-    QObject,
-    QMutex,
-    QMutexLocker,
-    QPoint,
-    QEventLoop,
 )
 from PySide6.QtGui import (
+    QCloseEvent,
+    QCursor,
     QFont,
     QGuiApplication,
     QIcon,
     QImage,
     QKeyEvent,
+    QMouseEvent,
     QPixmap,
     QSurfaceFormat,
-    QCursor,
-    QMouseEvent,
-    QCloseEvent,
 )
 from PySide6.QtMultimedia import (
     QAudioInput,
@@ -64,27 +52,36 @@ from PySide6.QtMultimedia import (
     QVideoSink,
 )
 from PySide6.QtMultimediaWidgets import QVideoWidget
-from loguru import logger
-import pyWinhook as pyHook
-import pythoncom
+from PySide6.QtWidgets import QApplication, QFileDialog, QLabel, QMessageBox, QWidget
 
 import controller_device
-import project_path
-from project_config import MainConfig
-from ui.ui_main import MainWindow
-from ui.ui_video_device_setup import VideoDeviceConfig, AudioDeviceConfig, VideoDeviceSetupDialog
-from ui.ui_controller_device_setup import ControllerDeviceSetupDialog, ControllerDeviceConfig
-from ui.ui_custom_key import CustomKeyDialog
-from ui.ui_paste_board import PasteBoardDialog
-from ui.ui_indicator_lights import IndicatorLightsDialog
-from ui.ui_about import AboutDialog
-from keyboard_buffer import KeyboardKeyBuffer, KeyStateEnum, KeyboardIndicatorBuffer
-from mouse_buffer import MouseStateBuffer, MouseButtonStateEnum, MouseButtonCodeEnum, \
-    MouseWheelStateEnum
 from data.hex_data import HexData
-from data.keyboard_shift_symbol import SHIFT_SYMBOL
-from data.keyboard_scancode_to_hid_code import SCANCODE_TO_HID_CODE
 from data.keyboard_key_name_to_hid_code import KEY_NAME_TO_HID_CODE
+from data.keyboard_scancode_to_hid_code import SCANCODE_TO_HID_CODE
+from data.keyboard_shift_symbol import SHIFT_SYMBOL
+from keyboard_buffer import KeyboardIndicatorBuffer, KeyboardKeyBuffer, KeyStateEnum
+from mouse_buffer import (
+    MouseButtonCodeEnum,
+    MouseButtonStateEnum,
+    MouseStateBuffer,
+    MouseWheelStateEnum,
+)
+from project_config import MainConfig
+from project_path import project_binary_directory_path, project_source_directory_path
+from ui.ui_about import AboutDialog
+from ui.ui_controller_device_setup import (
+    ControllerDeviceConfig,
+    ControllerDeviceSetupDialog,
+)
+from ui.ui_custom_key import CustomKeyDialog
+from ui.ui_indicator_lights import IndicatorLightsDialog
+from ui.ui_main import MainWindow
+from ui.ui_paste_board import PasteBoardDialog
+from ui.ui_video_device_setup import (
+    AudioDeviceConfig,
+    VideoDeviceConfig,
+    VideoDeviceSetupDialog,
+)
 
 
 class ControllerEventWorker(QObject):
@@ -95,7 +92,9 @@ class ControllerEventWorker(QObject):
         super().__init__(parent)
         self.mutex = QMutex()
         if controller_device.GLOBAL_CONTROLLER_DEVICE is None:
-            controller_device.GLOBAL_CONTROLLER_DEVICE = controller_device.ControllerDevice()
+            controller_device.GLOBAL_CONTROLLER_DEVICE = (
+                controller_device.ControllerDevice()
+            )
         self.command_send_signal.connect(self.command_event)
 
     def command_event(self, command: str, buffer: object) -> tuple[str, int, object]:
@@ -113,7 +112,9 @@ class ControllerEventWorker(QObject):
         """
         mutex_locker = QMutexLocker(self.mutex)
         with mutex_locker:
-            _, status_code, reply = controller_device.GLOBAL_CONTROLLER_DEVICE.device_event(command, buffer)
+            _, status_code, reply = (
+                controller_device.GLOBAL_CONTROLLER_DEVICE.device_event(command, buffer)
+            )
             self.command_reply_signal.emit(command, status_code, reply)
         return command, status_code, reply
 
@@ -156,8 +157,8 @@ class MyMainWindow(MainWindow):
         # 初始化变量
         # self.mutex = QMutex()
         # self.mutex_locker = QMutexLocker(self.mutex)
-        self.source_directory: str = project_path.project_source_directory_path()
-        self.binary_directory: str = project_path.project_binary_directory_path()
+        self.source_directory: str = project_source_directory_path()
+        self.binary_directory: str = project_binary_directory_path()
         # 获取显示器分辨率大小
         self.desktop = QGuiApplication.primaryScreen()
         self.status["screen_height"] = self.desktop.availableGeometry().height()
@@ -223,7 +224,9 @@ class MyMainWindow(MainWindow):
 
         # buffer
         self.keyboard_key_buffer: KeyboardKeyBuffer = KeyboardKeyBuffer()
-        self.keyboard_indicator_buffer: KeyboardIndicatorBuffer = KeyboardIndicatorBuffer()
+        self.keyboard_indicator_buffer: KeyboardIndicatorBuffer = (
+            KeyboardIndicatorBuffer()
+        )
         self.mouse_buffer = MouseStateBuffer()
 
         # 键盘设置
@@ -297,7 +300,7 @@ class MyMainWindow(MainWindow):
 
     def load_config(self) -> None:
         try:
-            self.config_file = MainConfig(project_path.project_binary_directory_path("config.yaml"))
+            self.config_file = MainConfig(project_binary_directory_path("config.yaml"))
             self.config_root: dict = self.config_file.data
             self.config_ui: dict = self.config_root["ui"]
             self.config_video_record: dict = self.config_root["video_record"]
@@ -320,7 +323,9 @@ class MyMainWindow(MainWindow):
     def load_external_data(self):
         self.keyboard_scancode_to_hid_code = dict()
         for hex_key, hex_value in SCANCODE_TO_HID_CODE.items():
-            self.keyboard_scancode_to_hid_code[HexData.hex_to_int(hex_key)] = HexData.hex_to_int(hex_value)
+            self.keyboard_scancode_to_hid_code[HexData.hex_to_int(hex_key)] = (
+                HexData.hex_to_int(hex_value)
+            )
         self.keyboard_key_name_to_hid_code = dict()
         for key, hex_value in KEY_NAME_TO_HID_CODE.items():
             self.keyboard_key_name_to_hid_code[key] = HexData.hex_to_int(hex_value)
@@ -388,7 +393,9 @@ class MyMainWindow(MainWindow):
         for action_name in self.config_root["shortcut_keys"]:
             action = self.menu_shortcut_keys.addAction(action_name)
             action.triggered.connect(
-                lambda _checked, triggered_keys=action_name: self.shortcut_key_action(triggered_keys)
+                lambda _checked, triggered_keys=action_name: self.shortcut_key_action(
+                    triggered_keys
+                )
             )
         pass
 
@@ -496,16 +503,24 @@ class MyMainWindow(MainWindow):
         # device
         self.action_video_device_setup.triggered.connect(self.video_device_setup)
         self.action_video_device_connect.triggered.connect(self.video_device_connect)
-        self.action_video_device_disconnect.triggered.connect(self.video_device_disconnect)
-        self.action_controller_device_setup.triggered.connect(self.controller_device_setup)
-        self.action_device_reload.triggered.connect(lambda: self.controller_device_reload("all"))
+        self.action_video_device_disconnect.triggered.connect(
+            self.video_device_disconnect
+        )
+        self.action_controller_device_setup.triggered.connect(
+            self.controller_device_setup
+        )
+        self.action_device_reload.triggered.connect(
+            lambda: self.controller_device_reload("all")
+        )
         self.action_device_reset.triggered.connect(self.controller_device_reset)
         self.action_minimize.triggered.connect(self.window_minimized)
         self.action_exit.triggered.connect(self.window_exit)
 
         # video
         self.action_fullscreen.triggered.connect(self.fullscreen_state_toggle)
-        self.action_resize_window.triggered.connect(self.resize_window_with_video_resolution)
+        self.action_resize_window.triggered.connect(
+            self.resize_window_with_video_resolution
+        )
         self.action_topmost.triggered.connect(self.window_topmost_state_toggle)
         self.action_keep_ratio.triggered.connect(self.video_keep_aspect_ratio_toggle)
         self.action_capture_frame.triggered.connect(self.video_frame_capture_trigger)
@@ -513,38 +528,58 @@ class MyMainWindow(MainWindow):
 
         # keyboard
         self.action_pause_keyboard.triggered.connect(self.input_pause_state)
-        self.action_reload_keyboard.triggered.connect(lambda: self.controller_device_reload("keyboard"))
+        self.action_reload_keyboard.triggered.connect(
+            lambda: self.controller_device_reload("keyboard")
+        )
         self.action_custom_key.triggered.connect(self.custom_key_dialog_show)
         self.custom_key_dialog.custom_key_send_signal.connect(self.custom_key_send)
         self.custom_key_dialog.custom_key_save_signal.connect(self.custom_key_save)
-        self.action_paste_board.triggered.connect(lambda: self.paste_board_dialog.exec())
+        self.action_paste_board.triggered.connect(
+            lambda: self.paste_board_dialog.exec()
+        )
         self.paste_board_dialog.send_string_signal.connect(self.keyboard_send_string)
         self.action_quick_paste.triggered.connect(self.quick_paste_toggle)
         self.action_indicator_light.triggered.connect(self.indicator_lights_action)
-        self.indicator_lights_dialog.lock_key_clicked_signal.connect(self.update_keyboard_indicator_buffer)
+        self.indicator_lights_dialog.lock_key_clicked_signal.connect(
+            self.update_keyboard_indicator_buffer
+        )
         self.action_system_hook.triggered.connect(self.system_hook_func)
         self.action_sync_indicator.triggered.connect(self.sync_indicator_action)
 
         # mouse
         self.action_pause_mouse.triggered.connect(self.input_pause_state)
-        self.action_reload_mouse.triggered.connect(lambda: self.controller_device_reload("mouse"))
+        self.action_reload_mouse.triggered.connect(
+            lambda: self.controller_device_reload("mouse")
+        )
         self.action_capture_mouse.triggered.connect(self.mouse_capture)
         self.action_release_mouse.triggered.connect(self.mouse_release)
         self.action_relative_mouse.triggered.connect(self.mouse_relative_mouse)
         self.action_hide_cursor.triggered.connect(self.mouse_hide_cursor)
 
         # tools
-        self.action_open_windows_device_manager.triggered.connect(lambda: self.menu_tools_actions("devmgmt.msc"))
-        self.action_open_on_screen_keyboard.triggered.connect(lambda: self.menu_tools_actions("osk"))
-        self.action_open_calculator.triggered.connect(lambda: self.menu_tools_actions("calc"))
-        self.action_open_snipping_tool.triggered.connect(lambda: self.menu_tools_actions("snipping_tool"))
-        self.action_open_notepad.triggered.connect(lambda: self.menu_tools_actions("notepad"))
+        self.action_open_windows_device_manager.triggered.connect(
+            lambda: self.menu_tools_actions("devmgmt.msc")
+        )
+        self.action_open_on_screen_keyboard.triggered.connect(
+            lambda: self.menu_tools_actions("osk")
+        )
+        self.action_open_calculator.triggered.connect(
+            lambda: self.menu_tools_actions("calc")
+        )
+        self.action_open_snipping_tool.triggered.connect(
+            lambda: self.menu_tools_actions("snipping_tool")
+        )
+        self.action_open_notepad.triggered.connect(
+            lambda: self.menu_tools_actions("notepad")
+        )
 
         # about
         self.action_about.triggered.connect(lambda: self.about_dialog.exec())
         self.action_about_qt.triggered.connect(lambda: QApplication.aboutQt())
         # controller event
-        self.controller_event_worker.command_reply_signal.connect(self.controller_command_reply)
+        self.controller_event_worker.command_reply_signal.connect(
+            self.controller_command_reply
+        )
 
     # 视频设备配置
     def video_device_setup(self) -> None:
@@ -560,8 +595,16 @@ class MyMainWindow(MainWindow):
         wm_pos = self.geometry()
         wm_size = self.size()
         self.video_device_setup_dialog.move(
-            int(wm_pos.x() + wm_size.width() / 2 - self.video_device_setup_dialog.width() / 2),
-            int(wm_pos.y() + wm_size.height() / 2 - self.video_device_setup_dialog.height() / 2),
+            int(
+                wm_pos.x()
+                + wm_size.width() / 2
+                - self.video_device_setup_dialog.width() / 2
+            ),
+            int(
+                wm_pos.y()
+                + wm_size.height() / 2
+                - self.video_device_setup_dialog.height() / 2
+            ),
         )
         # 执行窗口
         status_code = self.video_device_setup_dialog.exec()
@@ -580,7 +623,9 @@ class MyMainWindow(MainWindow):
                 # 保存配置
                 self.save_config()
             except ValueError:
-                QMessageBox.critical(self, self.tr("Video Error"), self.tr("Invalid device selected"))
+                QMessageBox.critical(
+                    self, self.tr("Video Error"), self.tr("Invalid device selected")
+                )
             # 尝试按照新配置启动
             self.video_device_reset()
         else:
@@ -588,9 +633,8 @@ class MyMainWindow(MainWindow):
 
     def video_camera_error_occurred(self, error: QCamera.Error, _string: str) -> None:
         error_s = (
-                f"Device: {self.video_device.description()}\n"
-                f"Returned: {error}\n"
-                + self.tr("Device disconnected")
+            f"Device: {self.video_device.description()}\n"
+            f"Returned: {error}\n" + self.tr("Device disconnected")
         )
         self.video_device_disconnect()
         QMessageBox.critical(self, self.tr("Device Error"), error_s)
@@ -606,7 +650,9 @@ class MyMainWindow(MainWindow):
         # 寻找指定视频设备
         video_device_description = self.config_video["device"]
         if video_device_description == "":
-            QMessageBox.critical(self, self.tr("Video Error"), self.tr("Target video device is empty"))
+            QMessageBox.critical(
+                self, self.tr("Video Error"), self.tr("Target video device is empty")
+            )
             return return_status
         cameras = QMediaDevices.videoInputs()
         for camera in cameras:
@@ -614,7 +660,9 @@ class MyMainWindow(MainWindow):
                 self.video_device = camera
                 break
         if self.video_device is None:
-            QMessageBox.critical(self, self.tr("Video Error"), self.tr("Target video device not found"))
+            QMessageBox.critical(
+                self, self.tr("Video Error"), self.tr("Target video device not found")
+            )
             return return_status
         # 设置摄像头配置
         self.video_camera = QCamera(self.video_device)
@@ -624,16 +672,19 @@ class MyMainWindow(MainWindow):
             resolution_y = i.resolution().height()
             pixel_format = i.pixelFormat().name.split("_")[1]
             if (
-                    resolution_x == self.config_video["resolution_x"]
-                    and resolution_y == self.config_video["resolution_y"]
-                    and pixel_format == self.config_video["format"]
+                resolution_x == self.config_video["resolution_x"]
+                and resolution_y == self.config_video["resolution_y"]
+                and pixel_format == self.config_video["format"]
             ):
                 self.video_camera.setCameraFormat(i)
                 camera_set_done = True
                 break
         if camera_set_done is False:
-            QMessageBox.critical(self, self.tr("Video Error"),
-                                 self.tr("Unsupported combination of resolution or format"))
+            QMessageBox.critical(
+                self,
+                self.tr("Video Error"),
+                self.tr("Unsupported combination of resolution or format"),
+            )
             return return_status
         # 配置音频
         if self.config_audio["audio_support"] is True:
@@ -659,8 +710,9 @@ class MyMainWindow(MainWindow):
                         out_device = i
                         break
             if in_device is None or out_device is None:
-                QMessageBox.critical(self, self.tr("Video Error"),
-                                     self.tr("Audio device not found"))
+                QMessageBox.critical(
+                    self, self.tr("Video Error"), self.tr("Audio device not found")
+                )
                 return return_status
             self.audio_in_device = in_device
             self.audio_out_device = out_device
@@ -669,8 +721,9 @@ class MyMainWindow(MainWindow):
         self.video_camera.start()
         if not self.video_camera.isActive():
             self.status["camera_opened"] = False
-            QMessageBox.critical(self, self.tr("Video Error"),
-                                 self.tr("Video device connect failed"))
+            QMessageBox.critical(
+                self, self.tr("Video Error"), self.tr("Video device connect failed")
+            )
             return return_status
         else:
             self.status["camera_opened"] = True
@@ -686,9 +739,7 @@ class MyMainWindow(MainWindow):
 
         self.video_frame_capture.setQuality(QImageCapture.Quality.VeryHighQuality)
         self.video_frame_capture.setFileFormat(QImageCapture.FileFormat.PNG)
-        self.video_frame_capture.imageCaptured.connect(
-            self.video_frame_capture_done
-        )
+        self.video_frame_capture.imageCaptured.connect(self.video_frame_capture_done)
 
         self.video_record = QMediaRecorder(self.video_camera)
         self.video_capture_session.setRecorder(self.video_record)
@@ -783,8 +834,8 @@ class MyMainWindow(MainWindow):
                 alert_window = QMessageBox(self)
                 alert_window.setWindowTitle(self.tr("Fullscreen mode alert"))
                 alert_window.setText(
-                    self.tr("Press Ctrl+Alt+F11 to toggle fullscreen\n") +
-                    self.tr("Stay cursor at left top corner to show toolbar")
+                    self.tr("Press Ctrl+Alt+F11 to toggle fullscreen\n")
+                    + self.tr("Stay cursor at left top corner to show toolbar")
                 )
                 alert_window.setCheckBox(alert_checkbox)
                 alert_window.exec()
@@ -854,8 +905,9 @@ class MyMainWindow(MainWindow):
         retained_width = 16 * 5
         recommend_height = self.config_video["resolution_y"] + add_height
         recommend_width = self.config_video["resolution_x"]
-        if ((self.status["screen_height"] - retained_height > recommend_height)
-                and (self.status["screen_width"] - retained_width > recommend_width)):
+        if (self.status["screen_height"] - retained_height > recommend_height) and (
+            self.status["screen_width"] - retained_width > recommend_width
+        ):
             # 如果屏幕大小足够
             self.showNormal()
             self.resize(
@@ -864,8 +916,10 @@ class MyMainWindow(MainWindow):
             )
         else:
             # 如屏幕大小不够
-            while not ((self.status["screen_height"] - retained_height > recommend_height)
-                       and (self.status["screen_width"] - retained_width > recommend_width)):
+            while not (
+                (self.status["screen_height"] - retained_height > recommend_height)
+                and (self.status["screen_width"] - retained_width > recommend_width)
+            ):
                 recommend_height = int(recommend_height * 1 / 4)
                 recommend_width = int(recommend_width * 1 / 4)
             self.showNormal()
@@ -894,10 +948,12 @@ class MyMainWindow(MainWindow):
             )
         else:
             self.windowHandle().setFlags(
-                current_window_flag & ~Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint
+                current_window_flag & ~Qt.WindowStaysOnTopHint
+                | Qt.WindowCloseButtonHint
             )
         self.statusBar().showMessage(
-            self.tr("Window topmost: ") + self.bool_to_behavior_string(self.status["topmost_enabled"])
+            self.tr("Window topmost: ")
+            + self.bool_to_behavior_string(self.status["topmost_enabled"])
         )
         self.action_topmost.setChecked(self.status["topmost_enabled"])
 
@@ -913,8 +969,8 @@ class MyMainWindow(MainWindow):
             self.video_widget.setAspectRatioMode(Qt.IgnoreAspectRatio)
             self.action_keep_ratio.setChecked(False)
         self.statusBar().showMessage(
-            self.tr("Keep aspect ratio: ") +
-            self.bool_to_behavior_string(self.config_video["keep_aspect_ratio"])
+            self.tr("Keep aspect ratio: ")
+            + self.bool_to_behavior_string(self.config_video["keep_aspect_ratio"])
         )
         self.save_config()
 
@@ -942,8 +998,8 @@ class MyMainWindow(MainWindow):
         if not self.status["camera_opened"]:
             return
         if (
-                self.video_record.recorderState()
-                == QMediaRecorder.RecorderState.RecordingState
+            self.video_record.recorderState()
+            == QMediaRecorder.RecorderState.RecordingState
         ):
             self.video_record.stop()
         if self.status["video_recording"]:
@@ -974,7 +1030,7 @@ class MyMainWindow(MainWindow):
             "device_reset",
             "mouse_relative_write",
             "mouse_absolute_write",
-            "keyboard_write"
+            "keyboard_write",
         ]
         if command == "device_open":
             if status == 0:
@@ -982,7 +1038,9 @@ class MyMainWindow(MainWindow):
                 self.status["controller_opened"] = True
                 self.statusBar().showMessage(self.tr("Controller connected"))
                 # 连接成功发送读取键盘指示灯信号
-                self.controller_event_worker.command_send_signal.emit("keyboard_read", None)
+                self.controller_event_worker.command_send_signal.emit(
+                    "keyboard_read", None
+                )
             else:
                 self.status["controller_opened"] = False
                 self.statusBar().showMessage(self.tr("Controller connect failure"))
@@ -1010,15 +1068,27 @@ class MyMainWindow(MainWindow):
         cc = ControllerDeviceConfig()
         cc.port = self.config_controller["port"]
         cc.baud = self.config_controller["baud"]
-        cc.screen_x = self.config_controller["screen_x"] = self.config_video["resolution_x"]
-        cc.screen_y = self.config_controller["screen_y"] = self.config_video["resolution_y"]
+        cc.screen_x = self.config_controller["screen_x"] = self.config_video[
+            "resolution_x"
+        ]
+        cc.screen_y = self.config_controller["screen_y"] = self.config_video[
+            "resolution_y"
+        ]
 
         # 确保窗口位置
         wm_pos = self.geometry()
         wm_size = self.size()
         self.video_device_setup_dialog.move(
-            int(wm_pos.x() + wm_size.width() / 2 - self.video_device_setup_dialog.width() / 2),
-            int(wm_pos.y() + wm_size.height() / 2 - self.video_device_setup_dialog.height() / 2),
+            int(
+                wm_pos.x()
+                + wm_size.width() / 2
+                - self.video_device_setup_dialog.width() / 2
+            ),
+            int(
+                wm_pos.y()
+                + wm_size.height() / 2
+                - self.video_device_setup_dialog.height() / 2
+            ),
         )
         # 执行窗口
         self.controller_device_setup_dialog.set_controller_device_config(cc)
@@ -1037,28 +1107,34 @@ class MyMainWindow(MainWindow):
             self.config_controller["port"],
             self.config_controller["baud"],
             self.config_video["resolution_x"],
-            self.config_video["resolution_y"]
+            self.config_video["resolution_y"],
         )
-        self.controller_event_worker.command_send_signal.emit('device_open', None)
+        self.controller_event_worker.command_send_signal.emit("device_open", None)
 
     # 断开设备
     def controller_device_disconnect(self):
-        self.controller_event_worker.command_send_signal.emit('device_close', None)
+        self.controller_event_worker.command_send_signal.emit("device_close", None)
 
     # 检查连接
     def controller_device_check_connection(self):
-        self.controller_event_worker.command_send_signal.emit('device_check', None)
+        self.controller_event_worker.command_send_signal.emit("device_check", None)
 
     # 重新载入设备
     def controller_device_reload(self, release_type: str):
         if release_type == "keyboard":
-            self.controller_event_worker.command_send_signal.emit('device_release', "keyboard")
+            self.controller_event_worker.command_send_signal.emit(
+                "device_release", "keyboard"
+            )
             self.keyboard_key_buffer.clear()
         elif release_type == "mouse":
-            self.controller_event_worker.command_send_signal.emit('device_release', "mouse")
+            self.controller_event_worker.command_send_signal.emit(
+                "device_release", "mouse"
+            )
             self.mouse_buffer.clear()
         else:
-            self.controller_event_worker.command_send_signal.emit('device_release', "all")
+            self.controller_event_worker.command_send_signal.emit(
+                "device_release", "all"
+            )
             self.keyboard_key_buffer.clear()
             self.mouse_buffer.clear()
             self.controller_device_disconnect()
@@ -1066,7 +1142,7 @@ class MyMainWindow(MainWindow):
 
     # 重置设备
     def controller_device_reset(self):
-        self.controller_event_worker.command_send_signal.emit('device_reset', None)
+        self.controller_event_worker.command_send_signal.emit("device_reset", None)
         self.keyboard_key_buffer.clear()
         self.mouse_buffer.clear()
 
@@ -1119,9 +1195,7 @@ class MyMainWindow(MainWindow):
         self.shortcut_key_send(keys)
 
     def custom_key_save(self, name: str, keys: list[str]):
-        custom_key_data = {
-            name: keys
-        }
+        custom_key_data = {name: keys}
         self.config_root["shortcut_keys"].update(custom_key_data)
         self.save_config()
         self.init_shortcut_keys()
@@ -1149,15 +1223,23 @@ class MyMainWindow(MainWindow):
                 logger.critical(f"character key code not found: {character}")
                 continue
             if shift_flag:
-                self.update_keyboard_buffer_with_hid_code(shift_hid_code, KeyStateEnum.PRESS)
+                self.update_keyboard_buffer_with_hid_code(
+                    shift_hid_code, KeyStateEnum.PRESS
+                )
                 self.update_keyboard_buffer_with_hid_code(key_code, KeyStateEnum.PRESS)
 
-                self.update_keyboard_buffer_with_hid_code(key_code, KeyStateEnum.RELEASE)
-                self.update_keyboard_buffer_with_hid_code(shift_hid_code, KeyStateEnum.RELEASE)
+                self.update_keyboard_buffer_with_hid_code(
+                    key_code, KeyStateEnum.RELEASE
+                )
+                self.update_keyboard_buffer_with_hid_code(
+                    shift_hid_code, KeyStateEnum.RELEASE
+                )
                 self.sleep(self.config_root["paste_board"]["interval"])
             else:
                 self.update_keyboard_buffer_with_hid_code(key_code, KeyStateEnum.PRESS)
-                self.update_keyboard_buffer_with_hid_code(key_code, KeyStateEnum.RELEASE)
+                self.update_keyboard_buffer_with_hid_code(
+                    key_code, KeyStateEnum.RELEASE
+                )
                 self.sleep(self.config_root["paste_board"]["interval"])
 
     # 快速粘贴功能开关切换
@@ -1165,7 +1247,8 @@ class MyMainWindow(MainWindow):
         self.status["quick_paste_enabled"] = not self.status["quick_paste_enabled"]
         self.action_quick_paste.setChecked(self.status["quick_paste_enabled"])
         self.statusBar().showMessage(
-            self.tr("Quick paste: ") + self.bool_to_behavior_string(self.status["quick_paste_enabled"])
+            self.tr("Quick paste: ")
+            + self.bool_to_behavior_string(self.status["quick_paste_enabled"])
         )
 
     def quick_paste_trigger(self):
@@ -1208,15 +1291,14 @@ class MyMainWindow(MainWindow):
             pass
         else:
             QMessageBox.critical(
-                self,
-                self.tr("Error"),
-                self.tr("system hook only supports windows")
+                self, self.tr("Error"), self.tr("system hook only supports windows")
             )
             return
         self.status["hook_state"] = not self.status["hook_state"]
         self.action_system_hook.setChecked(self.status["hook_state"])
         self.statusBar().showMessage(
-            self.tr("System hook: ") + self.bool_to_behavior_string(self.status["hook_state"])
+            self.tr("System hook: ")
+            + self.bool_to_behavior_string(self.status["hook_state"])
         )
         if self.status["hook_state"]:
             self.pythoncom_timer.start(5)
@@ -1240,7 +1322,8 @@ class MyMainWindow(MainWindow):
         self.status["mouse_relative_mode"] = not self.status["mouse_relative_mode"]
         self.action_relative_mouse.setChecked(self.status["mouse_relative_mode"])
         self.statusBar().showMessage(
-            self.tr("Relative mouse: ") + self.bool_to_behavior_string(self.status["mouse_relative_mode"])
+            self.tr("Relative mouse: ")
+            + self.bool_to_behavior_string(self.status["mouse_relative_mode"])
         )
 
     # 隐藏指针
@@ -1262,9 +1345,7 @@ class MyMainWindow(MainWindow):
             pass
         else:
             QMessageBox.critical(
-                self,
-                self.tr("Error"),
-                self.tr("system hook only supports windows")
+                self, self.tr("Error"), self.tr("system hook only supports windows")
             )
             return
         if action_name == "devmgmt.msc":
@@ -1301,32 +1382,40 @@ class MyMainWindow(MainWindow):
     def update_status_bar(self):
         ctrl_left = self.keyboard_key_name_to_hid_code.get("ctrl_left", 0)
         ctrl_right = self.keyboard_key_name_to_hid_code.get("ctrl_right", 0)
-        if self.keyboard_key_buffer.key_state(ctrl_left) == KeyStateEnum.PRESS or self.keyboard_key_buffer.key_state(
-                ctrl_right) == KeyStateEnum.PRESS:
+        if (
+            self.keyboard_key_buffer.key_state(ctrl_left) == KeyStateEnum.PRESS
+            or self.keyboard_key_buffer.key_state(ctrl_right) == KeyStateEnum.PRESS
+        ):
             self.statusbar_label_ctrl.setStyleSheet("color: black")
         else:
             self.statusbar_label_ctrl.setStyleSheet("color: grey")
 
         shift_left = self.keyboard_key_name_to_hid_code.get("shift_left", 0)
         shift_right = self.keyboard_key_name_to_hid_code.get("shift_right", 0)
-        if self.keyboard_key_buffer.key_state(shift_left) == KeyStateEnum.PRESS or self.keyboard_key_buffer.key_state(
-                shift_right) == KeyStateEnum.PRESS:
+        if (
+            self.keyboard_key_buffer.key_state(shift_left) == KeyStateEnum.PRESS
+            or self.keyboard_key_buffer.key_state(shift_right) == KeyStateEnum.PRESS
+        ):
             self.statusbar_label_shift.setStyleSheet("color: black")
         else:
             self.statusbar_label_shift.setStyleSheet("color: grey")
 
         alt_left = self.keyboard_key_name_to_hid_code.get("alt_left", 0)
         alt_right = self.keyboard_key_name_to_hid_code.get("alt_right", 0)
-        if self.keyboard_key_buffer.key_state(alt_left) == KeyStateEnum.PRESS or self.keyboard_key_buffer.key_state(
-                alt_right) == KeyStateEnum.PRESS:
+        if (
+            self.keyboard_key_buffer.key_state(alt_left) == KeyStateEnum.PRESS
+            or self.keyboard_key_buffer.key_state(alt_right) == KeyStateEnum.PRESS
+        ):
             self.statusbar_label_alt.setStyleSheet("color: black")
         else:
             self.statusbar_label_alt.setStyleSheet("color: grey")
 
         win_left = self.keyboard_key_name_to_hid_code.get("win_left", 0)
         win_right = self.keyboard_key_name_to_hid_code.get("win_right", 0)
-        if self.keyboard_key_buffer.key_state(win_left) == KeyStateEnum.PRESS or self.keyboard_key_buffer.key_state(
-                win_right) == KeyStateEnum.PRESS:
+        if (
+            self.keyboard_key_buffer.key_state(win_left) == KeyStateEnum.PRESS
+            or self.keyboard_key_buffer.key_state(win_right) == KeyStateEnum.PRESS
+        ):
             self.statusbar_label_meta.setStyleSheet("color: black")
         else:
             self.statusbar_label_meta.setStyleSheet("color: grey")
@@ -1347,20 +1436,23 @@ class MyMainWindow(MainWindow):
             self.statusbar_label_scr_lock.setStyleSheet("color: grey")
 
     # 更新键盘缓冲区(hid_code)
-    def update_keyboard_buffer_with_hid_code(self, hid_code: int, state: KeyStateEnum) -> None:
+    def update_keyboard_buffer_with_hid_code(
+        self, hid_code: int, state: KeyStateEnum
+    ) -> None:
         if state == KeyStateEnum.PRESS:
             self.keyboard_key_buffer.key_press(hid_code)
         else:
             self.keyboard_key_buffer.key_release(hid_code)
         self.controller_event_worker.command_send_signal.emit(
-            "keyboard_write",
-            self.keyboard_key_buffer.dup()
+            "keyboard_write", self.keyboard_key_buffer.dup()
         )
         self.keyboard_key_buffer.clear_released()
         self.update_status_bar()
 
     # 更新键盘缓冲区(scancode)
-    def update_keyboard_buffer_with_scancode(self, scancode: int, state: KeyStateEnum) -> None:
+    def update_keyboard_buffer_with_scancode(
+        self, scancode: int, state: KeyStateEnum
+    ) -> None:
         hid_code = self.keyboard_scancode_to_hid_code.get(scancode, 0)
         if hid_code == 0:
             logger.warning(f"Unknown keyboard scancode: {scancode}")
@@ -1371,15 +1463,21 @@ class MyMainWindow(MainWindow):
         if key_name == "num_lock":
             key_code = self.keyboard_key_name_to_hid_code.get("num_lock", 0)
             assert key_code != 0
-            self.keyboard_indicator_buffer.num_lock = not self.keyboard_indicator_buffer.num_lock
+            self.keyboard_indicator_buffer.num_lock = (
+                not self.keyboard_indicator_buffer.num_lock
+            )
         elif key_name == "caps_lock":
             key_code = self.keyboard_key_name_to_hid_code.get("caps_lock", 0)
             assert key_code != 0
-            self.keyboard_indicator_buffer.caps_lock = not self.keyboard_indicator_buffer.caps_lock
+            self.keyboard_indicator_buffer.caps_lock = (
+                not self.keyboard_indicator_buffer.caps_lock
+            )
         elif key_name == "scroll_lock":
             key_code = self.keyboard_key_name_to_hid_code.get("scroll_lock", 0)
             assert key_code != 0
-            self.keyboard_indicator_buffer.scroll_lock = not self.keyboard_indicator_buffer.scroll_lock
+            self.keyboard_indicator_buffer.scroll_lock = (
+                not self.keyboard_indicator_buffer.scroll_lock
+            )
         else:
             logger.error(f"Error key name: {key_name}")
             raise ValueError(f"Error key name: {key_name}")
@@ -1391,8 +1489,7 @@ class MyMainWindow(MainWindow):
     def clear_keyboard_key_buffer(self):
         self.keyboard_key_buffer.clear()
         self.controller_event_worker.command_send_signal.emit(
-            "keyboard_write",
-            self.keyboard_key_buffer.dup()
+            "keyboard_write", self.keyboard_key_buffer.dup()
         )
 
     # 清空键盘指示器缓冲区
@@ -1438,26 +1535,27 @@ class MyMainWindow(MainWindow):
 
     # 更新鼠标坐标缓冲区(相对坐标模式)
     def update_mouse_position_buffer_with_relative_mode(self):
-        middle_pos = self.mapToGlobal(QPoint(int(self.width() / 2), int(self.height() / 2)))
+        middle_pos = self.mapToGlobal(
+            QPoint(int(self.width() / 2), int(self.height() / 2))
+        )
         mouse_pos = QCursor.pos()
         if self.mouse_last_pos is not None:
             rel_x, rel_y = self.mouse_buffer.get_point()
             rel_x += (
-                             mouse_pos.x() - self.mouse_last_pos.x()
-                     ) * self.relative_mouse_speed
+                mouse_pos.x() - self.mouse_last_pos.x()
+            ) * self.relative_mouse_speed
             rel_y += (
-                             mouse_pos.y() - self.mouse_last_pos.y()
-                     ) * self.relative_mouse_speed
+                mouse_pos.y() - self.mouse_last_pos.y()
+            ) * self.relative_mouse_speed
             self.mouse_last_pos = mouse_pos
-            self.mouse_buffer.set_point(
-                int(round(rel_x)),
-                int(round(rel_y))
-            )
+            self.mouse_buffer.set_point(int(round(rel_x)), int(round(rel_y)))
             # logger.debug(f"relative mode X={rel_x}, Y={rel_y}")
-            self.statusBar().showMessage(self.tr(f"Press Ctrl+Alt+F12 to release mouse"))
+            self.statusBar().showMessage(
+                self.tr(f"Press Ctrl+Alt+F12 to release mouse")
+            )
             if (
-                    abs(mouse_pos.x() - middle_pos.x()) > 25
-                    or abs(mouse_pos.y() - middle_pos.y()) > 25
+                abs(mouse_pos.x() - middle_pos.x()) > 25
+                or abs(mouse_pos.y() - middle_pos.y()) > 25
             ):
                 QCursor.setPos(middle_pos)
                 self.mouse_last_pos = middle_pos
@@ -1495,7 +1593,9 @@ class MyMainWindow(MainWindow):
             command = "mouse_relative_write"
         else:
             command = "mouse_absolute_write"
-        self.controller_event_worker.command_send_signal.emit(command, self.mouse_buffer.dup())
+        self.controller_event_worker.command_send_signal.emit(
+            command, self.mouse_buffer.dup()
+        )
         self.mouse_buffer.wheel = MouseWheelStateEnum.STOP
 
     def mouse_timer_report(self):
@@ -1504,7 +1604,9 @@ class MyMainWindow(MainWindow):
         else:
             command = "mouse_absolute_write"
         if self.mouse_need_report:
-            self.controller_event_worker.command_send_signal.emit(command, self.mouse_buffer.dup())
+            self.controller_event_worker.command_send_signal.emit(
+                command, self.mouse_buffer.dup()
+            )
             if self.status["mouse_relative_mode"]:
                 self.mouse_buffer.clear_point()
         self.mouse_need_report = False
@@ -1564,9 +1666,9 @@ class MyMainWindow(MainWindow):
     # 鼠标按下事件
     def mousePressEvent(self, event: QMouseEvent):
         if (
-                not self.status["mouse_captured"]
-                and event.button() == Qt.LeftButton
-                and self.status["camera_opened"]
+            not self.status["mouse_captured"]
+            and event.button() == Qt.LeftButton
+            and self.status["camera_opened"]
         ):
             self.mouse_capture()
             return
@@ -1583,7 +1685,9 @@ class MyMainWindow(MainWindow):
         self.mouse_buffer.set_button(button_code, button_state)
         if self.status["mouse_relative_mode"]:
             self.mouse_buffer.clear_point()
-        self.controller_event_worker.command_send_signal.emit(command, self.mouse_buffer.dup())
+        self.controller_event_worker.command_send_signal.emit(
+            command, self.mouse_buffer.dup()
+        )
         pass
 
     # 鼠标松开事件
@@ -1601,7 +1705,9 @@ class MyMainWindow(MainWindow):
         self.mouse_buffer.set_button(button_code, button_state)
         if self.status["mouse_relative_mode"]:
             self.mouse_buffer.clear_point()
-        self.controller_event_worker.command_send_signal.emit(command, self.mouse_buffer.dup())
+        self.controller_event_worker.command_send_signal.emit(
+            command, self.mouse_buffer.dup()
+        )
 
     # 鼠标滚动事件
     def wheelEvent(self, event):
@@ -1625,7 +1731,9 @@ class MyMainWindow(MainWindow):
         keyboard_modifiers = event.modifiers()
         keyboard_key = event.key()
 
-        if keyboard_modifiers == (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.AltModifier):
+        if keyboard_modifiers == (
+            Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.AltModifier
+        ):
             is_register_function_keys: bool = True
             # Ctrl+Alt+F11 退出全屏
             if keyboard_key == Qt.Key.Key_F11:
@@ -1655,7 +1763,9 @@ class MyMainWindow(MainWindow):
             self.update_keyboard_indicator_buffer("num_lock")
         else:
             # 如果是非指示器按键则更新普通buffer
-            self.update_keyboard_buffer_with_scancode(event.nativeScanCode(), KeyStateEnum.PRESS)
+            self.update_keyboard_buffer_with_scancode(
+                event.nativeScanCode(), KeyStateEnum.PRESS
+            )
         super().keyPressEvent(event)
 
     # 键盘松开事件
@@ -1664,7 +1774,9 @@ class MyMainWindow(MainWindow):
             return
         if self.status["pause_keyboard"] is True:
             return
-        self.update_keyboard_buffer_with_scancode(event.nativeScanCode(), KeyStateEnum.RELEASE)
+        self.update_keyboard_buffer_with_scancode(
+            event.nativeScanCode(), KeyStateEnum.RELEASE
+        )
         super().keyReleaseEvent(event)
 
     # 窗口改变事件
@@ -1717,9 +1829,13 @@ def debug_mode(mode: bool):
 
 def command_line_parser():
     parser = argparse.ArgumentParser(description="USB KVM Client")
-    parser.add_argument("-d", "--debug", action="store_true",
-                        default=False,
-                        help="Debug mode (default: disable)")
+    parser.add_argument(
+        "-d",
+        "--debug",
+        action="store_true",
+        default=False,
+        help="Debug mode (default: disable)",
+    )
 
     args = parser.parse_args()
     debug_mode(args.debug)
@@ -1747,8 +1863,12 @@ def main():
     locale = QLocale().system().name().lower()
     translation_files: list[str] = []
     if locale == "zh_cn":
-        translation_files.append(project_path.project_source_directory_path("translate", "qtbase_zh_cn.qm"))
-        translation_files.append(project_path.project_source_directory_path("translate", "trans_zh_cn.qm"))
+        translation_files.append(
+            project_source_directory_path("translate", "qtbase_zh_cn.qm")
+        )
+        translation_files.append(
+            project_source_directory_path("translate", "trans_zh_cn.qm")
+        )
     for file_path in translation_files:
         translator = QTranslator(app)
         if translator.load(file_path):

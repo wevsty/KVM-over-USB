@@ -25,7 +25,9 @@ class ControllerDeviceConfig:
         return data
 
 
-class ControllerDeviceSetupDialog(QDialog, controller_device_setup_ui.Ui_ControllerDeviceSetupDialog):
+class ControllerDeviceSetupDialog(
+    QDialog, controller_device_setup_ui.Ui_ControllerDeviceSetupDialog
+):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)

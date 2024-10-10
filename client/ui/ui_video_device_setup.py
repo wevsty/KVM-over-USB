@@ -156,8 +156,8 @@ class VideoDeviceSetupDialog(QDialog, video_device_setup_ui.Ui_dialog):
                 resolution_list.append(resolutions_str)
                 self.combo_box_resolution.addItem(resolutions_str)
                 if (
-                        self.reference_video_config.resolution_x == width
-                        and self.reference_video_config.resolution_y == height
+                    self.reference_video_config.resolution_x == width
+                    and self.reference_video_config.resolution_y == height
                 ):
                     self.combo_box_resolution.setCurrentText(resolutions_str)
             format_str = i.pixelFormat().name.split("_")[1]

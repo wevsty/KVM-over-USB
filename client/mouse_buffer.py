@@ -1,7 +1,8 @@
-from enum import IntEnum, auto
-from dataclasses import dataclass, field
-from typing import Tuple
 from copy import deepcopy
+from dataclasses import dataclass, field
+from enum import IntEnum, auto
+from typing import Tuple
+
 
 class MouseButtonStateEnum(IntEnum):
     PRESS = auto()
@@ -72,7 +73,9 @@ class MouseStateBuffer:
     def set_point(self, x: int, y: int) -> None:
         self.point.set(x, y)
 
-    def set_button(self, code: MouseButtonCodeEnum, state: MouseButtonStateEnum) -> None:
+    def set_button(
+        self, code: MouseButtonCodeEnum, state: MouseButtonStateEnum
+    ) -> None:
         self.button.set(code, state)
 
     def get_button(self) -> tuple[MouseButtonCodeEnum, MouseButtonStateEnum]:

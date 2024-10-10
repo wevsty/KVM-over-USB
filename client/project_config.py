@@ -42,5 +42,5 @@ class MainConfig(RequiredConfig):
         super().load_from_file()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

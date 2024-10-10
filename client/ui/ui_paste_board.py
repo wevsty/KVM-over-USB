@@ -2,7 +2,7 @@ import base64
 import os
 from typing import Optional
 
-from PySide6.QtCore import Signal, Qt, QThread, QObject
+from PySide6.QtCore import QObject, Qt, QThread, Signal
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QDialog, QFileDialog, QMessageBox
 
@@ -43,7 +43,7 @@ class SendDataWorker(QObject):
         self.flag_sending = True
         file_name = os.path.basename(file_path)
         buffer_size = 512
-        command_template = "echo -e -n \"{}\" | base64 -d >> ./{}\n"
+        command_template = 'echo -e -n "{}" | base64 -d >> ./{}\n'
         sent_bytes = 0
         total_bytes = os.path.getsize(file_path)
         display_progress_value = 0
@@ -106,7 +106,7 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
             QMessageBox.critical(
                 self,
                 self.tr("Error"),
-                self.tr("Text send only supports ASCII characters\n")
+                self.tr("Text send only supports ASCII characters\n"),
             )
             return
         if self.send_worker.is_sending():
@@ -125,10 +125,10 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
             reply = QMessageBox.warning(
                 self,
                 self.tr("Warning"),
-                self.tr("Selected file that is too large may take a long time.\n") +
-                self.tr("Please confirm to continue.\n"),
+                self.tr("Selected file that is too large may take a long time.\n")
+                + self.tr("Please confirm to continue.\n"),
                 QMessageBox.StandardButton.Ok,
-                QMessageBox.StandardButton.Cancel
+                QMessageBox.StandardButton.Cancel,
             )
             if reply == QMessageBox.StandardButton.Cancel:
                 return
@@ -143,9 +143,7 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
             filename = os.path.basename(file_path)
             if filename.isascii():
                 self.file_path = file_path
-                self.line_edit_file_path.setText(
-                    file_path
-                )
+                self.line_edit_file_path.setText(file_path)
             else:
                 QMessageBox.critical(
                     self,

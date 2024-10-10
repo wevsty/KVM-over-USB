@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QMainWindow
+
 from ui.ui_resource import main_ui
 
 

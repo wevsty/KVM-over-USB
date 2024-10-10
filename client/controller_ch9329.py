@@ -3,12 +3,10 @@ import threading
 from abc import ABC, abstractmethod
 
 import ch9329.exceptions
-from ch9329 import keyboard
-from ch9329 import mouse
+from ch9329 import keyboard, mouse
 from ch9329.config import get_product
 from loguru import logger
-from serial import Serial
-from serial import SerialException
+from serial import Serial, SerialException
 
 from data.hex_data import HexData
 from data.keyboard_ch9329_hid_map import CH9329_HID_MAP
@@ -32,13 +30,14 @@ class ControllerBase(ABC):
         pass
 
     @abstractmethod
-    def mouse_send_data(self,
-                        button_name: str,
-                        x: int = 0,
-                        y: int = 0,
-                        wheel: int = 0,
-                        relative: bool = False
-                        ):
+    def mouse_send_data(
+        self,
+        button_name: str,
+        x: int = 0,
+        y: int = 0,
+        wheel: int = 0,
+        relative: bool = False,
+    ):
         pass
 
     @abstractmethod
@@ -56,9 +55,11 @@ class ControllerBase(ABC):
 
 class ControllerCh9329(ControllerBase):
     def __init__(
-            self, controller_port: str = "COM1",
-            baud: int = 9600, screen_x: int = 1920,
-            screen_y: int = 1080
+        self,
+        controller_port: str = "COM1",
+        baud: int = 9600,
+        screen_x: int = 1920,
+        screen_y: int = 1080,
     ):
         self.connection_mutex: threading.Lock = threading.Lock()
         self.connection: Serial | None = None
@@ -75,9 +76,11 @@ class ControllerCh9329(ControllerBase):
         return self.port, self.baud, self.screen_x, self.screen_y
 
     def set_connection_params(
-            self, controller_port: str = "COM1",
-            baud: int = 9600, screen_x: int = 1920,
-            screen_y: int = 1080
+        self,
+        controller_port: str = "COM1",
+        baud: int = 9600,
+        screen_x: int = 1920,
+        screen_y: int = 1080,
     ):
         self.port: str = controller_port
         self.baud: int = baud
@@ -92,11 +95,7 @@ class ControllerCh9329(ControllerBase):
             self.close_connection()
         with self.connection_mutex:
             try:
-                self.connection = Serial(
-                    self.port,
-                    self.baud,
-                    timeout=self.timeout
-                )
+                self.connection = Serial(self.port, self.baud, timeout=self.timeout)
                 connection_status = True
             except SerialException:
                 self.connection = None
@@ -157,29 +156,35 @@ class ControllerCh9329(ControllerBase):
                 return False
             self.connection.write(cmd_reset_packet)
 
-    def mouse_send_data(self, button_name: str, x: int = 0,
-                        y: int = 0,
-                        wheel: int = 0,
-                        relative: bool = False):
+    def mouse_send_data(
+        self,
+        button_name: str,
+        x: int = 0,
+        y: int = 0,
+        wheel: int = 0,
+        relative: bool = False,
+    ):
         with self.connection_mutex:
             if self.connection is None:
                 return False
             if self.connection.is_open is False:
                 return False
             if relative is False:
-                mouse.send_data_absolute(self.connection, x, y, button_name, self.screen_x, self.screen_y, wheel)
+                mouse.send_data_absolute(
+                    self.connection,
+                    x,
+                    y,
+                    button_name,
+                    self.screen_x,
+                    self.screen_y,
+                    wheel,
+                )
             else:
                 mouse.send_data_relative(self.connection, x, y, button_name, wheel)
 
-    def convert_hid_key_code_to_ch9329_key(
-            self,
-            code: int
-    ) -> str:
+    def convert_hid_key_code_to_ch9329_key(self, code: int) -> str:
         string_key: str = HexData.int_to_hex(code)
-        ch9329_key: str | None = self.ch9329_hid_map.get(
-            string_key,
-            None
-        )
+        ch9329_key: str | None = self.ch9329_hid_map.get(string_key, None)
         if ch9329_key is None:
             logger.error(f"hid key not found: {string_key}")
             ch9329_key = ""

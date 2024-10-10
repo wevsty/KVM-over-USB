@@ -14,5 +14,5 @@ def project_binary_directory_path(*paths: str) -> str:
     return str(os.path.join(BINARY_DIRECTORY_PATH, *paths))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

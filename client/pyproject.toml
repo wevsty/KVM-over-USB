@@ -3,7 +3,21 @@ name = "usb_kvm_client"
 version = "1.0.0.0"
 description = "simple USB KVM client"
 authors = ["wevsty <ty@wevs.org>"]
-readme = "README.md"
+package-mode = false
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+include = "\\.pyi?$"
+extend-exclude = """
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+(
+  ^/.idea/.*
+  | /ui_resource/.*
+  | /data/.*
+)
+"""
 
 [tool.poetry.dependencies]
 python = "<3.13,>=3.9"
@@ -17,6 +31,10 @@ pywinhook = "^1.6.2"
 pyserial = "^3.5"
 ch9329 = "^1.2.7"
 nuitka = "^2.4.8"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.10.0"
+isort = "^5.13.2"
 
 [build-system]
 requires = ["poetry-core"]

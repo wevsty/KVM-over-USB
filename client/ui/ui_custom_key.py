@@ -1,6 +1,6 @@
 import re
 
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QDialog, QInputDialog
 
 from data.keyboard_shift_symbol import SHIFT_SYMBOL
@@ -47,9 +47,7 @@ class CustomKeyDialog(QDialog, custom_key_ui.Ui_CustomKeyDialog):
             self.key_sequence_edit.setKeySequence(key_sequence)
         else:
             # key_sequence != "+"
-            key_sequence_list = key_sequence.split(
-                "+"
-            ).copy()  # 将复合键转换为功能键
+            key_sequence_list = key_sequence.split("+").copy()  # 将复合键转换为功能键
             if "Ctrl" in key_sequence_list:
                 self.push_button_ctrl.setChecked(True)
             else:

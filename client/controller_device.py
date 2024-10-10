@@ -5,15 +5,21 @@ from loguru import logger
 
 from controller_ch9329 import Controller
 from keyboard_buffer import KeyboardKeyBuffer, KeyStateEnum
-from mouse_buffer import MouseStateBuffer, MouseWheelStateEnum, MouseButtonCodeEnum, \
-    MouseButtonStateEnum
+from mouse_buffer import (
+    MouseButtonCodeEnum,
+    MouseButtonStateEnum,
+    MouseStateBuffer,
+    MouseWheelStateEnum,
+)
 
 if os.name == "nt":  # sys.platform == "win32":
     from serial.tools.list_ports_windows import comports as list_comports
 elif os.name == "posix":
     from serial.tools.list_ports_posix import comports as list_comports
 else:
-    raise ImportError("Sorry: no implementation for your platform {} available".format(os.name))
+    raise ImportError(
+        "Sorry: no implementation for your platform {} available".format(os.name)
+    )
 
 
 class ControllerDebugOptions:
@@ -45,10 +51,15 @@ class ControllerDeviceBase(ABC):
 
 class ControllerDevice(ControllerDeviceBase):
     FUNCTION_KEYS = [
-        "ctrl_left", "ctrl_right",
-        "shift_left", "shift_right",
-        "alt_left", "alt_right",
-        "win_left", "win_right", "win_app"
+        "ctrl_left",
+        "ctrl_right",
+        "shift_left",
+        "shift_right",
+        "alt_left",
+        "alt_right",
+        "win_left",
+        "win_right",
+        "win_app",
     ]
 
     def __init__(self):
@@ -61,7 +72,9 @@ class ControllerDevice(ControllerDeviceBase):
     @staticmethod
     def detect_serial_ports() -> list[str]:
         port_name_list: list[str] = []
-        port_info_list: serial.tools.list_ports.ListPortInfo = list_comports(include_links=False)
+        port_info_list: serial.tools.list_ports.ListPortInfo = list_comports(
+            include_links=False
+        )
         for port_info in port_info_list:
             port_name_list.append(port_info.name)
         port_info_list.sort()
@@ -85,11 +98,13 @@ class ControllerDevice(ControllerDeviceBase):
                 self.port = ""
         if self.port == "":
             return status
-        self.controller.set_connection_params(self.port, self.baud, self.screen_x, self.screen_y)
+        self.controller.set_connection_params(
+            self.port, self.baud, self.screen_x, self.screen_y
+        )
         if ControllerDebugOptions.DEVICE:
             logger.debug(
-                f"create_connection({self.port}, {self.baud}, " +
-                f"{self.screen_x}, {self.screen_y})"
+                f"create_connection({self.port}, {self.baud}, "
+                + f"{self.screen_x}, {self.screen_y})"
             )
         status = self.controller.create_connection()
         if ControllerDebugOptions.DEVICE:

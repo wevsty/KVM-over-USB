@@ -1,7 +1,9 @@
 import codecs
 import sys
-from PySide6.QtCore import Signal, Slot, Qt
+
+from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import QApplication, QDialog
+
 from project_path import project_source_directory_path
 from ui.ui_resource import about_ui
 
@@ -11,7 +13,9 @@ class AboutDialog(QDialog, about_ui.Ui_AboutDialog):
         super().__init__(parent)
         self.setupUi(self)
         self.label_python_version_value.setText(
-            "{}.{}.{}".format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
+            "{}.{}.{}".format(
+                sys.version_info.major, sys.version_info.minor, sys.version_info.micro
+            )
         )
         self.load_dependencies_info()
 
@@ -26,7 +30,7 @@ class AboutDialog(QDialog, about_ui.Ui_AboutDialog):
         }
         encoding = "utf-8"
         encoding_length = 0
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             binary_data = f.read(4)
             for bom, bom_encoding in BOM_TABLE.items():
                 if binary_data.startswith(bom):
