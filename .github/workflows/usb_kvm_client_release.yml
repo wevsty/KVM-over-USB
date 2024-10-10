@@ -24,15 +24,14 @@ jobs:
           architecture: "x64"
           cache: "pip"
           cache-dependency-path: '**/requirements*.txt'
-      # Code Style Check
-      - name: Code Style Check
-        uses: psf/black@stable
-        with:
-          options: "--check --verbose --config ./client/pyproject.toml"
-          src: "./client"
       # Install Dependencies
       - name: Install Dependencies
         run: pip install -r ./client/data/requirements.txt
+      # Code Static Check
+      - name: Code Static Check
+        run: |
+          black --check --verbose --config ./client/pyproject.toml ./client
+          flake8 --verbose --config=./client/flake8.cfg ./client
       # Build python script into a stand-alone exe
       - name: Build With Nuitka
         uses: Nuitka/Nuitka-Action@main
