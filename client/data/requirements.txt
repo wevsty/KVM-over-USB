@@ -1,8 +1,15 @@
-﻿ch9329==1.2.7
+black==24.10.0
+ch9329==1.2.7
+click==8.1.7
 colorama==0.4.6
+isort==5.13.2
 loguru==0.7.2
+mypy-extensions==1.0.0
 Nuitka==2.4.8
 ordered-set==4.1.0
+packaging==24.1
+pathspec==0.12.1
+platformdirs==4.3.6
 pyserial==3.5
 PySide6==6.8.0
 PySide6_Addons==6.8.0
