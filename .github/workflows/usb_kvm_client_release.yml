@@ -16,13 +16,6 @@ jobs:
       # Check-out repository
       - name: Check-out
         uses: actions/checkout@v4
-      # Code Style Check
-      - name: Code Style Check
-        uses: psf/black@stable
-        with:
-          options: "--check --verbose"
-          src: "./client"
-          use_pyproject: true
       # Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -31,6 +24,12 @@ jobs:
           architecture: "x64"
           cache: "pip"
           cache-dependency-path: '**/requirements*.txt'
+      # Code Style Check
+      - name: Code Style Check
+        uses: psf/black@stable
+        with:
+          options: "--check --verbose --config ./client/pyproject.toml"
+          src: "./client"
       # Install Dependencies
       - name: Install Dependencies
         run: pip install -r ./client/data/requirements.txt
