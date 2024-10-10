@@ -1,4 +1,7 @@
 # KVM over USB
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![usb_kvm_client_release](https://github.com/wevsty/KVM-over-USB/actions/workflows/usb_kvm_client_release.yml/badge.svg)](https://github.com/wevsty/KVM-over-USB/actions/workflows/usb_kvm_client_release.yml)
+
 一个简单的KVM USB方案
 
 Documentation English Version: https://github.com/wevsty/KVM-over-USB/blob/main/README_en-us.md
@@ -16,9 +19,13 @@ Documentation English Version: https://github.com/wevsty/KVM-over-USB/blob/main/
 
 ### 硬件清单
 1. 视频采集卡：可以使用MS2109或MS2130等芯片的视频采集卡，市场售价约为30到100元人民币。 
-2. CH340 转 CH9329 的USB连接线：CH340 是一个常见的USB转串口芯片，通过串口接入 CH9329，最终将 CH9329 连接到被控制的设备即可。 
+2. CH340转CH9329的USB连接线：
+CH340是一个常见的USB转串口芯片，通过串口接入CH9329，最终将CH9329连接到被控制的设备即可。 
+
 备注1：在购物平台上有成品的线，可直接购买，市场售价约20元人民币。 
-备注2：如有特殊需要，也可以自行购入使用其他芯片的USB转串口连接线（比如：FT232）然后购买带有串行接口的 CH9329 模块使用。 
+
+备注2：如有特殊需要，也可以自行购入使用其他芯片的USB转串口连接线（比如：FT232）然后购买带有串行接口的CH9329模块使用。 
+
 3. HDMI连接线。 
 4. 如设备没有足够多的USB接口，建议搭配一个USB HUB使用。 
 
