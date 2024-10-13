@@ -3,6 +3,7 @@ import sys
 
 from PySide6.QtWidgets import QDialog
 
+from project_info import VERSION_STRING
 from project_path import project_source_directory_path
 from ui.ui_resource import about_ui
 
@@ -11,6 +12,7 @@ class AboutDialog(QDialog, about_ui.Ui_AboutDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+        self.label_client_version_value.setText(VERSION_STRING)
         self.label_python_version_value.setText(
             "{}.{}.{}".format(
                 sys.version_info.major, sys.version_info.minor, sys.version_info.micro

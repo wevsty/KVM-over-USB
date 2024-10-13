@@ -9,32 +9,37 @@
         <translation>关于</translation>
     </message>
     <message>
-        <location filename="../ui/ui_resource/about.ui" line="24"/>
+        <location filename="../ui/ui_resource/about.ui" line="22"/>
         <source>Project name:</source>
         <translation>项目名称：</translation>
     </message>
     <message>
-        <location filename="../ui/ui_resource/about.ui" line="48"/>
+        <location filename="../ui/ui_resource/about.ui" line="46"/>
         <source>Project description:</source>
         <translation>项目说明：</translation>
     </message>
     <message>
-        <location filename="../ui/ui_resource/about.ui" line="55"/>
-        <source>A simple KVM client</source>
-        <translation>一个简单的KVM客户端</translation>
+        <location filename="../ui/ui_resource/about.ui" line="53"/>
+        <source>A simple USB KVM solution</source>
+        <translation>一个简单的USB KVM解决方案</translation>
     </message>
     <message>
-        <location filename="../ui/ui_resource/about.ui" line="68"/>
-        <source>Fork from:</source>
-        <translation>分叉来自：</translation>
+        <location filename="../ui/ui_resource/about.ui" line="64"/>
+        <source>Project fork from:</source>
+        <translation>项目分叉来自：</translation>
     </message>
     <message>
-        <location filename="../ui/ui_resource/about.ui" line="89"/>
+        <location filename="../ui/ui_resource/about.ui" line="85"/>
+        <source>Client version:</source>
+        <translation>客户端版本：</translation>
+    </message>
+    <message>
+        <location filename="../ui/ui_resource/about.ui" line="103"/>
         <source>Python version:</source>
         <translation>Python 版本：</translation>
     </message>
     <message>
-        <location filename="../ui/ui_resource/about.ui" line="105"/>
+        <location filename="../ui/ui_resource/about.ui" line="119"/>
         <source>Dependencies:</source>
         <translation>依赖：</translation>
     </message>
