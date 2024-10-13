@@ -23,11 +23,11 @@ extend-exclude = """
 python = "<3.13,>=3.9"
 pyyaml = "^6.0.2"
 loguru = "^0.7.2"
-pywin32 = ">=308"
+pywin32 = { version = ">=308", markers = "platform_system == 'Windows'" }
 pyside6-addons = "^6.8.0"
 pyside6-essentials = "^6.8.0"
 pyside6 = "^6.8.0"
-pywinhook = "^1.6.2"
+pywinhook = { version = "^1.6.2", markers = "platform_system == 'Windows'" }
 pyserial = "^3.5"
 ch9329 = "^1.2.7"
 nuitka = "^2.4.8"
