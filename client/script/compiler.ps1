@@ -1,3 +1,5 @@
+$root_path = (Resolve-Path ..).path;
+Set-Location $root_path
 # pip freeze > ./data/requirements.txt
 pip freeze | Out-File ./data/requirements.txt -Encoding utf8
 
