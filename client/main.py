@@ -446,8 +446,9 @@ class MyMainWindow(MainWindow):
         self.statusbar_label_scr_lock = QLabel()
         # 设置字体
         font = QFont()
-        font.setFamily("Microsoft YaHei UI")
+        font.setFamily("Segoe UI")
         font.setBold(True)
+        font.setPointSize(10)
         self.statusbar_label_ctrl.setFont(font)
         self.statusbar_label_shift.setFont(font)
         self.statusbar_label_alt.setFont(font)
