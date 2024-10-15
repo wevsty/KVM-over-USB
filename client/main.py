@@ -8,88 +8,44 @@ import sys
 import tempfile
 from typing import Optional
 
-import pythoncom
 import pyWinhook as pyHook
-from loguru import logger
-from PySide6.QtCore import (
-    QEvent,
-    QEventLoop,
-    QLocale,
-    QMutex,
-    QMutexLocker,
-    QObject,
-    QPoint,
-    QSize,
-    Qt,
-    QThread,
-    QTimer,
-    QTranslator,
-    QUrl,
-    Signal,
-)
-from PySide6.QtGui import (
-    QCloseEvent,
-    QCursor,
-    QFont,
-    QGuiApplication,
-    QIcon,
-    QImage,
-    QKeyEvent,
-    QMouseEvent,
-    QPixmap,
-    QSurfaceFormat,
-)
-from PySide6.QtMultimedia import (
-    QAudioDevice,
-    QAudioInput,
-    QAudioOutput,
-    QCamera,
-    QImageCapture,
-    QMediaCaptureSession,
-    QMediaDevices,
-    QMediaFormat,
-    QMediaRecorder,
-    QVideoFrame,
-    QVideoSink,
-)
+import pythoncom
+from PySide6.QtCore import (QEvent, QEventLoop, QLocale, QMutex, QMutexLocker,
+                            QObject, QPoint, QSize, Qt, QThread, QTimer,
+                            QTranslator, QUrl, Signal)
+from PySide6.QtGui import (QCloseEvent, QCursor, QFont, QGuiApplication, QIcon,
+                           QImage, QKeyEvent, QMouseEvent, QPixmap,
+                           QSurfaceFormat)
+from PySide6.QtMultimedia import (QAudioDevice, QAudioInput, QAudioOutput,
+                                  QCamera, QImageCapture, QMediaCaptureSession,
+                                  QMediaDevices, QMediaFormat, QMediaRecorder,
+                                  QVideoFrame, QVideoSink)
 from PySide6.QtMultimediaWidgets import QVideoWidget
-from PySide6.QtWidgets import (
-    QApplication,
-    QCheckBox,
-    QFileDialog,
-    QLabel,
-    QMessageBox,
-    QWidget,
-)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QFileDialog, QLabel,
+                               QMessageBox, QWidget)
+from loguru import logger
 
 import controller_device
 from data.hex_data import HexData
 from data.keyboard_key_name_to_hid_code import KEY_NAME_TO_HID_CODE
 from data.keyboard_scancode_to_hid_code import SCANCODE_TO_HID_CODE
 from data.keyboard_shift_symbol import SHIFT_SYMBOL
-from keyboard_buffer import KeyboardIndicatorBuffer, KeyboardKeyBuffer, KeyStateEnum
-from mouse_buffer import (
-    MouseButtonCodeEnum,
-    MouseButtonStateEnum,
-    MouseStateBuffer,
-    MouseWheelStateEnum,
-)
+from keyboard_buffer import (KeyboardIndicatorBuffer, KeyboardKeyBuffer,
+                             KeyStateEnum)
+from mouse_buffer import (MouseButtonCodeEnum, MouseButtonStateEnum,
+                          MouseStateBuffer, MouseWheelStateEnum)
 from project_config import MainConfig
-from project_path import project_binary_directory_path, project_source_directory_path
+from project_path import (project_binary_directory_path,
+                          project_source_directory_path)
 from ui.ui_about import AboutDialog
-from ui.ui_controller_device_setup import (
-    ControllerDeviceConfig,
-    ControllerDeviceSetupDialog,
-)
+from ui.ui_controller_device_setup import (ControllerDeviceConfig,
+                                           ControllerDeviceSetupDialog)
 from ui.ui_custom_key import CustomKeyDialog
 from ui.ui_indicator_lights import IndicatorLightsDialog
 from ui.ui_main import MainWindow
 from ui.ui_paste_board import PasteBoardDialog
-from ui.ui_video_device_setup import (
-    AudioDeviceConfig,
-    VideoDeviceConfig,
-    VideoDeviceSetupDialog,
-)
+from ui.ui_video_device_setup import (AudioDeviceConfig, VideoDeviceConfig,
+                                      VideoDeviceSetupDialog)
 
 
 class ControllerEventWorker(QObject):
@@ -99,13 +55,15 @@ class ControllerEventWorker(QObject):
     def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
         self.mutex = QMutex()
+        self.mutex_locker = QMutexLocker(self.mutex)
         if controller_device.GLOBAL_CONTROLLER_DEVICE is None:
             controller_device.GLOBAL_CONTROLLER_DEVICE = (
                 controller_device.ControllerDevice()
             )
-        self.command_send_signal.connect(self.command_event)
+        self.command_send_signal.connect(self.command_send)
+        self.command_reply_signal.connect(self.command_reply)
 
-    def command_event(self, command: str, buffer: object) -> tuple[str, int, object]:
+    def command_send(self, command: str, buffer: object) -> tuple[str, int, object]:
         """
         command list:
         "device_open"
@@ -118,13 +76,15 @@ class ControllerEventWorker(QObject):
         "mouse_relative_write"
         "mouse_absolute_write"
         """
-        mutex_locker = QMutexLocker(self.mutex)
-        with mutex_locker:
+        with self.mutex_locker:
             _, status_code, reply = (
                 controller_device.GLOBAL_CONTROLLER_DEVICE.device_event(command, buffer)
             )
             self.command_reply_signal.emit(command, status_code, reply)
         return command, status_code, reply
+
+    def command_reply(self, command: str, status: int, data: object):
+        pass
 
 
 class MyMainWindow(MainWindow):
@@ -160,6 +120,7 @@ class MyMainWindow(MainWindow):
             "pause_mouse": False,
             "quick_paste_enabled": True,
             "hook_state": False,
+            "block_input": False,
         }
 
         # 初始化变量
@@ -446,9 +407,9 @@ class MyMainWindow(MainWindow):
         self.statusbar_label_scr_lock = QLabel()
         # 设置字体
         font = QFont()
-        font.setFamily("Segoe UI")
         font.setBold(True)
-        font.setPointSize(10)
+        # font.setFamily("Segoe UI")
+        # font.setPointSize(10)
         self.statusbar_label_ctrl.setFont(font)
         self.statusbar_label_shift.setFont(font)
         self.statusbar_label_alt.setFont(font)
@@ -536,7 +497,7 @@ class MyMainWindow(MainWindow):
         self.action_record_video.triggered.connect(self.video_record_trigger)
 
         # keyboard
-        self.action_pause_keyboard.triggered.connect(self.input_pause_state)
+        self.action_pause_keyboard.triggered.connect(self.user_input_state_sync)
         self.action_reload_keyboard.triggered.connect(
             lambda: self.controller_device_reload("keyboard")
         )
@@ -556,7 +517,7 @@ class MyMainWindow(MainWindow):
         self.action_sync_indicator.triggered.connect(self.sync_indicator_action)
 
         # mouse
-        self.action_pause_mouse.triggered.connect(self.input_pause_state)
+        self.action_pause_mouse.triggered.connect(self.user_input_state_sync)
         self.action_reload_mouse.triggered.connect(
             lambda: self.controller_device_reload("mouse")
         )
@@ -1167,8 +1128,8 @@ class MyMainWindow(MainWindow):
     def window_exit(self) -> None:
         self.close()
 
-    # 设置输入转发状态
-    def input_pause_state(self):
+    # 同步用户输入状态
+    def user_input_state_sync(self):
         if self.action_pause_keyboard.isChecked() is True:
             self.status["pause_keyboard"] = True
         else:
@@ -1178,6 +1139,10 @@ class MyMainWindow(MainWindow):
             self.status["pause_mouse"] = True
         else:
             self.status["pause_mouse"] = False
+
+    # 屏蔽或者恢复用户输入
+    def user_input_block(self, block: bool):
+        self.status["block_input"] = block
 
     def shortcut_key_send(self, keys: list[str]):
         key_code_list = list()
@@ -1215,6 +1180,7 @@ class MyMainWindow(MainWindow):
 
     # 使用键盘发送字符串
     def keyboard_send_string(self, data: str):
+        self.user_input_block(True)
         shift_hid_code: int = self.keyboard_key_name_to_hid_code.get("shift", 0)
         assert shift_hid_code != 0
         # 强制关闭 capslock
@@ -1254,6 +1220,7 @@ class MyMainWindow(MainWindow):
                     key_code, KeyStateEnum.RELEASE
                 )
                 self.sleep(self.config_root["paste_board"]["interval"])
+        self.user_input_block(False)
 
     # 快速粘贴功能开关切换
     def quick_paste_toggle(self):
@@ -1663,9 +1630,11 @@ class MyMainWindow(MainWindow):
         if not self.status["mouse_captured"]:
             self.setCursor(Qt.ArrowCursor)
             return
+        # 阻止输入的情况下不响应移动事件
+        if self.status["block_input"] is True:
+            return
         # 暂停鼠标的状态下不响应移动事件
         if self.status["pause_mouse"] is True:
-            self.setCursor(Qt.ArrowCursor)
             return
         if self.status["hide_cursor_enabled"] or self.status["mouse_relative_mode"]:
             self.setCursor(Qt.BlankCursor)
@@ -1683,6 +1652,8 @@ class MyMainWindow(MainWindow):
             self.mouse_capture()
             return
         if self.status["mouse_captured"] is False:
+            return
+        if self.status["block_input"] is True:
             return
         if self.status["pause_mouse"] is True:
             return
@@ -1704,6 +1675,8 @@ class MyMainWindow(MainWindow):
     def mouseReleaseEvent(self, event):
         if self.status["mouse_captured"] is False:
             return
+        if self.status["block_input"] is True:
+            return
         if self.status["pause_mouse"] is True:
             return
         button_code = self.convert_to_button_code(event.button())
@@ -1722,6 +1695,8 @@ class MyMainWindow(MainWindow):
     # 鼠标滚动事件
     def wheelEvent(self, event):
         if self.status["mouse_captured"] is False:
+            return
+        if self.status["block_input"] is True:
             return
         if self.status["pause_mouse"] is True:
             return
@@ -1762,6 +1737,8 @@ class MyMainWindow(MainWindow):
             if is_register_function_keys:
                 self.clear_keyboard_key_buffer()
                 return
+        if self.status["block_input"] is True:
+            return
         if self.status["pause_keyboard"] is True:
             return
         # 如果是指示器按键则更新指示器buffer
@@ -1781,6 +1758,8 @@ class MyMainWindow(MainWindow):
     # 键盘松开事件
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         if event.isAutoRepeat():
+            return
+        if self.status["block_input"] is True:
             return
         if self.status["pause_keyboard"] is True:
             return
