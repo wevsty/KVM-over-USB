@@ -1,4 +1,4 @@
-VERSION_STRING = "v2024.10.14"
+VERSION_STRING = "v2024.10.25"
 
 
 if __name__ == "__main__":
