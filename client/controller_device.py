@@ -205,6 +205,10 @@ class ControllerDevice(ControllerDeviceBase):
         real_x = int(round(x * self.screen_x))
         real_y = int(round(y * self.screen_y))
 
+        # 确保值不会超过屏幕范围
+        real_x = min(real_x, self.screen_x)
+        real_y = min(real_y, self.screen_y)
+
         if buffer.wheel == MouseWheelStateEnum.UP:
             # 滚轮向上
             wheel = -1

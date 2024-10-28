@@ -76,6 +76,7 @@
     <addaction name="separator"/>
     <addaction name="action_relative_mouse"/>
     <addaction name="action_hide_cursor"/>
+    <addaction name="action_correction_cursor"/>
    </widget>
    <widget class="QMenu" name="menu_tools">
     <property name="title">
@@ -366,6 +367,14 @@
   <action name="action_sync_indicator">
    <property name="text">
     <string>Sync indicator</string>
+   </property>
+  </action>
+  <action name="action_correction_cursor">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Correction cursor</string>
    </property>
   </action>
  </widget>

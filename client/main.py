@@ -75,6 +75,7 @@ from mouse_buffer import (
     MouseWheelStateEnum,
 )
 from project_config import MainConfig
+from project_info import CONFIG_VERSION_STRING
 from project_path import project_binary_directory_path, project_source_directory_path
 from ui.ui_about import AboutDialog
 from ui.ui_controller_device_setup import (
@@ -158,13 +159,14 @@ class MyMainWindow(MainWindow):
             "fullscreen_enabled": False,
             "topmost_enabled": False,
             "mouse_captured": False,
-            "mouse_relative_mode": False,
+            "relative_mode_enabled": False,
             "hide_cursor_enabled": False,
-            "pause_keyboard": False,
-            "pause_mouse": False,
+            "correction_cursor_enabled": False,
+            "pause_keyboard_enabled": False,
+            "pause_mouse_enabled": False,
             "quick_paste_enabled": True,
+            "block_input_enabled": False,
             "hook_state": False,
-            "block_input": False,
         }
 
         # 初始化变量
@@ -253,9 +255,9 @@ class MyMainWindow(MainWindow):
 
         # 鼠标设置
         self.mouse_last_pos: None | QPoint = None
-        self.relative_mouse_speed = self.config_mouse["mouse_relative_speed"]
-        if self.config_mouse["mouse_report_freq"] != 0:
-            self.mouse_report_interval = 1000 / self.config_mouse["mouse_report_freq"]
+        self.relative_mouse_speed = self.config_mouse["relative_speed"]
+        if self.config_mouse["report_freq"] != 0:
+            self.mouse_report_interval = 1000 / self.config_mouse["report_freq"]
             self.dynamic_mouse_report_interval = False
         else:
             self.mouse_report_interval = 10
@@ -315,6 +317,12 @@ class MyMainWindow(MainWindow):
         try:
             self.config_file = MainConfig(project_binary_directory_path("config.yaml"))
             self.config_root: dict = self.config_file.data
+            config_version = self.config_root["config_version"]
+            if config_version != CONFIG_VERSION_STRING:
+                raise ValueError(
+                    self.tr("The configuration file does not match the program.\n")
+                    + self.tr("Please delete the existing configuration file.\n")
+                )
             self.config_ui: dict = self.config_root["ui"]
             self.config_video_record: dict = self.config_root["video_record"]
             self.config_video: dict = self.config_root["video"]
@@ -381,6 +389,7 @@ class MyMainWindow(MainWindow):
         self.action_release_mouse.setIcon(self.load_icon("mouse-off"))
         self.action_relative_mouse.setIcon(self.load_icon("relative"))
         self.action_hide_cursor.setIcon(self.load_icon("cursor"))
+        self.action_correction_cursor.setIcon(self.load_icon("cursor-correction"))
 
         # menu_tools
         self.action_open_windows_device_manager.setIcon(self.load_icon("device"))
@@ -567,8 +576,11 @@ class MyMainWindow(MainWindow):
         )
         self.action_capture_mouse.triggered.connect(self.mouse_capture_action)
         self.action_release_mouse.triggered.connect(self.mouse_capture_release_action)
-        self.action_relative_mouse.triggered.connect(self.mouse_relative_mouse)
-        self.action_hide_cursor.triggered.connect(self.mouse_hide_cursor)
+        self.action_relative_mouse.triggered.connect(self.mouse_relative_mouse_action)
+        self.action_hide_cursor.triggered.connect(self.mouse_hide_cursor_action)
+        self.action_correction_cursor.triggered.connect(
+            self.mouse_cursor_correction_action
+        )
 
         # tools
         self.action_open_windows_device_manager.triggered.connect(
@@ -1186,18 +1198,18 @@ class MyMainWindow(MainWindow):
     # 同步用户输入状态
     def user_input_state_sync(self):
         if self.action_pause_keyboard.isChecked() is True:
-            self.status["pause_keyboard"] = True
+            self.status["pause_keyboard_enabled"] = True
         else:
-            self.status["pause_keyboard"] = False
+            self.status["pause_keyboard_enabled"] = False
 
         if self.action_pause_mouse.isChecked() is True:
-            self.status["pause_mouse"] = True
+            self.status["pause_mouse_enabled"] = True
         else:
-            self.status["pause_mouse"] = False
+            self.status["pause_mouse_enabled"] = False
 
     # 屏蔽或者恢复用户输入
     def user_input_block(self, block: bool):
-        self.status["block_input"] = block
+        self.status["block_input_enabled"] = block
 
     def shortcut_key_send(self, keys: list[str]):
         key_code_list = list()
@@ -1358,24 +1370,32 @@ class MyMainWindow(MainWindow):
     def mouse_capture_release_action(self) -> None:
         self.status["mouse_captured"] = False
 
-    def mouse_relative_mouse(self):
-        self.status["mouse_relative_mode"] = not self.status["mouse_relative_mode"]
-        self.action_relative_mouse.setChecked(self.status["mouse_relative_mode"])
+    def mouse_relative_mouse_action(self):
+        relative_mode = not self.status["relative_mode_enabled"]
+        self.status["relative_mode_enabled"] = relative_mode
+        self.action_relative_mouse.setChecked(relative_mode)
         self.statusBar().showMessage(
-            self.tr("Relative mouse: ")
-            + self.bool_to_behavior_string(self.status["mouse_relative_mode"])
+            self.tr("Relative mouse: ") + self.bool_to_behavior_string(relative_mode)
         )
 
     # 隐藏指针
-    def mouse_hide_cursor(self) -> None:
-        self.status["hide_cursor_enabled"] = not self.status["hide_cursor_enabled"]
-        if self.status["hide_cursor_enabled"]:
-            self.action_hide_cursor.setChecked(True)
-        else:
-            self.action_hide_cursor.setChecked(False)
+    def mouse_hide_cursor_action(self) -> None:
+        hide_cursor = not self.status["hide_cursor_enabled"]
+        self.status["hide_cursor_enabled"] = hide_cursor
+        self.action_hide_cursor.setChecked(hide_cursor)
         self.statusBar().showMessage(
             self.tr("Hide cursor when capture mouse: ")
-            + self.bool_to_behavior_string(self.status["hide_cursor_enabled"])
+            + self.bool_to_behavior_string(hide_cursor)
+        )
+
+    # 光标校正
+    def mouse_cursor_correction_action(self) -> None:
+        correction_cursor = not self.status["correction_cursor_enabled"]
+        self.status["correction_cursor_enabled"] = correction_cursor
+        self.action_correction_cursor.setChecked(correction_cursor)
+        self.statusBar().showMessage(
+            self.tr("Correction cursor: ")
+            + self.bool_to_behavior_string(correction_cursor)
         )
 
     def menu_tools_actions(self, action_name: str):
@@ -1556,8 +1576,7 @@ class MyMainWindow(MainWindow):
             height = self.video_widget.height()
             x_pos = self.video_widget.pos().x()
             y_pos = self.video_widget.pos().y()
-        x_diff = 0
-        y_diff = 0
+
         if self.config_video["keep_aspect_ratio"]:
             cam_scale = y_res / x_res
             finder_scale = height / width
@@ -1567,6 +1586,10 @@ class MyMainWindow(MainWindow):
             elif finder_scale < cam_scale:
                 x_diff = width - height / cam_scale
                 y_diff = 0
+        # 启用游标偏移校正
+        if self.status["correction_cursor_enabled"]:
+            x_pos += self.config_mouse["cursor_offset_x"]
+            y_pos += self.config_mouse["cursor_offset_y"]
         x_hid = (x - x_diff / 2 - x_pos) / (width - x_diff)
         y_hid = (y - y_diff / 2 - y_pos) / (height - y_diff)
         x_hid = max(min(x_hid, 1), 0)
@@ -1606,7 +1629,7 @@ class MyMainWindow(MainWindow):
 
     # 更新鼠标坐标缓冲区
     def update_mouse_position_buffer(self, x: int, y: int):
-        if not self.status["mouse_relative_mode"]:
+        if not self.status["relative_mode_enabled"]:
             self.update_mouse_position_buffer_with_absolute_mode(x, y)
         else:
             self.update_mouse_position_buffer_with_relative_mode()
@@ -1629,7 +1652,7 @@ class MyMainWindow(MainWindow):
 
     # 滚轮事件
     def mouse_scroll_report(self):
-        if self.status["mouse_relative_mode"]:
+        if self.status["relative_mode_enabled"]:
             command = "mouse_relative_write"
         else:
             command = "mouse_absolute_write"
@@ -1639,7 +1662,7 @@ class MyMainWindow(MainWindow):
         self.mouse_buffer.wheel = MouseWheelStateEnum.STOP
 
     def mouse_timer_report(self):
-        if self.status["mouse_relative_mode"]:
+        if self.status["relative_mode_enabled"]:
             command = "mouse_relative_write"
         else:
             command = "mouse_absolute_write"
@@ -1647,7 +1670,7 @@ class MyMainWindow(MainWindow):
             self.controller_event_worker.command_send_signal.emit(
                 command, self.mouse_buffer.dup()
             )
-            if self.status["mouse_relative_mode"]:
+            if self.status["relative_mode_enabled"]:
                 self.mouse_buffer.clear_point()
         self.mouse_need_report = False
 
@@ -1694,12 +1717,12 @@ class MyMainWindow(MainWindow):
             self.setCursor(Qt.ArrowCursor)
             return
         # 阻止输入的情况下不响应移动事件
-        if self.status["block_input"] is True:
+        if self.status["block_input_enabled"] is True:
             return
         # 暂停鼠标的状态下不响应移动事件
-        if self.status["pause_mouse"] is True:
+        if self.status["pause_mouse_enabled"] is True:
             return
-        if self.status["hide_cursor_enabled"] or self.status["mouse_relative_mode"]:
+        if self.status["hide_cursor_enabled"] or self.status["relative_mode_enabled"]:
             self.setCursor(Qt.BlankCursor)
         else:
             self.setCursor(Qt.ArrowCursor)
@@ -1716,18 +1739,18 @@ class MyMainWindow(MainWindow):
             return
         if self.status["mouse_captured"] is False:
             return
-        if self.status["block_input"] is True:
+        if self.status["block_input_enabled"] is True:
             return
-        if self.status["pause_mouse"] is True:
+        if self.status["pause_mouse_enabled"] is True:
             return
         button_code = self.convert_to_button_code(event.button())
         button_state = MouseButtonStateEnum.PRESS
-        if self.status["mouse_relative_mode"]:
+        if self.status["relative_mode_enabled"]:
             command = "mouse_relative_write"
         else:
             command = "mouse_absolute_write"
         self.mouse_buffer.set_button(button_code, button_state)
-        if self.status["mouse_relative_mode"]:
+        if self.status["relative_mode_enabled"]:
             self.mouse_buffer.clear_point()
         self.controller_event_worker.command_send_signal.emit(
             command, self.mouse_buffer.dup()
@@ -1738,18 +1761,18 @@ class MyMainWindow(MainWindow):
     def mouseReleaseEvent(self, event):
         if self.status["mouse_captured"] is False:
             return
-        if self.status["block_input"] is True:
+        if self.status["block_input_enabled"] is True:
             return
-        if self.status["pause_mouse"] is True:
+        if self.status["pause_mouse_enabled"] is True:
             return
         button_code = self.convert_to_button_code(event.button())
         button_state = MouseButtonStateEnum.RELEASE
-        if self.status["mouse_relative_mode"]:
+        if self.status["relative_mode_enabled"]:
             command = "mouse_relative_write"
         else:
             command = "mouse_absolute_write"
         self.mouse_buffer.set_button(button_code, button_state)
-        if self.status["mouse_relative_mode"]:
+        if self.status["relative_mode_enabled"]:
             self.mouse_buffer.clear_point()
         self.controller_event_worker.command_send_signal.emit(
             command, self.mouse_buffer.dup()
@@ -1759,9 +1782,9 @@ class MyMainWindow(MainWindow):
     def wheelEvent(self, event):
         if self.status["mouse_captured"] is False:
             return
-        if self.status["block_input"] is True:
+        if self.status["block_input_enabled"] is True:
             return
-        if self.status["pause_mouse"] is True:
+        if self.status["pause_mouse_enabled"] is True:
             return
         y = event.angleDelta().y()
         if y == 120:
@@ -1800,9 +1823,9 @@ class MyMainWindow(MainWindow):
             if is_register_function_keys:
                 self.clear_keyboard_key_buffer()
                 return
-        if self.status["block_input"] is True:
+        if self.status["block_input_enabled"] is True:
             return
-        if self.status["pause_keyboard"] is True:
+        if self.status["pause_keyboard_enabled"] is True:
             return
         # 如果是指示器按键则更新指示器buffer
         if keyboard_key == Qt.Key.Key_CapsLock:
@@ -1822,9 +1845,9 @@ class MyMainWindow(MainWindow):
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         if event.isAutoRepeat():
             return
-        if self.status["block_input"] is True:
+        if self.status["block_input_enabled"] is True:
             return
-        if self.status["pause_keyboard"] is True:
+        if self.status["pause_keyboard_enabled"] is True:
             return
         self.update_keyboard_buffer_with_scancode(
             event.nativeScanCode(), KeyStateEnum.RELEASE

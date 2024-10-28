@@ -1,4 +1,5 @@
 MAIN_DEFAULT_CONFIG_DATA = """
+config_version: v1
 ui:
   quick_paste: true
   fullscreen_state_alert: false
@@ -22,8 +23,10 @@ controller:
   port: auto
   baud: 9600
 mouse:
-  mouse_report_freq: 60
-  mouse_relative_speed: 0.6
+  relative_speed: 0.6
+  report_freq: 60
+  cursor_offset_x: 4
+  cursor_offset_y: 6
 paste_board:
   interval: 1
 shortcut_keys:
