@@ -1576,7 +1576,8 @@ class MyMainWindow(MainWindow):
             height = self.video_widget.height()
             x_pos = self.video_widget.pos().x()
             y_pos = self.video_widget.pos().y()
-
+        x_diff = 0
+        y_diff = 0
         if self.config_video["keep_aspect_ratio"]:
             cam_scale = y_res / x_res
             finder_scale = height / width
