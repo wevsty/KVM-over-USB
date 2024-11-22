@@ -9,7 +9,7 @@ isort==5.13.2
 loguru==0.7.2
 mccabe==0.7.0
 mypy-extensions==1.0.0
-Nuitka==2.4.11
+Nuitka==2.5.1
 ordered-set==4.1.0
 packaging==24.2
 pathspec==0.12.1
