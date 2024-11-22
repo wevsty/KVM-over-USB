@@ -1892,9 +1892,11 @@ def debug_mode(mode: bool):
             format="{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {name} - {message}",
             level="DEBUG",
         )
+        logger.add("debug.log", rotation="100 MB")
         controller_device.ControllerDebugOptions.DEVICE = True
         controller_device.ControllerDebugOptions.MOUSE = True
         controller_device.ControllerDebugOptions.KEYBOARD = True
+        logger.debug("Debug mode enabled")
     else:
         logger.add(
             sys.stdout,
@@ -1926,6 +1928,9 @@ def os_init():
         # 4K分辨率下字体发虚
         # 设置环境变量让渲染使用 freetype
         os.environ["QT_QPA_PLATFORM"] = "windows:fontengine=freetype"
+        # 设置二进制文件夹为工作目录
+        binary_path = project_binary_directory_path()
+        os.chdir(binary_path)
     elif system_name == "linux":
         pass
     else:
