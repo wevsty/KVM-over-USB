@@ -7,7 +7,7 @@ package-mode = false
 
 [tool.black]
 line-length = 88
-target-version = ["py312"]
+target-version = ["py313"]
 include = "\\.pyi?$"
 extend-exclude = """
 # A regex preceded with ^/ will apply only to files and directories
@@ -20,17 +20,17 @@ extend-exclude = """
 """
 
 [tool.poetry.dependencies]
-python = "<3.13,>=3.9"
+python = "<3.14,>=3.12"
 pyyaml = "^6.0.2"
 loguru = "^0.7.2"
 pywin32 = { version = ">=308", markers = "platform_system == 'Windows'" }
-pyside6-addons = "^6.8.0"
-pyside6-essentials = "^6.8.0"
-pyside6 = "^6.8.0"
+pyside6-addons = "6.8.1"
+pyside6-essentials = "6.8.1"
+pyside6 = "6.8.1"
 pywinhook = { version = "^1.6.2", markers = "platform_system == 'Windows'" }
 pyserial = "^3.5"
 ch9329 = "^1.2.7"
-nuitka = "^2.5.1"
+nuitka = "^2.5.4"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.10.0"
