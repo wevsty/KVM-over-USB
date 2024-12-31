@@ -56,7 +56,6 @@ jobs:
           windows-console-mode: disable
           windows-icon-from-ico: .\icons\main.ico
           onefile-windows-splash-screen-image: .\icons\splash.png
-          onefile: true
           quiet: true
       # Archive files
       - run: |
