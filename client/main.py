@@ -184,17 +184,17 @@ class MyMainWindow(MainWindow):
         self.keyboard_key_name_to_hid_code = dict()
         self.load_external_data()
 
-        # 加载配置文件
-        self.config_file: MainConfig | None = None
-        self.config: MainConfig = self.config_file
-        self.load_config()
-
-        # 窗口图标
+        # 加载窗口图标
         main_icon: QIcon = QIcon(f"{self.source_directory}/icons/main.ico")
         self.setWindowIcon(main_icon)
 
         # 初始化菜单图标
         self.init_menu_icon()
+
+        # 加载配置文件
+        self.config_file: MainConfig | None = None
+        self.config: MainConfig = self.config_file
+        self.load_config()
 
         # 子窗口
         self.video_device_setup_dialog = VideoDeviceSetupDialog()
