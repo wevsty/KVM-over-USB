@@ -30,9 +30,6 @@ video_record:
   frame_rate: 0
   quality: HighQuality
 shortcut_keys:
-  Alt+Tab:
-  - alt_left
-  - tab
   Alt+F4:
   - alt_left
   - f4
@@ -44,6 +41,9 @@ shortcut_keys:
   - ctrl_left
   - shift_left
   - esc
+  Meta+D:
+  - win_left
+  - d
   Meta+L:
   - win_left
   - l
