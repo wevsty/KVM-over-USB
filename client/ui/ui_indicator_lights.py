@@ -5,7 +5,9 @@ from keyboard_buffer import KeyboardIndicatorBuffer
 from ui.ui_resource import indicator_lights_ui
 
 
-class IndicatorLightsDialog(QDialog, indicator_lights_ui.Ui_IndicatorLightsDialog):
+class IndicatorLightsDialog(
+    QDialog, indicator_lights_ui.Ui_IndicatorLightsDialog
+):
     lock_key_clicked_signal = Signal(str)
 
     def __init__(self, parent=None):
@@ -29,8 +31,12 @@ class IndicatorLightsDialog(QDialog, indicator_lights_ui.Ui_IndicatorLightsDialo
         pass
 
     def refresh_status_from_buffer(self):
-        self.push_button_num_lock.setChecked(self.keyboard_indicator_lights.num_lock)
-        self.push_button_caps_lock.setChecked(self.keyboard_indicator_lights.caps_lock)
+        self.push_button_num_lock.setChecked(
+            self.keyboard_indicator_lights.num_lock
+        )
+        self.push_button_caps_lock.setChecked(
+            self.keyboard_indicator_lights.caps_lock
+        )
         self.push_button_scroll_lock.setChecked(
             self.keyboard_indicator_lights.scroll_lock
         )

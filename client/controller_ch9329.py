@@ -95,7 +95,9 @@ class ControllerCh9329(ControllerBase):
             self.close_connection()
         with self.connection_mutex:
             try:
-                self.connection = Serial(self.port, self.baud, timeout=self.timeout)
+                self.connection = Serial(
+                    self.port, self.baud, timeout=self.timeout
+                )
                 connection_status = True
             except SerialException:
                 self.connection = None
@@ -180,7 +182,9 @@ class ControllerCh9329(ControllerBase):
                     wheel,
                 )
             else:
-                mouse.send_data_relative(self.connection, x, y, button_name, wheel)
+                mouse.send_data_relative(
+                    self.connection, x, y, button_name, wheel
+                )
 
     def convert_hid_key_code_to_ch9329_key(self, code: int) -> str:
         string_key: str = HexData.int_to_hex(code)

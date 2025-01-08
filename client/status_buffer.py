@@ -21,14 +21,18 @@ class StatusBuffer(UserDict[str, typing.Any]):
         if isinstance(value, (int, float)):
             self.set_value(key, value)
         else:
-            raise StatusValueTypeException("The value type should be a int or float")
+            raise StatusValueTypeException(
+                "The value type should be a int or float"
+            )
 
     def get_number(self, key: str) -> int | float:
         value = self.get_value(key)
         if isinstance(value, (int, float)):
             return value
         else:
-            raise StatusValueTypeException("The value type should be a int or float")
+            raise StatusValueTypeException(
+                "The value type should be a int or float"
+            )
 
     def set_string(self, key: str, value: str) -> None:
         if isinstance(value, str):

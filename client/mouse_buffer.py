@@ -35,7 +35,9 @@ class MouseButton:
     def get(self) -> tuple[MouseButtonCodeEnum, MouseButtonStateEnum]:
         return self.code, self.state
 
-    def set(self, code: MouseButtonCodeEnum, state: MouseButtonStateEnum) -> None:
+    def set(
+        self, code: MouseButtonCodeEnum, state: MouseButtonStateEnum
+    ) -> None:
         self.code = code
         self.state = state
 

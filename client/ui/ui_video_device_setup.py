@@ -63,7 +63,9 @@ class VideoDeviceSetupDialog(QDialog, video_device_setup_ui.Ui_dialog):
         self.reference_audio_config = AudioDeviceConfig()
         self.refresh_devices()
         self.adjustSize()
-        self.combo_box_device.currentTextChanged.connect(self.refresh_video_device_info)
+        self.combo_box_device.currentTextChanged.connect(
+            self.refresh_video_device_info
+        )
 
     def get_auto_string(self) -> str:
         return self.tr("auto")

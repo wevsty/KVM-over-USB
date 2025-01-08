@@ -35,7 +35,9 @@ class ControllerDeviceSetupDialog(
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
         self.combobox_baud.setValidator(QIntValidator())
 
-    def set_controller_device_config(self, data: ControllerDeviceConfig) -> None:
+    def set_controller_device_config(
+        self, data: ControllerDeviceConfig
+    ) -> None:
         port_name_list = ControllerDevice.detect_serial_ports()
         self.combobox_com_port.clear()
         self.combobox_com_port.addItem(self.tr("auto"))

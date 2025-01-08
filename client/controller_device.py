@@ -20,7 +20,9 @@ elif os.name == "posix":
     from serial.tools.list_ports_common import ListPortInfo
 else:
     raise ImportError(
-        "Sorry: no implementation for your platform {} available".format(os.name)
+        "Sorry: no implementation for your platform {} available".format(
+            os.name
+        )
     )
 
 
@@ -80,7 +82,9 @@ class ControllerDevice(ControllerDeviceBase):
         port_info_list.sort()
         return port_name_list
 
-    def device_init(self, port: str, baud: int, screen_x: int, screen_y: int) -> None:
+    def device_init(
+        self, port: str, baud: int, screen_x: int, screen_y: int
+    ) -> None:
         self.port = port
         self.baud = baud
         self.screen_x = screen_x
@@ -137,9 +141,11 @@ class ControllerDevice(ControllerDeviceBase):
     # 设备事件
     # 返回0为成功
     # 返回非0为失败
-    def device_event(self, command: str, buffer: typing.Any) -> tuple[str, int, typing.Any]:
+    def device_event(
+        self, command: str, buffer: typing.Any
+    ) -> tuple[str, int, typing.Any]:
         status_code: int = 0
-        reply: Any = None
+        reply: typing.Any = None
 
         if command == "keyboard_write":
             self.keyboard_send_event(buffer)
@@ -182,7 +188,9 @@ class ControllerDevice(ControllerDeviceBase):
         press_function_keys = list()
         for key in keys:
             if key.state == KeyStateEnum.PRESS:
-                key_name = self.controller.convert_hid_key_code_to_ch9329_key(key.code)
+                key_name = self.controller.convert_hid_key_code_to_ch9329_key(
+                    key.code
+                )
                 if key_name in self.FUNCTION_KEYS:
                     press_function_keys.append(key_name)
                 else:
@@ -220,13 +228,21 @@ class ControllerDevice(ControllerDeviceBase):
             wheel = 0
 
         if buffer.button.state == MouseButtonStateEnum.RELEASE:
-            self.controller.mouse_send_data("null", real_x, real_y, wheel, False)
+            self.controller.mouse_send_data(
+                "null", real_x, real_y, wheel, False
+            )
         elif buffer.button.code == MouseButtonCodeEnum.LEFT_BUTTON:
-            self.controller.mouse_send_data("left", real_x, real_y, wheel, False)
+            self.controller.mouse_send_data(
+                "left", real_x, real_y, wheel, False
+            )
         elif buffer.button.code == MouseButtonCodeEnum.RIGHT_BUTTON:
-            self.controller.mouse_send_data("right", real_x, real_y, wheel, False)
+            self.controller.mouse_send_data(
+                "right", real_x, real_y, wheel, False
+            )
         elif buffer.button.code == MouseButtonCodeEnum.MIDDLE_BUTTON:
-            self.controller.mouse_send_data("center", real_x, real_y, wheel, False)
+            self.controller.mouse_send_data(
+                "center", real_x, real_y, wheel, False
+            )
         elif buffer.button.code == MouseButtonCodeEnum.UNKNOWN_BUTTON:
             self.controller.mouse_send_data("null", x, y, wheel, True)
         else:

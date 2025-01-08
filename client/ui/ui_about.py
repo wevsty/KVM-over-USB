@@ -15,7 +15,9 @@ class AboutDialog(QDialog, about_ui.Ui_AboutDialog):
         self.label_client_version_value.setText(VERSION_STRING)
         self.label_python_version_value.setText(
             "{}.{}.{}".format(
-                sys.version_info.major, sys.version_info.minor, sys.version_info.micro
+                sys.version_info.major,
+                sys.version_info.minor,
+                sys.version_info.micro,
             )
         )
         self.load_dependencies_info()

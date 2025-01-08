@@ -17,7 +17,9 @@ class CustomKeyDialog(QDialog, custom_key_ui.Ui_CustomKeyDialog):
         self.setWindowFlags(Qt.CustomizeWindowHint | Qt.WindowCloseButtonHint)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
         self.shortcut_key_clear()
-        self.key_sequence_edit.keySequenceChanged.connect(self.shortcut_key_changed)
+        self.key_sequence_edit.keySequenceChanged.connect(
+            self.shortcut_key_changed
+        )
         self.push_button_save.clicked.connect(self.shortcut_key_save)
         self.push_button_send.clicked.connect(self.shortcut_key_send)
         self.push_button_clear.clicked.connect(self.shortcut_key_clear)
@@ -47,7 +49,9 @@ class CustomKeyDialog(QDialog, custom_key_ui.Ui_CustomKeyDialog):
             self.key_sequence_edit.setKeySequence(key_sequence)
         else:
             # key_sequence != "+"
-            key_sequence_list = key_sequence.split("+").copy()  # 将复合键转换为功能键
+            key_sequence_list = key_sequence.split(
+                "+"
+            ).copy()  # 将复合键转换为功能键
             if "Ctrl" in key_sequence_list:
                 self.push_button_ctrl.setChecked(True)
             else:

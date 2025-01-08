@@ -76,7 +76,9 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
         self.setupUi(self)
         self.setWindowFlags(Qt.CustomizeWindowHint | Qt.WindowCloseButtonHint)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-        self.push_button_file_select.clicked.connect(self.select_file_button_clicked)
+        self.push_button_file_select.clicked.connect(
+            self.select_file_button_clicked
+        )
         self.push_button_send.clicked.connect(self.send_button_clicked)
         self.push_button_stop.clicked.connect(self.stop_button_clicked)
         self.progress_bar.setRange(0, 100)
@@ -84,7 +86,9 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
         self.file_path = None
         self.thread = QThread()
         self.send_worker = SendDataWorker()
-        self.send_worker.send_progress_value_signal.connect(self.update_progress_bar)
+        self.send_worker.send_progress_value_signal.connect(
+            self.update_progress_bar
+        )
         self.send_worker.send_string_signal.connect(self.send_string_signal)
         self.send_worker.moveToThread(self.thread)
 
@@ -126,7 +130,9 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
             reply = QMessageBox.warning(
                 self,
                 self.tr("Warning"),
-                self.tr("Selected file that is too large may take a long time.\n")
+                self.tr(
+                    "Selected file that is too large may take a long time.\n"
+                )
                 + self.tr("Please confirm to continue.\n"),
                 QMessageBox.StandardButton.Ok,
                 QMessageBox.StandardButton.Cancel,

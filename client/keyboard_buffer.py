@@ -24,7 +24,9 @@ class KeyboardKeyBuffer:
             if ks.code == key_code:
                 exist_flag = True
         if not exist_flag:
-            self.keyboard_buffer.append(KeyStateItem(key_code, KeyStateEnum.PRESS))
+            self.keyboard_buffer.append(
+                KeyStateItem(key_code, KeyStateEnum.PRESS)
+            )
 
     def key_release(self, key_code: int):
         for ks in self.keyboard_buffer:
