@@ -50,8 +50,8 @@ shortcut_keys:
   Meta+R:
   - win_left
   - r
-
 """
+MAIN_DEFAULT_CONFIG_DATA = MAIN_DEFAULT_CONFIG_DATA.strip()
 
 
 if __name__ == "__main__":
