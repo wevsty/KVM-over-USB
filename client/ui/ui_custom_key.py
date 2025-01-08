@@ -97,7 +97,8 @@ class CustomKeyDialog(QDialog, custom_key_ui.Ui_CustomKeyDialog):
             buffer.append("print_screen")
         key_sequence = self.key_sequence_edit.keySequence().toString()
         if key_sequence == "":
-            buffer.clear()
+            # buffer.clear()
+            pass
         else:
             buffer.append(key_sequence.lower())
         return buffer
