@@ -1,0 +1,15 @@
+#-------------------------------------------------------------------------------#
+#               Qodana analysis is configured by qodana.yaml file               #
+#             https://www.jetbrains.com/help/qodana/qodana-yaml.html            #
+#-------------------------------------------------------------------------------#
+version: "1.0"
+profile:
+  name: qodana.recommended
+include:
+  - name: SomeInspectionId
+exclude:
+  - name: All
+    paths:
+      - /ui/ui_resource
+
+linter: jetbrains/qodana-<linter>:2024.3
