@@ -76,6 +76,7 @@ from mouse_buffer import (
 from project_config import MainConfig
 from project_info import CONFIG_VERSION_STRING
 from project_path import project_binary_directory_path, project_source_directory_path
+from status_buffer import StatusBuffer
 from ui.ui_about import AboutDialog
 from ui.ui_controller_device_setup import (
     ControllerDeviceConfig,
@@ -149,25 +150,28 @@ class MyMainWindow(MainWindow):
         super().__init__(parent)
 
         # 初始化状态
-        self.status = {
-            "screen_height": 0,
-            "screen_width": 0,
-            "video_recording": False,
-            "camera_opened": False,
-            "audio_opened": False,
-            "controller_opened": False,
-            "fullscreen_enabled": False,
-            "topmost_enabled": False,
-            "mouse_captured": False,
-            "relative_mode_enabled": False,
-            "hide_cursor_enabled": False,
-            "correction_cursor_enabled": False,
-            "pause_keyboard_enabled": False,
-            "pause_mouse_enabled": False,
-            "quick_paste_enabled": True,
-            "block_input_enabled": False,
-            "hook_state": False,
-        }
+        self.status = StatusBuffer()
+        self.status.update(
+            {
+                "screen_height": 0,
+                "screen_width": 0,
+                "video_recording": False,
+                "camera": False,
+                "audio": False,
+                "controller": False,
+                "fullscreen": False,
+                "topmost_window": False,
+                "mouse_capture": False,
+                "relative_mode": False,
+                "hide_cursor": False,
+                "correction_cursor": False,
+                "pause_keyboard": False,
+                "pause_mouse": False,
+                "quick_paste": True,
+                "block_input": False,
+                "hook_state": False,
+            }
+        )
 
         # 初始化变量
         # self.mutex = QMutex()
@@ -176,8 +180,12 @@ class MyMainWindow(MainWindow):
         self.binary_directory: str = project_binary_directory_path()
         # 获取显示器分辨率大小
         self.desktop = QGuiApplication.primaryScreen()
-        self.status["screen_height"] = self.desktop.availableGeometry().height()
-        self.status["screen_width"] = self.desktop.availableGeometry().width()
+        self.status.set_number(
+            "screen_height", self.desktop.availableGeometry().height()
+        )
+        self.status.set_number(
+            "screen_width", self.desktop.availableGeometry().width()
+        )
 
         # 加载外部数据
         self.keyboard_scancode_to_hid_code = dict()
@@ -416,7 +424,7 @@ class MyMainWindow(MainWindow):
         if self.config.video["keep_aspect_ratio"]:
             self.action_keep_ratio.setChecked(True)
         if self.config.ui["quick_paste"]:
-            self.status["quick_paste_enabled"] = True
+            self.status.set_bool("quick_paste", True)
             self.action_quick_paste.setChecked(True)
 
     def init_video_widget(self):
@@ -760,7 +768,7 @@ class MyMainWindow(MainWindow):
         self.video_camera.errorOccurred.connect(self.video_camera_error_occurred)
         self.video_camera.start()
         if not self.video_camera.isActive():
-            self.status["camera_opened"] = False
+            self.status.set_bool("camera", False)
             QMessageBox.critical(
                 self,
                 self.tr("Video Error"),
@@ -770,7 +778,7 @@ class MyMainWindow(MainWindow):
             )
             return return_status
         else:
-            self.status["camera_opened"] = True
+            self.status.set_bool("camera", True)
         # 设置视频捕捉
         self.video_capture_session = QMediaCaptureSession()
         self.video_sink = QVideoSink()
@@ -799,7 +807,7 @@ class MyMainWindow(MainWindow):
         self.video_record.setVideoBitRate(self.config.video_record["encoding_bitrate"])
         self.video_record.setVideoFrameRate(self.config.video_record["frame_rate"])
         self.video_record.setVideoResolution(QSize())
-        self.status["video_recording"] = False
+        self.status.set_bool("video_recording", False)
         # 设置音频捕捉
         if self.config.audio["audio_support"] is True:
             self.audio_input = QAudioInput(self.audio_in_device)
@@ -810,7 +818,7 @@ class MyMainWindow(MainWindow):
             self.audio_output.setMuted(False)
             self.capture_session.setAudioInput(self.audio_input)
             self.capture_session.setAudioOutput(self.audio_output)
-            self.status["audio_opened"] = True
+            self.status.set_bool("audio", True)
             # self.video_record.setAudioBitRate(16)
             # self.video_record.setAudioSampleRate(48000)
             # self.video_record.record()
@@ -818,7 +826,7 @@ class MyMainWindow(MainWindow):
         else:
             self.audio_input = QAudioInput()
             self.audio_output = QAudioOutput()
-            self.status["audio_opened"] = False
+            self.status.set_bool("audio", False)
         return_status = True
         return return_status
 
@@ -826,7 +834,7 @@ class MyMainWindow(MainWindow):
     def video_device_connect(self, center=False) -> None:
         if not self.video_device_init():
             return
-        if not self.status["fullscreen_enabled"]:
+        if not self.status.is_enabled("fullscreen"):
             self.resize_window_with_video_resolution(center=center)
         fps = self.video_camera.cameraFormat().maxFrameRate()
         # self.device_event_handle("video_ok")
@@ -847,20 +855,20 @@ class MyMainWindow(MainWindow):
 
     # 停用视频设备
     def video_device_disconnect(self) -> None:
-        if self.status["camera_opened"]:
+        if self.status.is_enabled("camera"):
             self.video_camera.stop()
             self.video_camera.setActive(False)
             self.video_camera.deleteLater()
             self.video_capture_session.deleteLater()
             self.video_frame_capture.deleteLater()
             self.video_record.deleteLater()
-            self.status["camera_opened"] = False
-        if self.status["audio_opened"]:
+            self.status.set_bool("camera", False)
+        if self.status.is_enabled("audio"):
             self.audio_input.deleteLater()
             self.audio_output.deleteLater()
             self.audio_in_device = None
             self.audio_out_device = None
-            self.status["audio_opened"] = False
+            self.status.set_bool("audio", False)
         # self.device_event_handle("video_close")
         self.takeCentralWidget()
         self.setCentralWidget(self.disconnect_label)
@@ -875,8 +883,8 @@ class MyMainWindow(MainWindow):
 
     # 全屏模式
     def fullscreen_state_toggle(self) -> None:
-        self.status["fullscreen_enabled"] = not self.status["fullscreen_enabled"]
-        if self.status["fullscreen_enabled"]:
+        self.status.reverse_bool("fullscreen")
+        if self.status.is_enabled("fullscreen"):
             if self.config.ui["fullscreen_tip"]:
                 _, close_next_tip = MessageBox.optional_information(
                     self,
@@ -886,7 +894,7 @@ class MyMainWindow(MainWindow):
                     self.tr("Don't show again"),
                     False,
                     QMessageBox.StandardButton.Ok,
-                    QMessageBox.StandardButton.NoButton
+                    QMessageBox.StandardButton.NoButton,
                 )
                 if close_next_tip is True and self.config.ui["fullscreen_tip"] is True:
                     self.config.ui["fullscreen_tip"] = False
@@ -923,7 +931,7 @@ class MyMainWindow(MainWindow):
 
     # 全屏状态下鼠标动作事件
     def fullscreen_mouse_event(self, x: int, y: int):
-        if not self.status["fullscreen_enabled"]:
+        if not self.status.is_enabled("fullscreen"):
             return
         const_pixel = 5
         width = self.width()
@@ -944,7 +952,7 @@ class MyMainWindow(MainWindow):
 
     # 通过视频设备分辨率调整窗口大小
     def resize_window_with_video_resolution(self, center=True) -> None:
-        if self.status["fullscreen_enabled"]:
+        if self.status.is_enabled("fullscreen"):
             return
         menu_bar_height = self.menubar.height()
         status_bar_height = self.statusbar.height()
@@ -954,8 +962,10 @@ class MyMainWindow(MainWindow):
         retained_width = 16 * 5
         recommend_height = self.config.video["resolution_y"] + add_height
         recommend_width = self.config.video["resolution_x"]
-        if (self.status["screen_height"] - retained_height > recommend_height) and (
-            self.status["screen_width"] - retained_width > recommend_width
+        if (
+            self.status.get_number("screen_height") - retained_height > recommend_height
+        ) and (
+            self.status.get_number("screen_width") - retained_width > recommend_width
         ):
             # 如果屏幕大小足够
             self.showNormal()
@@ -966,8 +976,8 @@ class MyMainWindow(MainWindow):
         else:
             # 如屏幕大小不够
             while not (
-                (self.status["screen_height"] - retained_height > recommend_height)
-                and (self.status["screen_width"] - retained_width > recommend_width)
+                (self.status.get_number("screen_height") - retained_height > recommend_height)
+                and (self.status.get_number("screen_width") - retained_width > recommend_width)
             ):
                 recommend_height = int(recommend_height * 1 / 4)
                 recommend_width = int(recommend_width * 1 / 4)
@@ -989,9 +999,9 @@ class MyMainWindow(MainWindow):
 
     # 切换保持窗口在最前
     def window_topmost_state_toggle(self):
-        self.status["topmost_enabled"] = not self.status["topmost_enabled"]
+        self.status.reverse_bool("topmost_window")
         current_window_flag = self.windowFlags()
-        if self.status["topmost_enabled"]:
+        if self.status.is_enabled("topmost_window"):
             self.windowHandle().setFlags(
                 current_window_flag | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint
             )
@@ -1002,9 +1012,9 @@ class MyMainWindow(MainWindow):
             )
         self.statusBar().showMessage(
             self.tr("Window topmost: ")
-            + self.bool_to_behavior_string(self.status["topmost_enabled"])
+            + self.bool_to_behavior_string(self.status.is_enabled("topmost_window"))
         )
-        self.action_topmost.setChecked(self.status["topmost_enabled"])
+        self.action_topmost.setChecked(self.status.is_enabled("topmost_window"))
 
     # 保持比例拉伸
     def video_keep_aspect_ratio_toggle(self):
@@ -1039,21 +1049,21 @@ class MyMainWindow(MainWindow):
 
     # 保存当前帧命令触发
     def video_frame_capture_trigger(self) -> None:
-        if self.status["camera_opened"]:
+        if self.status.is_enabled("camera"):
             self.video_frame_capture.capture()
         logger.debug("video_frame_capture_trigger triggered")
 
     def video_record_trigger(self) -> None:
-        if not self.status["camera_opened"]:
+        if not self.status.is_enabled("camera"):
             return
         if (
             self.video_record.recorderState()
             == QMediaRecorder.RecorderState.RecordingState
         ):
             self.video_record.stop()
-        if self.status["video_recording"]:
+        if self.status.is_enabled("video_recording"):
             self.video_record.stop()
-            self.status["video_recording"] = False
+            self.set_bool("video_recording", False)
             self.action_record_video.setText(self.tr("Record video"))
             self.action_record_video.setChecked(False)
             self.statusBar().showMessage(self.tr("Video recording stopped"))
@@ -1068,7 +1078,7 @@ class MyMainWindow(MainWindow):
                 return
             self.video_record.setOutputLocation(QUrl.fromLocalFile(file_name))
             self.video_record.record()
-            self.status["video_recording"] = True
+            self.set_bool("video_recording", True)
             self.action_record_video.setText(self.tr("Stop recording"))
             self.action_record_video.setChecked(True)
             self.statusBar().showMessage(self.tr("Video recording started"))
@@ -1084,17 +1094,17 @@ class MyMainWindow(MainWindow):
         if command == "device_open":
             if status == 0:
                 # open 成功
-                self.status["controller_opened"] = True
+                self.status.set_bool("controller", True)
                 self.statusBar().showMessage(self.tr("Controller connected"))
                 # 连接成功发送读取键盘指示灯信号
                 self.controller_event_worker.command_send_signal.emit(
                     "keyboard_read", None
                 )
             else:
-                self.status["controller_opened"] = False
+                self.status.set_bool("controller", False)
                 self.statusBar().showMessage(self.tr("Controller connect failure"))
         elif command == "device_close":
-            self.status["controller_opened"] = False
+            self.status.set_bool("controller", False)
         elif command == "device_check":
             if status != 0:
                 # 检查连接返回失败
@@ -1217,18 +1227,18 @@ class MyMainWindow(MainWindow):
     # 同步用户输入状态
     def user_input_state_sync(self):
         if self.action_pause_keyboard.isChecked() is True:
-            self.status["pause_keyboard_enabled"] = True
+            self.status.set_bool("pause_keyboard", True)
         else:
-            self.status["pause_keyboard_enabled"] = False
+            self.status.set_bool("pause_keyboard", False)
 
         if self.action_pause_mouse.isChecked() is True:
-            self.status["pause_mouse_enabled"] = True
+            self.status.set_bool("pause_mouse", True)
         else:
-            self.status["pause_mouse_enabled"] = False
+            self.status.set_bool("pause_mouse", False)
 
     # 屏蔽或者恢复用户输入
     def user_input_block(self, block: bool):
-        self.status["block_input_enabled"] = block
+        self.status.set_bool("block_input", block)
 
     def shortcut_key_send(self, keys: list[str]):
         key_code_list = list()
@@ -1310,11 +1320,12 @@ class MyMainWindow(MainWindow):
 
     # 快速粘贴功能开关切换
     def quick_paste_toggle(self):
-        self.status["quick_paste_enabled"] = not self.status["quick_paste_enabled"]
-        self.action_quick_paste.setChecked(self.status["quick_paste_enabled"])
+        self.status.reverse_bool("quick_paste")
+        quick_paste = self.status.get_bool("quick_paste")
+        self.action_quick_paste.setChecked(quick_paste)
         self.statusBar().showMessage(
             self.tr("Quick paste: ")
-            + self.bool_to_behavior_string(self.status["quick_paste_enabled"])
+            + self.bool_to_behavior_string(quick_paste)
         )
 
     def quick_paste_trigger(self):
@@ -1369,13 +1380,14 @@ class MyMainWindow(MainWindow):
                 QMessageBox.StandardButton.NoButton,
             )
             return
-        self.status["hook_state"] = not self.status["hook_state"]
-        self.action_system_hook.setChecked(self.status["hook_state"])
+        self.status.reverse_bool("hook_state")
+        hook_state = self.status.get_bool("hook_state")
+        self.action_system_hook.setChecked(hook_state)
         self.statusBar().showMessage(
             self.tr("System hook: ")
-            + self.bool_to_behavior_string(self.status["hook_state"])
+            + self.bool_to_behavior_string(hook_state)
         )
-        if self.status["hook_state"]:
+        if hook_state:
             self.pythoncom_timer.start(5)
             self.hook_manager.HookKeyboard()
         else:
@@ -1384,18 +1396,18 @@ class MyMainWindow(MainWindow):
 
     # 捕获鼠标功能
     def mouse_capture_action(self) -> None:
-        self.status["mouse_captured"] = True
+        self.status.set_bool("mouse_capture", True)
         self.statusBar().showMessage(
             self.tr("Mouse capture on (Press Ctrl+Alt+F12 to release)")
         )
 
     # 释放鼠标功能
     def mouse_capture_release_action(self) -> None:
-        self.status["mouse_captured"] = False
+        self.status.set_bool("mouse_capture", False)
 
     def mouse_relative_mouse_action(self):
-        relative_mode = not self.status["relative_mode_enabled"]
-        self.status["relative_mode_enabled"] = relative_mode
+        self.status.reverse_bool("relative_mode")
+        relative_mode = self.status.get_bool("relative_mode")
         self.action_relative_mouse.setChecked(relative_mode)
         self.statusBar().showMessage(
             self.tr("Relative mouse: ") + self.bool_to_behavior_string(relative_mode)
@@ -1403,8 +1415,8 @@ class MyMainWindow(MainWindow):
 
     # 隐藏指针
     def mouse_hide_cursor_action(self) -> None:
-        hide_cursor = not self.status["hide_cursor_enabled"]
-        self.status["hide_cursor_enabled"] = hide_cursor
+        self.status.reverse_bool("hide_cursor")
+        hide_cursor = self.status.get_bool("hide_cursor")
         self.action_hide_cursor.setChecked(hide_cursor)
         self.statusBar().showMessage(
             self.tr("Hide cursor when capture mouse: ")
@@ -1413,8 +1425,8 @@ class MyMainWindow(MainWindow):
 
     # 光标校正
     def mouse_cursor_correction_action(self) -> None:
-        correction_cursor = not self.status["correction_cursor_enabled"]
-        self.status["correction_cursor_enabled"] = correction_cursor
+        self.status.reverse_bool("correction_cursor")
+        correction_cursor = self.status.get_bool("correction_cursor")
         self.action_correction_cursor.setChecked(correction_cursor)
         self.statusBar().showMessage(
             self.tr("Correction cursor: ")
@@ -1589,7 +1601,7 @@ class MyMainWindow(MainWindow):
     # 更新鼠标坐标缓冲区(绝对坐标模式)
     def update_mouse_position_buffer_with_absolute_mode(self, x: int, y: int):
         self.mouse_last_pos = None
-        if not self.status["camera_opened"]:
+        if not self.status.is_enabled("camera"):
             x_res = self.disconnect_label.width()
             y_res = self.disconnect_label.height()
             width = self.disconnect_label.width()
@@ -1615,7 +1627,7 @@ class MyMainWindow(MainWindow):
                 x_diff = width - height / cam_scale
                 y_diff = 0
         # 启用游标偏移校正
-        if self.status["correction_cursor_enabled"]:
+        if self.status.is_enabled("correction_cursor"):
             x_pos += self.config.mouse["cursor_offset_x"]
             y_pos += self.config.mouse["cursor_offset_y"]
         x_hid = (x - x_diff / 2 - x_pos) / (width - x_diff)
@@ -1657,7 +1669,7 @@ class MyMainWindow(MainWindow):
 
     # 更新鼠标坐标缓冲区
     def update_mouse_position_buffer(self, x: int, y: int):
-        if not self.status["relative_mode_enabled"]:
+        if not self.status.is_enabled("relative_mode"):
             self.update_mouse_position_buffer_with_absolute_mode(x, y)
         else:
             self.update_mouse_position_buffer_with_relative_mode()
@@ -1680,7 +1692,7 @@ class MyMainWindow(MainWindow):
 
     # 滚轮事件
     def mouse_scroll_report(self):
-        if self.status["relative_mode_enabled"]:
+        if self.status.is_enabled("relative_mode"):
             command = "mouse_relative_write"
         else:
             command = "mouse_absolute_write"
@@ -1690,7 +1702,7 @@ class MyMainWindow(MainWindow):
         self.mouse_buffer.wheel = MouseWheelStateEnum.STOP
 
     def mouse_timer_report(self):
-        if self.status["relative_mode_enabled"]:
+        if self.status.is_enabled("relative_mode"):
             command = "mouse_relative_write"
         else:
             command = "mouse_absolute_write"
@@ -1698,7 +1710,7 @@ class MyMainWindow(MainWindow):
             self.controller_event_worker.command_send_signal.emit(
                 command, self.mouse_buffer.dup()
             )
-            if self.status["relative_mode_enabled"]:
+            if self.status.is_enabled("relative_mode"):
                 self.mouse_buffer.clear_point()
         self.mouse_need_report = False
 
@@ -1737,20 +1749,20 @@ class MyMainWindow(MainWindow):
         p = event.position().toPoint()
         x, y = p.x(), p.y()
         # 全屏状态下检测鼠标位置
-        if self.status["fullscreen_enabled"]:
+        if self.status.is_enabled("fullscreen"):
             # self.fullscreen_action_timer.start(self.DEFAULT_TIMER_DELAY)
             self.fullscreen_mouse_event(x, y)
         # 非鼠标捕获的情况下显示光标
-        if not self.status["mouse_captured"]:
+        if not self.status.is_enabled("mouse_capture"):
             self.setCursor(Qt.ArrowCursor)
             return
         # 阻止输入的情况下不响应移动事件
-        if self.status["block_input_enabled"] is True:
+        if self.status.is_enabled("block_input") is True:
             return
         # 暂停鼠标的状态下不响应移动事件
-        if self.status["pause_mouse_enabled"] is True:
+        if self.status.is_enabled("pause_mouse") is True:
             return
-        if self.status["hide_cursor_enabled"] or self.status["relative_mode_enabled"]:
+        if self.status.is_enabled("hide_cursor") or self.status.is_enabled("relative_mode"):
             self.setCursor(Qt.BlankCursor)
         else:
             self.setCursor(Qt.ArrowCursor)
@@ -1759,26 +1771,26 @@ class MyMainWindow(MainWindow):
     # 鼠标按下事件
     def mousePressEvent(self, event: QMouseEvent):
         if (
-            not self.status["mouse_captured"]
+            not self.status.is_enabled("mouse_capture")
             and event.button() == Qt.LeftButton
-            and self.status["camera_opened"]
+            and self.status.is_enabled("camera")
         ):
             self.mouse_capture_action()
             return
-        if self.status["mouse_captured"] is False:
+        if self.status.is_enabled("mouse_capture") is False:
             return
-        if self.status["block_input_enabled"] is True:
+        if self.status.is_enabled("block_input") is True:
             return
-        if self.status["pause_mouse_enabled"] is True:
+        if self.status.is_enabled("pause_mouse") is True:
             return
         button_code = self.convert_to_button_code(event.button())
         button_state = MouseButtonStateEnum.PRESS
-        if self.status["relative_mode_enabled"]:
+        if self.status.is_enabled("relative_mode"):
             command = "mouse_relative_write"
         else:
             command = "mouse_absolute_write"
         self.mouse_buffer.set_button(button_code, button_state)
-        if self.status["relative_mode_enabled"]:
+        if self.status.is_enabled("relative_mode"):
             self.mouse_buffer.clear_point()
         self.controller_event_worker.command_send_signal.emit(
             command, self.mouse_buffer.dup()
@@ -1787,20 +1799,20 @@ class MyMainWindow(MainWindow):
 
     # 鼠标松开事件
     def mouseReleaseEvent(self, event):
-        if self.status["mouse_captured"] is False:
+        if self.status.is_enabled("mouse_capture") is False:
             return
-        if self.status["block_input_enabled"] is True:
+        if self.status.is_enabled("block_input") is True:
             return
-        if self.status["pause_mouse_enabled"] is True:
+        if self.status.is_enabled("pause_mouse") is True:
             return
         button_code = self.convert_to_button_code(event.button())
         button_state = MouseButtonStateEnum.RELEASE
-        if self.status["relative_mode_enabled"]:
+        if self.status.is_enabled("relative_mode"):
             command = "mouse_relative_write"
         else:
             command = "mouse_absolute_write"
         self.mouse_buffer.set_button(button_code, button_state)
-        if self.status["relative_mode_enabled"]:
+        if self.status.is_enabled("relative_mode"):
             self.mouse_buffer.clear_point()
         self.controller_event_worker.command_send_signal.emit(
             command, self.mouse_buffer.dup()
@@ -1808,11 +1820,11 @@ class MyMainWindow(MainWindow):
 
     # 鼠标滚动事件
     def wheelEvent(self, event):
-        if self.status["mouse_captured"] is False:
+        if self.status.is_enabled("mouse_capture") is False:
             return
-        if self.status["block_input_enabled"] is True:
+        if self.status.is_enabled("block_input") is True:
             return
-        if self.status["pause_mouse_enabled"] is True:
+        if self.status.is_enabled("pause_mouse") is True:
             return
         y = event.angleDelta().y()
         if y == 120:
@@ -1843,7 +1855,7 @@ class MyMainWindow(MainWindow):
                 self.controller_device_release("mouse")
                 self.statusBar().showMessage(self.tr("Mouse capture off"))
             # Ctrl+Alt+V quick paste
-            elif keyboard_key == Qt.Key.Key_V and self.status["quick_paste_enabled"]:
+            elif keyboard_key == Qt.Key.Key_V and self.status.is_enabled("quick_paste"):
                 self.quick_paste_trigger()
             else:
                 is_register_function_keys = False
@@ -1851,9 +1863,9 @@ class MyMainWindow(MainWindow):
             if is_register_function_keys:
                 self.clear_keyboard_key_buffer()
                 return
-        if self.status["block_input_enabled"] is True:
+        if self.status.is_enabled("block_input") is True:
             return
-        if self.status["pause_keyboard_enabled"] is True:
+        if self.status.is_enabled("pause_keyboard") is True:
             return
         # 如果是指示器按键则更新指示器buffer
         if keyboard_key == Qt.Key.Key_CapsLock:
@@ -1873,9 +1885,9 @@ class MyMainWindow(MainWindow):
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         if event.isAutoRepeat():
             return
-        if self.status["block_input_enabled"] is True:
+        if self.status.is_enabled("block_input") is True:
             return
-        if self.status["pause_keyboard_enabled"] is True:
+        if self.status.is_enabled("pause_keyboard") is True:
             return
         self.update_keyboard_buffer_with_scancode(
             event.nativeScanCode(), KeyStateEnum.RELEASE
@@ -1886,7 +1898,7 @@ class MyMainWindow(MainWindow):
     def changeEvent(self, event):
         # 窗口失焦事件
         if event.type() == QEvent.WindowDeactivate:
-            if not self.isActiveWindow() and self.status["controller_opened"]:
+            if not self.isActiveWindow() and self.status.is_enabled("controller"):
                 # 窗口失去焦点时释放键盘和鼠标
                 # 防止卡键
                 self.controller_device_release("all")
