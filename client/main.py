@@ -889,9 +889,9 @@ class MyMainWindow(MainWindow):
                 _, close_next_tip = MessageBox.optional_information(
                     self,
                     self.tr("Fullscreen tip"),
-                    self.tr("Press Ctrl+Alt+F11 to toggle fullscreen\n")
-                    + self.tr("Or stay cursor at left top corner to show toolbar"),
-                    self.tr("Don't show again"),
+                    self.tr("Press Ctrl+Alt+F11 to toggle fullscreen.\n")
+                    + self.tr("Or stay cursor at left top corner to show menubar."),
+                    self.tr("Don't show again."),
                     False,
                     QMessageBox.StandardButton.Ok,
                     QMessageBox.StandardButton.NoButton,
