@@ -32,7 +32,7 @@ class ControllerBase(ABC):
     @abstractmethod
     def mouse_send_data(
         self,
-        button_name: str,
+        button_name: mouse.MouseCtrl,
         x: int = 0,
         y: int = 0,
         wheel: int = 0,
@@ -158,7 +158,7 @@ class ControllerCh9329(ControllerBase):
 
     def mouse_send_data(
         self,
-        button_name: str,
+        button_name: mouse.MouseCtrl,
         x: int = 0,
         y: int = 0,
         wheel: int = 0,

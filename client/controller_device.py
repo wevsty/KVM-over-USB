@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-
+import typing
 from loguru import logger
 
 from controller_ch9329 import Controller
@@ -137,9 +137,9 @@ class ControllerDevice(ControllerDeviceBase):
     # 设备事件
     # 返回0为成功
     # 返回非0为失败
-    def device_event(self, command: str, buffer: object) -> tuple[str, int, object]:
+    def device_event(self, command: str, buffer: typing.Any) -> tuple[str, int, typing.Any]:
         status_code: int = 0
-        reply: object = None
+        reply: Any = None
 
         if command == "keyboard_write":
             self.keyboard_send_event(buffer)

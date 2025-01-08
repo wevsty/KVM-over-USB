@@ -106,6 +106,8 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
                 self,
                 self.tr("Error"),
                 self.tr("Text send only supports ASCII characters\n"),
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.NoButton,
             )
             return
         if self.send_worker.is_sending():
@@ -148,6 +150,8 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
                     self,
                     self.tr("Error"),
                     self.tr("The file name contains non-ascii characters"),
+                    QMessageBox.StandardButton.Ok,
+                    QMessageBox.StandardButton.NoButton,
                 )
 
     def send_button_clicked(self) -> None:

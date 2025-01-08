@@ -22,7 +22,7 @@ class AboutDialog(QDialog, about_ui.Ui_AboutDialog):
 
     @staticmethod
     def detect_file_bom(path: str) -> tuple[str, int]:
-        BOM_TABLE = {
+        __BOM_TABLE__ = {
             codecs.BOM_UTF8: "utf-8",
             codecs.BOM_UTF16_LE: "utf-16",
             codecs.BOM_UTF16_BE: "utf-16",
@@ -33,7 +33,7 @@ class AboutDialog(QDialog, about_ui.Ui_AboutDialog):
         encoding_length = 0
         with open(path, "rb") as f:
             binary_data = f.read(4)
-            for bom, bom_encoding in BOM_TABLE.items():
+            for bom, bom_encoding in __BOM_TABLE__.items():
                 if binary_data.startswith(bom):
                     encoding = bom_encoding
                     encoding_length = len(bom)
