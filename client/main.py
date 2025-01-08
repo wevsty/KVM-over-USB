@@ -6,7 +6,7 @@ import random
 import subprocess
 import sys
 import tempfile
-from typing import Optional
+import typing
 
 import pyWinhook as pyHook
 import pythoncom
@@ -54,7 +54,6 @@ from PySide6.QtMultimedia import (
 from PySide6.QtMultimediaWidgets import QVideoWidget
 from PySide6.QtWidgets import (
     QApplication,
-    QCheckBox,
     QFileDialog,
     QLabel,
     QMessageBox,
@@ -85,6 +84,7 @@ from ui.ui_controller_device_setup import (
 from ui.ui_custom_key import CustomKeyDialog
 from ui.ui_indicator_lights import IndicatorLightsDialog
 from ui.ui_main import MainWindow
+from ui.ui_messagebox import MessageBox
 from ui.ui_paste_board import PasteBoardDialog
 from ui.ui_video_device_setup import (
     AudioDeviceConfig,
@@ -97,7 +97,7 @@ class ControllerEventWorker(QObject):
     command_send_signal = Signal(str, object)
     command_reply_signal = Signal(str, int, object)
 
-    def __init__(self, parent: Optional[QObject] = None):
+    def __init__(self, parent: QObject | None = None):
         super().__init__(parent)
         self.mutex = QMutex()
         self.mutex_locker = QMutexLocker(self.mutex)
@@ -144,7 +144,7 @@ class MyMainWindow(MainWindow):
         "Rwin": 0x015C,
     }
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: QWidget | None = None):
         # 初始化UI
         super().__init__(parent)
 
@@ -186,13 +186,7 @@ class MyMainWindow(MainWindow):
 
         # 加载配置文件
         self.config_file: MainConfig | None = None
-        self.config_root: dict = dict()
-        self.config_ui: dict = dict()
-        self.config_video_record: dict = dict()
-        self.config_video: dict = dict()
-        self.config_audio: dict = dict()
-        self.config_controller: dict = dict()
-        self.config_mouse: dict = dict()
+        self.config: MainConfig = self.config_file
         self.load_config()
 
         # 窗口图标
@@ -255,9 +249,9 @@ class MyMainWindow(MainWindow):
 
         # 鼠标设置
         self.mouse_last_pos: None | QPoint = None
-        self.relative_mouse_speed = self.config_mouse["relative_speed"]
-        if self.config_mouse["report_freq"] != 0:
-            self.mouse_report_interval = 1000 / self.config_mouse["report_freq"]
+        self.relative_mouse_speed = self.config.mouse["relative_speed"]
+        if self.config.mouse["report_freq"] != 0:
+            self.mouse_report_interval = 1000 / self.config.mouse["report_freq"]
             self.dynamic_mouse_report_interval = False
         else:
             self.mouse_report_interval = 10
@@ -297,7 +291,7 @@ class MyMainWindow(MainWindow):
         # 绑定信号
         self.init_connect_signal()
 
-        if self.config_video["auto_connect"] is True:
+        if self.config.video["auto_connect"] is True:
             self.video_device_connect()
         self.controller_device_connect()
 
@@ -316,24 +310,20 @@ class MyMainWindow(MainWindow):
     def load_config(self) -> None:
         try:
             self.config_file = MainConfig(project_binary_directory_path("config.yaml"))
-            self.config_root: dict = self.config_file.data
-            config_version = self.config_root["config_version"]
+            self.config = self.config_file
+            config_version = self.config.root["config_version"]
             if config_version != CONFIG_VERSION_STRING:
                 raise ValueError(
                     self.tr("The configuration file does not match the program.\n")
                     + self.tr("Please delete the existing configuration file.\n")
                 )
-            self.config_ui: dict = self.config_root["ui"]
-            self.config_video_record: dict = self.config_root["video_record"]
-            self.config_video: dict = self.config_root["video"]
-            self.config_audio: dict = self.config_root["audio"]
-            self.config_controller: dict = self.config_root["controller"]
-            self.config_mouse: dict = self.config_root["mouse"]
         except Exception as err:
             QMessageBox.critical(
                 self,
                 self.tr("Error"),
                 self.tr("Import config error:\n{}\n").format(err),
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.NoButton,
             )
             sys.exit(1)
 
@@ -412,7 +402,7 @@ class MyMainWindow(MainWindow):
 
     def init_shortcut_keys(self) -> None:
         self.menu_shortcut_keys.clear()
-        for action_name in self.config_root["shortcut_keys"]:
+        for action_name in self.config.shortcut_keys.keys():
             action = self.menu_shortcut_keys.addAction(action_name)
             action.triggered.connect(
                 lambda _checked, triggered_keys=action_name: self.shortcut_key_action(
@@ -423,9 +413,9 @@ class MyMainWindow(MainWindow):
 
     # 初始化菜单点击状态
     def init_menu_checked_state(self):
-        if self.config_video["keep_aspect_ratio"]:
+        if self.config.video["keep_aspect_ratio"]:
             self.action_keep_ratio.setChecked(True)
-        if self.config_ui["quick_paste"]:
+        if self.config.ui["quick_paste"]:
             self.status["quick_paste_enabled"] = True
             self.action_quick_paste.setChecked(True)
 
@@ -610,9 +600,9 @@ class MyMainWindow(MainWindow):
     # 视频设备配置
     def video_device_setup(self) -> None:
         vc = VideoDeviceConfig()
-        vc.from_dict(self.config_video)
+        vc.from_dict(self.config.video)
         ac = AudioDeviceConfig()
-        ac.from_dict(self.config_audio)
+        ac.from_dict(self.config.audio)
         # 传入配置文件的配置
         self.video_device_setup_dialog.set_video_config(vc)
         self.video_device_setup_dialog.set_audio_config(ac)
@@ -644,13 +634,17 @@ class MyMainWindow(MainWindow):
                 if vc.device == "":
                     raise ValueError("Invalid device")
                 # 与配置文件合并
-                self.config_video.update(vc.to_dict())
-                self.config_audio.update(ac.to_dict())
+                self.config.video.update(vc.to_dict())
+                self.config.audio.update(ac.to_dict())
                 # 保存配置
                 self.save_config()
             except ValueError:
                 QMessageBox.critical(
-                    self, self.tr("Video Error"), self.tr("Invalid device selected")
+                    self,
+                    self.tr("Video Error"),
+                    self.tr("Invalid device selected"),
+                    QMessageBox.StandardButton.Ok,
+                    QMessageBox.StandardButton.NoButton,
                 )
             # 尝试按照新配置启动
             self.video_device_reset()
@@ -663,7 +657,13 @@ class MyMainWindow(MainWindow):
             f"Returned: {error}\n" + self.tr("Device disconnected")
         )
         self.video_device_disconnect()
-        QMessageBox.critical(self, self.tr("Device Error"), error_s)
+        QMessageBox.critical(
+            self,
+            self.tr("Device Error"),
+            error_s,
+            QMessageBox.StandardButton.Ok,
+            QMessageBox.StandardButton.NoButton,
+        )
 
     def video_frame_changed(self, frame: QVideoFrame) -> None:
         self.video_widget.videoSink().setVideoFrame(frame)
@@ -674,10 +674,14 @@ class MyMainWindow(MainWindow):
     def video_device_init(self) -> bool:
         return_status: bool = False
         # 寻找指定视频设备
-        video_device_description = self.config_video["device"]
+        video_device_description = self.config.video["device"]
         if video_device_description == "":
             QMessageBox.critical(
-                self, self.tr("Video Error"), self.tr("Target video device is empty")
+                self,
+                self.tr("Video Error"),
+                self.tr("Target video device is empty"),
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.NoButton,
             )
             return return_status
         cameras = QMediaDevices.videoInputs()
@@ -687,7 +691,11 @@ class MyMainWindow(MainWindow):
                 break
         if self.video_device is None:
             QMessageBox.critical(
-                self, self.tr("Video Error"), self.tr("Target video device not found")
+                self,
+                self.tr("Video Error"),
+                self.tr("Target video device not found"),
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.NoButton,
             )
             return return_status
         # 设置摄像头配置
@@ -698,9 +706,9 @@ class MyMainWindow(MainWindow):
             resolution_y = i.resolution().height()
             pixel_format = i.pixelFormat().name.split("_")[1]
             if (
-                resolution_x == self.config_video["resolution_x"]
-                and resolution_y == self.config_video["resolution_y"]
-                and pixel_format == self.config_video["format"]
+                resolution_x == self.config.video["resolution_x"]
+                and resolution_y == self.config.video["resolution_y"]
+                and pixel_format == self.config.video["format"]
             ):
                 self.video_camera.setCameraFormat(i)
                 camera_set_done = True
@@ -710,14 +718,16 @@ class MyMainWindow(MainWindow):
                 self,
                 self.tr("Video Error"),
                 self.tr("Unsupported combination of resolution or format"),
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.NoButton,
             )
             return return_status
         # 配置音频
-        if self.config_audio["audio_support"] is True:
+        if self.config.audio["audio_support"] is True:
             in_devices = QMediaDevices.audioInputs()
             out_devices = QMediaDevices.audioOutputs()
-            in_device_name = self.config_audio["audio_device_in"]
-            out_device_name = self.config_audio["audio_device_out"]
+            in_device_name = self.config.audio["audio_device_in"]
+            out_device_name = self.config.audio["audio_device_out"]
             if in_device_name == self.tr("auto"):
                 in_device = QMediaDevices.defaultAudioInput()
             else:
@@ -737,7 +747,11 @@ class MyMainWindow(MainWindow):
                         break
             if in_device is None or out_device is None:
                 QMessageBox.critical(
-                    self, self.tr("Video Error"), self.tr("Audio device not found")
+                    self,
+                    self.tr("Video Error"),
+                    self.tr("Audio device not found"),
+                    QMessageBox.StandardButton.Ok,
+                    QMessageBox.StandardButton.NoButton,
                 )
                 return return_status
             self.audio_in_device = in_device
@@ -748,7 +762,11 @@ class MyMainWindow(MainWindow):
         if not self.video_camera.isActive():
             self.status["camera_opened"] = False
             QMessageBox.critical(
-                self, self.tr("Video Error"), self.tr("Video device connect failed")
+                self,
+                self.tr("Video Error"),
+                self.tr("Video device connect failed"),
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.NoButton,
             )
             return return_status
         else:
@@ -770,20 +788,20 @@ class MyMainWindow(MainWindow):
         self.video_record = QMediaRecorder(self.video_camera)
         self.video_capture_session.setRecorder(self.video_record)
         self.video_record.setQuality(
-            getattr(QMediaRecorder.Quality, self.config_video_record["quality"])
+            getattr(QMediaRecorder.Quality, self.config.video_record["quality"])
         )
         self.video_record.setMediaFormat(QMediaFormat.FileFormat.MPEG4)
         self.video_record.setEncodingMode(
             getattr(
-                QMediaRecorder.EncodingMode, self.config_video_record["encoding_mode"]
+                QMediaRecorder.EncodingMode, self.config.video_record["encoding_mode"]
             )
         )
-        self.video_record.setVideoBitRate(self.config_video_record["encoding_bitrate"])
-        self.video_record.setVideoFrameRate(self.config_video_record["frame_rate"])
+        self.video_record.setVideoBitRate(self.config.video_record["encoding_bitrate"])
+        self.video_record.setVideoFrameRate(self.config.video_record["frame_rate"])
         self.video_record.setVideoResolution(QSize())
         self.status["video_recording"] = False
         # 设置音频捕捉
-        if self.config_audio["audio_support"] is True:
+        if self.config.audio["audio_support"] is True:
             self.audio_input = QAudioInput(self.audio_in_device)
             self.audio_output = QAudioOutput(self.audio_out_device)
             self.audio_input.setVolume(1)
@@ -819,7 +837,7 @@ class MyMainWindow(MainWindow):
         self.setWindowTitle(
             f"{self.WINDOW_TITLE_STRING}"
             + " - "
-            + f"{self.config_video["resolution_x"]}x{self.config_video["resolution_y"]}"
+            + f"{self.config.video["resolution_x"]}x{self.config.video["resolution_y"]}"
             + " @ "
             + f"{fps:.1f}"
         )
@@ -859,18 +877,19 @@ class MyMainWindow(MainWindow):
     def fullscreen_state_toggle(self) -> None:
         self.status["fullscreen_enabled"] = not self.status["fullscreen_enabled"]
         if self.status["fullscreen_enabled"]:
-            if self.config_ui["fullscreen_state_alert"]:
-                alert_checkbox = QCheckBox(self.tr("Don't show again"))
-                alert_window = QMessageBox(self)
-                alert_window.setWindowTitle(self.tr("Fullscreen mode alert"))
-                alert_window.setText(
+            if self.config.ui["fullscreen_tip"]:
+                _, close_next_tip = MessageBox.optional_information(
+                    self,
+                    self.tr("Fullscreen tip"),
                     self.tr("Press Ctrl+Alt+F11 to toggle fullscreen\n")
-                    + self.tr("Stay cursor at left top corner to show toolbar")
+                    + self.tr("Or stay cursor at left top corner to show toolbar"),
+                    self.tr("Don't show again"),
+                    False,
+                    QMessageBox.StandardButton.Ok,
+                    QMessageBox.StandardButton.NoButton
                 )
-                alert_window.setCheckBox(alert_checkbox)
-                alert_window.exec()
-                if alert_window.checkBox().isChecked() is True:
-                    self.config_ui["fullscreen_state_alert"] = False
+                if close_next_tip is True and self.config.ui["fullscreen_tip"] is True:
+                    self.config.ui["fullscreen_tip"] = False
                     self.save_config()
             self.showFullScreen()
             self.action_fullscreen.setChecked(True)
@@ -933,8 +952,8 @@ class MyMainWindow(MainWindow):
 
         retained_height = 9 * 5
         retained_width = 16 * 5
-        recommend_height = self.config_video["resolution_y"] + add_height
-        recommend_width = self.config_video["resolution_x"]
+        recommend_height = self.config.video["resolution_y"] + add_height
+        recommend_width = self.config.video["resolution_x"]
         if (self.status["screen_height"] - retained_height > recommend_height) and (
             self.status["screen_width"] - retained_width > recommend_width
         ):
@@ -963,7 +982,7 @@ class MyMainWindow(MainWindow):
             cp = QGuiApplication.primaryScreen().availableGeometry().center()
             qr.moveCenter(cp)
             self.move(qr.topLeft())
-        if self.config_video["keep_aspect_ratio"]:
+        if self.config.video["keep_aspect_ratio"]:
             self.video_widget.setAspectRatioMode(Qt.KeepAspectRatio)
         else:
             self.video_widget.setAspectRatioMode(Qt.IgnoreAspectRatio)
@@ -989,10 +1008,10 @@ class MyMainWindow(MainWindow):
 
     # 保持比例拉伸
     def video_keep_aspect_ratio_toggle(self):
-        self.config_video["keep_aspect_ratio"] = not self.config_video[
+        self.config.video["keep_aspect_ratio"] = not self.config.video[
             "keep_aspect_ratio"
         ]
-        if self.config_video["keep_aspect_ratio"]:
+        if self.config.video["keep_aspect_ratio"]:
             self.video_widget.setAspectRatioMode(Qt.KeepAspectRatio)
             self.action_keep_ratio.setChecked(True)
         else:
@@ -1000,7 +1019,7 @@ class MyMainWindow(MainWindow):
             self.action_keep_ratio.setChecked(False)
         self.statusBar().showMessage(
             self.tr("Keep aspect ratio: ")
-            + self.bool_to_behavior_string(self.config_video["keep_aspect_ratio"])
+            + self.bool_to_behavior_string(self.config.video["keep_aspect_ratio"])
         )
         self.save_config()
 
@@ -1054,7 +1073,7 @@ class MyMainWindow(MainWindow):
             self.action_record_video.setChecked(True)
             self.statusBar().showMessage(self.tr("Video recording started"))
 
-    def controller_command_reply(self, command: str, status: int, data: object):
+    def controller_command_reply(self, command: str, status: int, data: typing.Any):
         ignored_command = [
             "device_release",
             "device_reset",
@@ -1096,12 +1115,12 @@ class MyMainWindow(MainWindow):
 
     def controller_device_setup(self):
         cc = ControllerDeviceConfig()
-        cc.port = self.config_controller["port"]
-        cc.baud = self.config_controller["baud"]
-        cc.screen_x = self.config_controller["screen_x"] = self.config_video[
+        cc.port = self.config.controller["port"]
+        cc.baud = self.config.controller["baud"]
+        cc.screen_x = self.config.controller["screen_x"] = self.config.video[
             "resolution_x"
         ]
-        cc.screen_y = self.config_controller["screen_y"] = self.config_video[
+        cc.screen_y = self.config.controller["screen_y"] = self.config.video[
             "resolution_y"
         ]
 
@@ -1125,8 +1144,8 @@ class MyMainWindow(MainWindow):
         status_code = self.controller_device_setup_dialog.exec()
         if status_code != 0:
             cc = self.controller_device_setup_dialog.get_controller_device_config()
-            self.config_controller["port"] = cc.port
-            self.config_controller["baud"] = cc.baud
+            self.config.controller["port"] = cc.port
+            self.config.controller["baud"] = cc.baud
             self.save_config()
             self.controller_device_disconnect()
             self.controller_device_connect()
@@ -1134,10 +1153,10 @@ class MyMainWindow(MainWindow):
     # 连接设备
     def controller_device_connect(self):
         controller_device.GLOBAL_CONTROLLER_DEVICE.device_init(
-            self.config_controller["port"],
-            self.config_controller["baud"],
-            self.config_video["resolution_x"],
-            self.config_video["resolution_y"],
+            self.config.controller["port"],
+            self.config.controller["baud"],
+            self.config.video["resolution_x"],
+            self.config.video["resolution_y"],
         )
         self.controller_event_worker.command_send_signal.emit("device_open", None)
 
@@ -1225,9 +1244,9 @@ class MyMainWindow(MainWindow):
             self.update_keyboard_buffer_with_hid_code(key_code, KeyStateEnum.RELEASE)
 
     def shortcut_key_action(self, action_name: str):
-        for keys_name in self.config_root["shortcut_keys"]:
+        for keys_name in self.config.shortcut_keys:
             if action_name == keys_name:
-                send_buffer = self.config_root["shortcut_keys"][action_name]
+                send_buffer = self.config.shortcut_keys[action_name]
                 self.shortcut_key_send(send_buffer)
                 break
             pass
@@ -1241,7 +1260,7 @@ class MyMainWindow(MainWindow):
 
     def custom_key_save(self, name: str, keys: list[str]):
         custom_key_data = {name: keys}
-        self.config_root["shortcut_keys"].update(custom_key_data)
+        self.config.shortcut_keys.update(custom_key_data)
         self.save_config()
         self.init_shortcut_keys()
 
@@ -1280,13 +1299,13 @@ class MyMainWindow(MainWindow):
                 self.update_keyboard_buffer_with_hid_code(
                     shift_hid_code, KeyStateEnum.RELEASE
                 )
-                self.sleep(self.config_root["paste_board"]["interval"])
+                self.sleep(self.config.paste_board["interval"])
             else:
                 self.update_keyboard_buffer_with_hid_code(key_code, KeyStateEnum.PRESS)
                 self.update_keyboard_buffer_with_hid_code(
                     key_code, KeyStateEnum.RELEASE
                 )
-                self.sleep(self.config_root["paste_board"]["interval"])
+                self.sleep(self.config.paste_board["interval"])
         self.user_input_block(False)
 
     # 快速粘贴功能开关切换
@@ -1343,7 +1362,11 @@ class MyMainWindow(MainWindow):
             pass
         else:
             QMessageBox.critical(
-                self, self.tr("Error"), self.tr("system hook only support windows")
+                self,
+                self.tr("Error"),
+                self.tr("system hook only support windows"),
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.NoButton,
             )
             return
         self.status["hook_state"] = not self.status["hook_state"]
@@ -1404,7 +1427,11 @@ class MyMainWindow(MainWindow):
             pass
         else:
             QMessageBox.critical(
-                self, self.tr("Error"), self.tr("This tool only support windows")
+                self,
+                self.tr("Error"),
+                self.tr("This tool only support windows"),
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.NoButton,
             )
             return
         if action_name == "devmgmt.msc":
@@ -1570,15 +1597,15 @@ class MyMainWindow(MainWindow):
             x_pos = self.disconnect_label.pos().x()
             y_pos = self.disconnect_label.pos().y()
         else:
-            x_res = self.config_video["resolution_x"]
-            y_res = self.config_video["resolution_y"]
+            x_res = self.config.video["resolution_x"]
+            y_res = self.config.video["resolution_y"]
             width = self.video_widget.width()
             height = self.video_widget.height()
             x_pos = self.video_widget.pos().x()
             y_pos = self.video_widget.pos().y()
         x_diff = 0
         y_diff = 0
-        if self.config_video["keep_aspect_ratio"]:
+        if self.config.video["keep_aspect_ratio"]:
             cam_scale = y_res / x_res
             finder_scale = height / width
             if finder_scale > cam_scale:
@@ -1589,8 +1616,8 @@ class MyMainWindow(MainWindow):
                 y_diff = 0
         # 启用游标偏移校正
         if self.status["correction_cursor_enabled"]:
-            x_pos += self.config_mouse["cursor_offset_x"]
-            y_pos += self.config_mouse["cursor_offset_y"]
+            x_pos += self.config.mouse["cursor_offset_x"]
+            y_pos += self.config.mouse["cursor_offset_y"]
         x_hid = (x - x_diff / 2 - x_pos) / (width - x_diff)
         y_hid = (y - y_diff / 2 - y_pos) / (height - y_diff)
         x_hid = max(min(x_hid, 1), 0)

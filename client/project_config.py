@@ -7,10 +7,13 @@ from data.default_config import MAIN_DEFAULT_CONFIG_DATA
 
 
 class RequiredConfig:
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str | None = None, data: dict | None = None):
+        if data is None:
+            data = dict()
         self.file_path: str = file_path
-        self.data: dict = dict()
-        self.load_from_file()
+        self.data: dict = data
+        if file_path is not None:
+            self.load_from_file()
 
     def load_from_file(self) -> None:
         try:
@@ -33,13 +36,36 @@ class RequiredConfig:
 
 class MainConfig(RequiredConfig):
     def __init__(self, file_path: str = "config.yaml"):
-        super().__init__(file_path)
+        super().__init__(file_path, None)
+        self.root: dict = self.data
+        self.audio: dict | None = None
+        self.controller: dict | None = None
+        self.mouse: dict | None = None
+        self.paste_board: dict | None = None
+        self.shortcut_keys: dict | None = None
+        self.ui: dict | None = None
+        self.video: dict | None = None
+        self.video_record: dict | None = None
+        if file_path is not None:
+            self.load_from_file()
+
+    def split_data_node(self):
+        self.root: dict = self.data
+        self.audio = self.root.get("audio", None)
+        self.controller = self.root.get("controller", None)
+        self.mouse = self.root.get("mouse", None)
+        self.paste_board = self.root.get("paste_board", None)
+        self.shortcut_keys = self.root.get("shortcut_keys", None)
+        self.ui = self.root.get("ui", None)
+        self.video = self.root.get("video", None)
+        self.video_record = self.root.get("video_record", None)
 
     def load_from_file(self) -> None:
         if not os.path.exists(self.file_path):
             with open(self.file_path, "w", encoding="utf-8") as fp:
                 fp.write(MAIN_DEFAULT_CONFIG_DATA)
         super().load_from_file()
+        self.split_data_node()
 
 
 if __name__ == "__main__":
