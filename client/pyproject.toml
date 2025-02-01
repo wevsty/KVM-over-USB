@@ -25,13 +25,13 @@ python = "<3.14,>=3.12"
 pyyaml = "^6.0.2"
 loguru = "^0.7.2"
 pywin32 = { version = ">=308", markers = "platform_system == 'Windows'" }
-pyside6-addons = "6.8.1"
-pyside6-essentials = "6.8.1"
-pyside6 = "6.8.1"
+pyside6-addons = "^6.8.2"
+pyside6-essentials = "^6.8.2"
+pyside6 = "^6.8.2"
 pywinhook = { version = "^1.6.2", markers = "platform_system == 'Windows'" }
 pyserial = "^3.5"
 ch9329 = "^1.2.7"
-nuitka = "^2.5.4"
+nuitka = "^2.6.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.10.0"
