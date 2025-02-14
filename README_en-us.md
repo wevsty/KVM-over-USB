@@ -19,11 +19,11 @@ So this project recommends using a combination of products already available on 
 ### Hardware list
 1. Video capture card: You can use video capture cards with chips such as MS2109 or MS2130, which are sold in the market for about 5-15 USD. 
 2. CH340 to CH9329 USB Connection Cable: CH340 is a common USB to serial chip, access CH9329 through the serial port, and finally connect CH9329 to the controlled device can be. 
-Note 1: There are finished cables available on shopping platforms, which can be purchased directly at a market price of about 20 CNY. 
-Note 2: If you have special needs, you can also purchase a USB to serial cable with other chips (e.g. FT232) and then purchase a CH9329 module with a serial interface. 
 3. HDMI cable. 
 4. If the device does not have enough USB ports, it is recommended to use it with a USB HUB. 
 
+Note 1: There are finished cables available on shopping platforms, which can be purchased directly at a market price of about 20 CNY. 
+Note 2: If you have special needs, you can also purchase a USB to serial cable with other chips (e.g. FT232) and then purchase a CH9329 module with a serial interface. 
 
 ### Schematic
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/connection_schematic.svg)
@@ -86,19 +86,26 @@ Select Device Menu -> Controller Settings -> Select the correct serial port -> O
 Demo control ASUS BIOS
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/demo_control_bios.gif)
 
+Demo auto input function
+![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/demo_fast_input.gif)
+
 ### FAQ
 
-Q: Why doesn't the mouse work when the console is Linux? 
+Q: Why does the mouse not work when the controlled end is a Linux distribution?
 
-A: Some operating systems do not support absolute coordinate mode, please try to switch to relative coordinate mode. 
+A: Some operating systems do not support the absolute coordinate mode of the mouse. Please try to switch to the relative coordinate mode for operation.
 
-Q: How do I send the Ctrl + Alt + Delete key combination? 
+Q: How to send the Ctrl + Alt + Delete key combination?
 
-A: Due to the Windows mechanism it is difficult to intercept these key combinations. To send these combinations to the console, use the shortcut function in the keyboard menu. 
+A: If you need to send these key combinations to the controlled end, it is recommended to use the shortcut key function in the keyboard menu.
 
-Q: What should I do if a key jam occurs when using the software? 
+Q: What should I do if input is abnormal when using the software?
 
-A: Please use the reload or reset function in the software device menu, which can restore to normal in most cases. If a similar key jam still occurs after use, it is recommended to restart the operating system of the controlled end. 
+A: Please use the reload or reset function in the software device menu. If the problem still exists after using it, it is recommended to try to restart the operating system of the controlled end.
+
+Q: How to deal with incorrect capitalization when quick pasting or clipboard input?
+
+A: Please synchronize the keyboard status through the synchronization indicator function in the menu and try again.
 
 
 ## Thanks

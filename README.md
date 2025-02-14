@@ -13,7 +13,7 @@ Documentation English Version: https://github.com/wevsty/KVM-over-USB/blob/main/
 
 ## 硬件
 对于大部分用户来说，要求用户自己制造PCB是困难的。 
-一个非盈利项目如果要委托制造商生产显然也是困难的。 
+一个非盈利项目如果要委托制造商生产硬件显然也是困难的。 
 所以本项目推荐使用市面上已有的产品进行组合。 
 
 
@@ -21,14 +21,12 @@ Documentation English Version: https://github.com/wevsty/KVM-over-USB/blob/main/
 1. 视频采集卡：可以使用MS2109或MS2130等芯片的视频采集卡，市场售价约为30到100元人民币。 
 2. CH340转CH9329的USB连接线：
 CH340是一个常见的USB转串口芯片，通过串口接入CH9329，最终将CH9329连接到被控制的设备即可。 
+3. HDMI连接线。 
+4. 如设备没有足够多的USB接口，建议搭配一个USB HUB使用。 
 
 备注1：在购物平台上有成品的线，可直接购买，市场售价约20元人民币。 
 
 备注2：如有特殊需要，也可以自行购入使用其他芯片的USB转串口连接线（比如：FT232）然后购买带有串行接口的CH9329模块使用。 
-
-3. HDMI连接线。 
-4. 如设备没有足够多的USB接口，建议搭配一个USB HUB使用。 
-
 
 ### 连接原理图
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/connection_schematic.svg)
@@ -95,19 +93,27 @@ CH340 驱动程序下载地址： https://www.wch.cn/downloads/CH341SER_EXE.html
 
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/demo_control_bios.gif)
 
+演示自动输入功能 
+
+![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/demo_fast_input.gif)
+
 ### FAQ
 
-Q: 为什么被控制端为 Linux 的时候鼠标不工作？ 
+Q: 为什么被控制端为 Linux 发行版时鼠标不工作？ 
 
 A: 部分操作系统不支持鼠标使用绝对坐标模式，请尝试切换至相对坐标模式进行操作。 
 
 Q: 如何发送 Ctrl + Alt + Delete 组合键？ 
 
-A: 由于 Windows 机制的原因很难拦截此类组合键。如需向被控制端发送这些组合键，请使用键盘菜单中的快捷键功能。
+A: 如需向被控制端发送这些组合键，建议使用键盘菜单中的快捷键功能。
 
-Q: 使用软件时出现卡键情况怎么办？ 
+Q: 使用软件时出现输入异常情况怎么办？ 
 
-A: 请使用软件设备菜单中的重载或者重置功能，大部分情况下均可恢复正常。 如使用后依然存在类似于卡键的故障建议重启被控制端的操作系统。 
+A: 请使用软件设备菜单中的重载或者重置功能，如使用后依然存在故障建议尝试重启被控制端的操作系统。 
+
+Q: 快速粘贴或剪贴板输入时大小写不正确如何处理？ 
+
+A: 请通过菜单中的同步指示器功能同步键盘状态后再尝试。
 
 
 ## 感谢
