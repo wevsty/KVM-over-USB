@@ -1,6 +1,5 @@
 ﻿attrs==25.1.0
 black==24.10.0
-ch9329==1.2.7
 click==8.1.8
 colorama==0.4.6
 flake8==7.1.1
