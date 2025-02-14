@@ -59,6 +59,7 @@ class VideoDeviceSetupDialog(QDialog, video_device_setup_ui.Ui_dialog):
         self.setupUi(self)
         self.setWindowFlags(Qt.CustomizeWindowHint | Qt.WindowCloseButtonHint)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+
         self.reference_video_config = VideoDeviceConfig()
         self.reference_audio_config = AudioDeviceConfig()
         self.refresh_devices()
@@ -110,8 +111,48 @@ class VideoDeviceSetupDialog(QDialog, video_device_setup_ui.Ui_dialog):
     def set_audio_config(self, config: AudioDeviceConfig) -> None:
         self.reference_audio_config = config
 
+    def select_video_devices_with_config(self) -> None:
+        video_devices = self.list_video_devices_name()
+        reference_width = self.reference_video_config.resolution_x
+        reference_height = self.reference_video_config.resolution_y
+        reference_resolution = f"{reference_width}x{reference_height}"
+
+        select_device_name = None
+        for device_name in video_devices:
+            if device_name == self.reference_video_config.device:
+                select_device_name = device_name
+                self.combo_box_device.setCurrentText(select_device_name)
+        if select_device_name is None:
+            pass
+        else:
+            self.refresh_video_device_info(select_device_name)
+
+        find_result = self.combo_box_resolution.findText(reference_resolution)
+        if find_result != -1:
+            self.combo_box_resolution.setCurrentText(reference_resolution)
+        find_result = self.combo_box_format.findText(
+            self.reference_video_config.format
+        )
+        if find_result != -1:
+            self.combo_box_format.setCurrentText(
+                self.reference_video_config.format
+            )
+        return
+
+    def select_audio_devices_with_config(self) -> None:
+        selected_audio_device_in = self.reference_audio_config.audio_device_in
+        selected_audio_device_out = self.reference_audio_config.audio_device_out
+        find_result = self.combo_box_audio_in.findText(selected_audio_device_in)
+        if find_result != -1:
+            self.combo_box_audio_in.setCurrentText(selected_audio_device_in)
+        find_result = self.combo_box_audio_out.findText(
+            selected_audio_device_out
+        )
+        if find_result != -1:
+            self.combo_box_audio_out.setCurrentText(selected_audio_device_out)
+
     @staticmethod
-    def list_video_devices() -> list[str]:
+    def list_video_devices_name() -> list[str]:
         # 获取摄像头信息
         devices = list()
         cameras = QMediaDevices.videoInputs()
@@ -119,6 +160,29 @@ class VideoDeviceSetupDialog(QDialog, video_device_setup_ui.Ui_dialog):
             # self.combo_box_device.addItem(camera.description())
             devices.append(camera.description())
         return devices
+
+    @staticmethod
+    def list_video_device_info(device_name: str) -> tuple[list[str], list[str]]:
+        resolution_list = list()
+        format_list = list()
+        cameras = QMediaDevices.videoInputs()
+        camera_device = None
+        for camera in cameras:
+            if camera.description() == device_name:
+                camera_device = camera
+                break
+        if camera_device is None:
+            return resolution_list, format_list
+        for i in camera_device.videoFormats():
+            width = i.resolution().width()
+            height = i.resolution().height()
+            resolutions_string = f"{width}x{height}"
+            if resolutions_string not in resolution_list:
+                resolution_list.append(resolutions_string)
+            format_string = i.pixelFormat().name.split("_")[1]
+            if format_string not in format_list:
+                format_list.append(format_string)
+        return resolution_list, format_list
 
     # 刷新设备列表
     def refresh_devices(self):
@@ -128,46 +192,34 @@ class VideoDeviceSetupDialog(QDialog, video_device_setup_ui.Ui_dialog):
     # 刷新视频设备列表
     def refresh_video_devices(self):
         self.combo_box_device.clear()
-        video_devices = self.list_video_devices()
+        video_devices = self.list_video_devices_name()
+        video_device_name = None
         for device in video_devices:
             self.combo_box_device.addItem(device)
-        if self.combo_box_device.count() > 0:
-            # self.combo_box_device.setCurrentIndex(0)
-            self.refresh_video_device_info()
+            video_device_name = device
+        if video_device_name is not None:
+            self.combo_box_device.setCurrentText(video_device_name)
+            self.refresh_video_device_info(video_device_name)
 
     # 刷新视频设备详细信息
-    def refresh_video_device_info(self):
+    def refresh_video_device_info(self, device_name: str):
         self.combo_box_resolution.clear()
         self.combo_box_format.clear()
-        current_video_device_name = self.combo_box_device.currentText()
-        cameras = QMediaDevices.videoInputs()
-        camera_device = None
-        for camera in cameras:
-            if camera.description() == current_video_device_name:
-                camera_device = camera
-                break
-        if camera_device is None:
-            return
-        resolution_list = []
-        format_list = []
-        for i in camera_device.videoFormats():
-            width = i.resolution().width()
-            height = i.resolution().height()
-            resolutions_str = f"{width}x{height}"
-            if resolutions_str not in resolution_list:
-                resolution_list.append(resolutions_str)
-                self.combo_box_resolution.addItem(resolutions_str)
-                if (
-                    self.reference_video_config.resolution_x == width
-                    and self.reference_video_config.resolution_y == height
-                ):
-                    self.combo_box_resolution.setCurrentText(resolutions_str)
-            format_str = i.pixelFormat().name.split("_")[1]
-            if format_str not in format_list:
-                format_list.append(format_str)
-                self.combo_box_format.addItem(format_str)
-                if self.reference_video_config.format == format_str:
-                    self.combo_box_format.setCurrentText(format_str)
+        resolution_list, format_list = self.list_video_device_info(device_name)
+        default_resolution = None
+        default_format = None
+        # 设置分辨率combox
+        for resolution in resolution_list:
+            self.combo_box_resolution.addItem(resolution)
+            default_resolution = resolution
+        if default_resolution is not None:
+            self.combo_box_resolution.setCurrentText(default_resolution)
+        # 设置格式combox
+        for format_string in format_list:
+            self.combo_box_format.addItem(format_string)
+            default_format = format_string
+        if default_format is not None:
+            self.combo_box_format.setCurrentText(default_format)
 
     # 刷新音频设备列表
     def refresh_audio_device(self):
@@ -180,17 +232,14 @@ class VideoDeviceSetupDialog(QDialog, video_device_setup_ui.Ui_dialog):
 
         audio_in_devices = QMediaDevices.audioInputs()
         audio_out_devices = QMediaDevices.audioOutputs()
+
         for device in audio_in_devices:
             description = device.description()
             self.combo_box_audio_in.addItem(description)
-            if self.reference_audio_config.audio_device_in == description:
-                self.combo_box_audio_in.setCurrentText(description)
 
         for device in audio_out_devices:
             description = device.description()
-            self.combo_box_audio_out.addItem(device.description())
-            if self.reference_audio_config.audio_device_out == description:
-                self.combo_box_audio_out.setCurrentText(description)
+            self.combo_box_audio_out.addItem(description)
 
 
 if __name__ == "__main__":

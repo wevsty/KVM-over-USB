@@ -677,7 +677,8 @@ class MyMainWindow(MainWindow):
         # 传入配置文件的配置
         self.video_device_setup_dialog.set_video_config(vc)
         self.video_device_setup_dialog.set_audio_config(ac)
-
+        self.video_device_setup_dialog.select_video_devices_with_config()
+        self.video_device_setup_dialog.select_audio_devices_with_config()
         # 确保窗口位置
         wm_pos = self.geometry()
         wm_size = self.size()
@@ -1411,6 +1412,7 @@ class MyMainWindow(MainWindow):
             if character.isupper():
                 shift_flag = True
             key_code = self.keyboard_key_name_to_hid_code.get(character, 0)
+
             if key_code == 0:
                 logger.critical(f"character key code not found: {character}")
                 continue
