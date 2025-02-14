@@ -9,7 +9,7 @@ isort==5.13.2
 loguru==0.7.3
 mccabe==0.7.0
 mypy-extensions==1.0.0
-Nuitka==2.6.2
+Nuitka==2.6.5
 ordered-set==4.1.0
 packaging==24.2
 pathspec==0.12.1
@@ -17,12 +17,12 @@ platformdirs==4.3.6
 pycodestyle==2.12.1
 pyflakes==3.2.0
 pyserial==3.5
-PySide6==6.8.2
-PySide6_Addons==6.8.2
-PySide6_Essentials==6.8.2
+PySide6==6.8.2.1
+PySide6_Addons==6.8.2.1
+PySide6_Essentials==6.8.2.1
 pywin32==308
 pyWinhook==1.6.2
 PyYAML==6.0.2
-shiboken6==6.8.2
+shiboken6==6.8.2.1
 win32_setctime==1.2.0
 zstandard==0.23.0
