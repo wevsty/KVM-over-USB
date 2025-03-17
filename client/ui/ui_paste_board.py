@@ -104,7 +104,7 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
 
     def send_text(self) -> None:
         text = self.plain_text_edit.toPlainText()
-        text = text.replace(os.sep, "\n")
+        text = text.replace(os.linesep, "\n")
         if text.isascii() is False:
             QMessageBox.critical(
                 self,
