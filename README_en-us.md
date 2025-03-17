@@ -11,9 +11,7 @@ For home users, this project helps you to quickly manage/maintain your server us
 
 
 ## Hardware
-For most users, it is difficult to ask users to manufacture their own PCB. 
-A non-profit project that involves commissioning a manufacturer is obviously also difficult. 
-So this project recommends using a combination of products already available on the market. 
+Because for normal users, it is unrealistic to ask users to produce their own or commissioned manufacturers to produce hardware. so this project recommends the use of existing products on the market for a combination of DIY.
 
 
 ### Hardware list
@@ -30,6 +28,9 @@ Note 2: If you have special needs, you can also purchase a USB to serial cable w
 
 ### Hardware photos
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/hardware_photos.jpg)
+
+### Other Compatible Hardware 
+According to the feedback from our users, the NanoKVM-USB manufactured by Sipeed can also be used with the client provided in this project.
 
 ## Software
 The software client of the project is based on the source code of [KVM-Card-Mini-PySide6](https://github.com/ElluIFX/KVM-Card-Mini-PySide6) with modifications, and adapts CH9329 for keyboard and mouse input.

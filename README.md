@@ -11,11 +11,8 @@ Documentation English Version: https://github.com/wevsty/KVM-over-USB/blob/main/
 对于家庭用户来说，本方案能帮助你使用其他PC/笔记本电脑通过USB连接快速的管理/维护服务器。 
 
 
-## 硬件
-对于大部分用户来说，要求用户自己制造PCB是困难的。 
-一个非盈利项目如果要委托制造商生产硬件显然也是困难的。 
-所以本项目推荐使用市面上已有的产品进行组合。 
-
+## 硬件部分
+因为对于普通用户来说，要求用户自行生产或者委托制造商生产硬件是不现实的，所以本项目推荐使用市面上已有的产品进行组合自行DIY。
 
 ### 硬件清单
 1. 视频采集卡：可以使用MS2109或MS2130等芯片的视频采集卡，市场售价约为30到100元人民币。 
@@ -33,6 +30,9 @@ CH340是一个常见的USB转串口芯片，通过串口接入CH9329，最终将
 
 ### 硬件实物图
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/hardware_photos.jpg)
+
+### 其他兼容硬件
+根据网友反馈，由 Sipeed 生产的 NanoKVM-USB 亦可使用本项目提供的客户端。
 
 ## 软件
 项目软件客户端基于 [KVM-Card-Mini-PySide6](https://github.com/ElluIFX/KVM-Card-Mini-PySide6) 的源码进行了改动以及重构，适配了 CH9329 作为键盘鼠标输入使用。
