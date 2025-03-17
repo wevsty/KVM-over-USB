@@ -30,12 +30,13 @@ pyside6-essentials = "^6.8.2"
 pyside6 = "^6.8.2"
 pywinhook = { version = "^1.6.2", markers = "platform_system == 'Windows'" }
 pyserial = "^3.5"
-nuitka = "^2.6.5"
+nuitka = "^2.6.8"
+pych9329 = "^0.1.5"
 
 [tool.poetry.group.dev.dependencies]
-black = "^24.10.0"
-isort = "^5.13.2"
-flake8-bugbear = "^24.10.31"
+black = "^25.1"
+isort = "^6.0.1"
+flake8-bugbear = "^24.12.12"
 
 [build-system]
 requires = ["poetry-core"]

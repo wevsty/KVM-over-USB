@@ -12,7 +12,6 @@ import pyWinhook as pyHook
 import pythoncom
 from PySide6.QtCore import (
     QEvent,
-    QEventLoop,
     QLocale,
     QMutex,
     QMutexLocker,
@@ -1598,8 +1597,8 @@ class MyMainWindow(MainWindow):
     # 随机延迟
     @staticmethod
     def random_sleep_ms(min_interval: int = 0, max_interval: int = 100):
-        random_sleep_time = int(random.uniform(min_interval, max_interval))
-        QThread.msleep(interval)
+        random_time = int(random.uniform(min_interval, max_interval))
+        QThread.msleep(random_time)
 
     def update_status_bar(self):
         ctrl_left = self.keyboard_key_name_to_hid_code.get("ctrl_left", 0)

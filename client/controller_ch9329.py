@@ -2,9 +2,10 @@ import random
 import threading
 from abc import ABC, abstractmethod
 
-import ch9329.exceptions
-from ch9329 import keyboard, mouse
-from ch9329.config import get_product
+import pych9329.exceptions
+from pych9329 import keyboard
+from pych9329 import mouse
+from pych9329 import chip_command
 from loguru import logger
 from serial import Serial, SerialException
 
@@ -32,7 +33,7 @@ class ControllerBase(ABC):
     @abstractmethod
     def mouse_send_data(
         self,
-        button_name: mouse.MouseCtrl,
+        button_name: str,
         x: int = 0,
         y: int = 0,
         wheel: int = 0,
@@ -70,7 +71,7 @@ class ControllerCh9329(ControllerBase):
         self.screen_y: int = screen_y
         self.min_interval: float = 0.2
         self.max_interval: float = 0.5
-        self.timeout: float = 0.1
+        self.timeout: float = 0.5
 
     def get_connection_params(self) -> tuple[str, int, int, int]:
         return self.port, self.baud, self.screen_x, self.screen_y
@@ -133,34 +134,34 @@ class ControllerCh9329(ControllerBase):
             if self.connection.is_open is False:
                 return info
             try:
-                info = get_product(self.connection)
-            except ch9329.exceptions.ProtocolError:
-                info = ""
+                info = chip_command.get_product(self.connection)
+            except pych9329.exceptions.InvalidStringEncoding:
+                info = "Invalid string"
+            except pych9329.exceptions.ChipBaseException:
+                info = "Unknown error"
         return info
 
     # 恢复出厂设置
     def restore_factory_settings(self):
-        cmd_restore_packet = b"\x57\xab\x00\x0c\x00\x0e"
         with self.connection_mutex:
             if self.connection is None:
                 return False
             if self.connection.is_open is False:
                 return False
-            self.connection.write(cmd_restore_packet)
+            chip_command.send_command_restore_factory_config(self.connection)
 
     # 复位芯片
     def reset_controller(self):
-        cmd_reset_packet = b"\x57\xab\x00\x0f\x00\x11"
         with self.connection_mutex:
             if self.connection is None:
                 return False
             if self.connection.is_open is False:
                 return False
-            self.connection.write(cmd_reset_packet)
+            chip_command.send_command_reset(self.connection)
 
     def mouse_send_data(
         self,
-        button_name: mouse.MouseCtrl,
+        button_name: str,
         x: int = 0,
         y: int = 0,
         wheel: int = 0,
@@ -172,7 +173,7 @@ class ControllerCh9329(ControllerBase):
             if self.connection.is_open is False:
                 return False
             if relative is False:
-                mouse.send_data_absolute(
+                mouse.send_absolute_data(
                     self.connection,
                     x,
                     y,
@@ -182,7 +183,7 @@ class ControllerCh9329(ControllerBase):
                     wheel,
                 )
             else:
-                mouse.send_data_relative(
+                mouse.send_relative_data(
                     self.connection, x, y, button_name, wheel
                 )
 
@@ -204,46 +205,33 @@ class ControllerCh9329(ControllerBase):
                 keys = keys[0:6]
             if len(function_keys) > 8:
                 function_keys = function_keys[0:8]
-            keyboard.trigger_keys(self.connection, keys, function_keys)
+            keyboard.trigger(self.connection, keys, function_keys)
             # logger.debug(f"keyboard keys trigger : {keys}")
         return True
 
     # 获取键盘状态（指示灯状态）
-    def keyboard_receive_status(self) -> tuple[int, dict]:
+    def keyboard_receive_status(self) -> tuple[int, dict[str, bool]]:
         status: bool = False
         reply_dict: dict = dict()
-        keyboard_light_status: int = 0
         with self.connection_mutex:
             if self.connection is None:
                 return status, reply_dict
             if self.connection.is_open is False:
                 return status, reply_dict
-            cmd_get_info_packet = b"\x57\xab\x00\x01\x00\x03"
             # clear connection buffer
-            self.connection.readall()
-            self.connection.write(cmd_get_info_packet)
-            buffer: bytes = self.connection.readall()
-            if len(buffer) == 14:
-                keyboard_light_status = buffer[7]
-                status = True
-            logger.debug(f"keyboard status 0x{keyboard_light_status:02x}")
-            if keyboard_light_status & (1 << 0) != 0:
-                num_lock = True
-            else:
-                num_lock = False
-            if keyboard_light_status & (1 << 1) != 0:
-                caps_lock = True
-            else:
-                caps_lock = False
-            if keyboard_light_status & (1 << 2) != 0:
-                scroll_lock = True
-            else:
-                scroll_lock = False
-            reply_dict = {
-                "num_lock": num_lock,
-                "caps_lock": caps_lock,
-                "scroll_lock": scroll_lock,
-            }
+            # self.connection.readall()
+            status, reply_dict = keyboard.receive_indicator_status(
+                self.connection
+            )
+
+            logger.debug(f"receive keyboard indicator: {status}")
+            if status:
+                logger.debug(
+                    f"keyboard usb connect: {reply_dict["usb_connect_status"]}"
+                )
+                logger.debug(f"num_lock: {reply_dict["num_lock"]}")
+                logger.debug(f"caps_lock: {reply_dict["caps_lock"]}")
+                logger.debug(f"scroll_lock: {reply_dict["scroll_lock"]}")
         return status, reply_dict
 
     def release(self, release_type: str = "all"):
