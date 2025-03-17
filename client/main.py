@@ -1365,7 +1365,7 @@ class MyMainWindow(MainWindow):
             self.update_keyboard_buffer_with_hid_code(
                 key_code, KeyStateEnum.PRESS
             )
-        self.random_sleep()
+        self.random_sleep_ms()
         for key_code in key_code_list:
             self.update_keyboard_buffer_with_hid_code(
                 key_code, KeyStateEnum.RELEASE
@@ -1400,11 +1400,12 @@ class MyMainWindow(MainWindow):
         # 强制关闭 capslock
         if self.keyboard_indicator_buffer.caps_lock:
             self.update_keyboard_indicator_buffer("caps_lock")
-        shift_flag = False
+
         for character in data:
             if character.isascii() is False:
                 logger.critical(f"Character not supported: {character}")
                 continue
+            shift_flag = False
             # 如果是需要shift的符号
             if character in SHIFT_SYMBOL:
                 shift_flag = True
@@ -1430,7 +1431,6 @@ class MyMainWindow(MainWindow):
                 self.update_keyboard_buffer_with_hid_code(
                     shift_hid_code, KeyStateEnum.RELEASE
                 )
-                self.sleep(self.config.paste_board["interval"])
             else:
                 self.update_keyboard_buffer_with_hid_code(
                     key_code, KeyStateEnum.PRESS
@@ -1438,7 +1438,7 @@ class MyMainWindow(MainWindow):
                 self.update_keyboard_buffer_with_hid_code(
                     key_code, KeyStateEnum.RELEASE
                 )
-                self.sleep(self.config.paste_board["interval"])
+            self.sleep_ms(self.config.paste_board["interval"])
         self.user_input_block(False)
 
     # 快速粘贴功能开关切换
@@ -1590,23 +1590,16 @@ class MyMainWindow(MainWindow):
         else:
             pass
 
-    # 随机延迟
-    @staticmethod
-    def random_sleep(min_interval: int = 0, max_interval: int = 100):
-        random_sleep_time = int(random.uniform(min_interval, max_interval))
-        if random_sleep_time > 0:
-            loop = QEventLoop()
-            QTimer.singleShot(random_sleep_time, loop.quit)
-            loop.exec()
-
     # 固定延迟
     @staticmethod
-    def sleep(interval: int = 1):
-        interval = int(interval)
-        if interval > 0:
-            loop = QEventLoop()
-            QTimer.singleShot(interval, loop.quit)
-            loop.exec()
+    def sleep_ms(interval: int = 1):
+        QThread.msleep(interval)
+
+    # 随机延迟
+    @staticmethod
+    def random_sleep_ms(min_interval: int = 0, max_interval: int = 100):
+        random_sleep_time = int(random.uniform(min_interval, max_interval))
+        QThread.msleep(interval)
 
     def update_status_bar(self):
         ctrl_left = self.keyboard_key_name_to_hid_code.get("ctrl_left", 0)
