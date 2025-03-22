@@ -31,7 +31,7 @@ pyside6 = "^6.8.2"
 pywinhook = { version = "^1.6.2", markers = "platform_system == 'Windows'" }
 pyserial = "^3.5"
 nuitka = "^2.6.8"
-pych9329 = "^0.1.5"
+pych9329 = "^0.1.6"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1"
