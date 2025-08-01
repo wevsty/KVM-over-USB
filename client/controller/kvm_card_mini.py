@@ -224,8 +224,8 @@ class ControllerKvmCardMini(ControllerDeviceBase):
             return status
         self.hid_device.open_path(self.hid_device_path)
         # self.hid_device.set_nonblocking(True)
-        manufacturer: str = self.hid_device.get_manufacturer_string()
-        if manufacturer is not None and len(manufacturer) != 0:
+        product: str = self.hid_device.get_product_string()
+        if len(product) != 0:
             self.is_open = True
         status = True
         self.update_board_indicator_light(0, 0, 30)
