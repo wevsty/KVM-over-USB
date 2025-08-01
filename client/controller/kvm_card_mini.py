@@ -3,7 +3,7 @@ import typing
 
 import hid
 from loguru import logger
-
+from PySide6.QtCore import QThread
 from controller.base import ControllerDeviceBase
 from keyboard_buffer import KeyboardKeyBuffer, KeyStateEnum
 from mouse_buffer import (
@@ -152,7 +152,7 @@ class KvmCardMiniHidBuffer:
         mouse_button_code = self.mouse_state_buffer_to_b2(buffer)
         mouse_button_state = buffer.button.state
         if mouse_button_state == MouseButtonStateEnum.PRESS:
-            hid_buffer = hid_buffer[2] | mouse_button_code
+            hid_buffer[2] = hid_buffer[2] | mouse_button_code
         elif mouse_button_state == MouseButtonStateEnum.RELEASE:
             hid_buffer[2] = hid_buffer[2] ^ mouse_button_code
             if hid_buffer[2] < 0 or hid_buffer[2] > 7:
@@ -163,6 +163,8 @@ class KvmCardMiniHidBuffer:
         # 填充鼠标坐标
         x_hid = int(buffer.point.x)
         y_hid = int(buffer.point.y)
+        x_hid = max(min(x_hid, 127), -127)
+        y_hid = max(min(y_hid, 127), -127)
         hid_buffer[3] = x_hid & 0xFF
         hid_buffer[4] = y_hid & 0xFF
 
@@ -182,17 +184,10 @@ class KvmCardMiniHidBuffer:
 
 
 class ControllerKvmCardMini(ControllerDeviceBase):
-    FUNCTION_KEYS = [
-        "ctrl_left",
-        "ctrl_right",
-        "shift_left",
-        "shift_right",
-        "alt_left",
-        "alt_right",
-        "win_left",
-        "win_right",
-        "win_app",
-    ]
+    # 固定延迟
+    @staticmethod
+    def sleep_ms(interval: int = 1):
+        QThread.msleep(interval)
 
     def __init__(self):
         self.product_id: int = 0x2107
@@ -200,6 +195,7 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         self.usage_page: int = 0xFF00
         self.hid_device = hid.device()
         self.hid_device_path: bytes | None = None
+        self.is_open: bool = False
         self.timeout: float = 1.0
         self.hid_buffer: KvmCardMiniHidBuffer = KvmCardMiniHidBuffer()
 
@@ -227,25 +223,22 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         if self.hid_device_path is None:
             return status
         self.hid_device.open_path(self.hid_device_path)
-        self.hid_device.set_nonblocking(True)
+        # self.hid_device.set_nonblocking(True)
+        manufacturer: str = self.hid_device.get_manufacturer_string()
+        if manufacturer is not None and len(manufacturer) != 0:
+            self.is_open = True
         status = True
-        self.update_board_indicator_light(30, 30, 0)
+        self.update_board_indicator_light(0, 0, 30)
         return status
 
     def device_close(self) -> None:
-        self.update_board_indicator_light(0, 30, 30)
+        self.update_board_indicator_light(30, 0, 0)
         self.controller_release()
         self.hid_device.close()
+        self.is_open = False
 
     def device_check_connection(self) -> bool:
-        result: bool = False
-        try:
-            self.hid_device.read(1)
-            result = True
-        except IOError as error:
-            logger.error(error)
-            pass
-        return result
+        return self.is_open
 
     # 设备事件
     # 返回0为成功
@@ -370,6 +363,7 @@ class ControllerKvmCardMini(ControllerDeviceBase):
             else:
                 self.hid_buffer.keyboard_release(key.code)
         self.write_hid_data(self.hid_buffer.keyboard_buffer)
+        self.sleep_ms(5)
 
     def keyboard_recv_event(self, _command: str) -> tuple[int, dict]:
         status_code, reply = self.keyboard_receive_status()
@@ -407,11 +401,12 @@ class ControllerKvmCardMini(ControllerDeviceBase):
     def controller_reset(self):
         if not self.device_check_connection():
             return
-        status_code = self.write_hid_data([3, 0])
+        status_code = self.write_hid_data([4, 0])
         if status_code != 0:
             logger.error("Reset MCU failed.")
         else:
             logger.error("Reset MCU succeed.")
+            self.device_close()
 
     def update_board_indicator_light(self, r: int, g: int, b: int):
         if not self.device_check_connection():
