@@ -597,6 +597,11 @@ class AppMainWindow(MainWindow):
         controller_event_thread = self.threads.create("CONTROLLER_EVENT_THREAD")
         controller_event_thread.start()
         self.controller_event.moveToThread(controller_event_thread)
+        # 每秒自动检查控制器连接
+        controller_check_connection_timer = self.timer.create("CONTROLLER_CHECK_CONNECTION_TIMER")
+        controller_check_connection_timer.timeout.connect(self.check_controller_connection)
+        controller_check_connection_timer.setInterval(1000)
+        # controller_check_connection_timer.start()
 
         # 全屏模式设置
         self.fullscreen_event_command: str = "unknown"
@@ -1199,15 +1204,15 @@ class AppMainWindow(MainWindow):
                 self.update_keyboard_buffer_with_hid_code(
                     shift_hid_code, KeyStateEnum.PRESS
                 )
-                self.random_sleep_ms(20, 30)
+                # self.random_sleep_ms(20, 30)
                 self.update_keyboard_buffer_with_hid_code(
                     key_code, KeyStateEnum.PRESS
                 )
-                self.random_sleep_ms(20, 30)
+                # self.random_sleep_ms(20, 30)
                 self.update_keyboard_buffer_with_hid_code(
                     key_code, KeyStateEnum.RELEASE
                 )
-                self.random_sleep_ms(20, 30)
+                # self.random_sleep_ms(20, 30)
                 self.update_keyboard_buffer_with_hid_code(
                     shift_hid_code, KeyStateEnum.RELEASE
                 )
@@ -1215,7 +1220,7 @@ class AppMainWindow(MainWindow):
                 self.update_keyboard_buffer_with_hid_code(
                     key_code, KeyStateEnum.PRESS
                 )
-                self.random_sleep_ms(20, 30)
+                # self.random_sleep_ms(20, 30)
                 self.update_keyboard_buffer_with_hid_code(
                     key_code, KeyStateEnum.RELEASE
                 )
@@ -1382,9 +1387,14 @@ class AppMainWindow(MainWindow):
         self.init_controller()
         self.controller_command_send("device_open", None)
         self.controller_command_send("keyboard_read", None)
+        self.mouse_capture_triggered()
+        check_connection_timer = self.timer.get("CONTROLLER_CHECK_CONNECTION_TIMER")
+        check_connection_timer.start()
 
     # 断开控制器
     def disconnect_controller(self):
+        check_connection_timer = self.timer.get("CONTROLLER_CHECK_CONNECTION_TIMER")
+        check_connection_timer.stop()
         self.controller_command_send("device_close", None)
 
     # 重载控制器
@@ -1394,6 +1404,11 @@ class AppMainWindow(MainWindow):
     # 重置控制器
     def reset_controller(self):
         self.controller_command_send("device_reset", None)
+
+    # 检查控制器连接
+    def check_controller_connection(self):
+        if self.status.is_enabled("controller"):
+            self.controller_command_send("device_check_connection", None)
 
     # 控制器发送命令信号
     def controller_command_send(self, command: str, data: typing.Any):
@@ -1555,7 +1570,7 @@ class AppMainWindow(MainWindow):
             logger.error(f"Error key name: {key_name}")
             raise ValueError(f"Error key name: {key_name}")
         self.update_keyboard_buffer_with_hid_code(key_code, KeyStateEnum.PRESS)
-        self.random_sleep_ms(20, 25)
+        # self.random_sleep_ms(20, 25)
         self.update_keyboard_buffer_with_hid_code(
             key_code, KeyStateEnum.RELEASE
         )
@@ -1626,7 +1641,7 @@ class AppMainWindow(MainWindow):
                 mouse_pos.y() - self.mouse_last_pos.y()
             ) * relative_mouse_speed
             self.mouse_last_pos = mouse_pos
-            self.mouse_buffer.set_point(int(round(rel_x)), int(round(rel_y)))
+            self.mouse_buffer.set_point(rel_x, rel_y)
             # logger.debug(f"relative mode X={rel_x}, Y={rel_y}")
             self.statusbar_manager.show_message(
                 self.tr("Press Ctrl+Alt+F12 to release mouse")
