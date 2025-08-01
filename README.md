@@ -1,7 +1,8 @@
 # KVM over USB
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Code_checks](https://github.com/wevsty/KVM-over-USB/actions/workflows/code_checks.yml/badge.svg?branch=main)](https://github.com/wevsty/KVM-over-USB/actions/workflows/code_checks.yml)
-[![Client_release](https://github.com/wevsty/KVM-over-USB/actions/workflows/usb_kvm_client_release.yml/badge.svg)](https://github.com/wevsty/KVM-over-USB/actions/workflows/usb_kvm_client_release.yml)
+[![black_checks](https://badgen.net/github/checks/wevsty/KVM-over-USB/main?label=black)](https://github.com/wevsty/KVM-over-USB/actions/workflows/code_checks.yml)
+[![flake8_checks](https://badgen.net/github/checks/wevsty/KVM-over-USB/main?label=flake8)](https://github.com/wevsty/KVM-over-USB/actions/workflows/code_checks.yml)
+[![release_version](https://badgen.net/github/release/wevsty/KVM-over-USB)](https://github.com/wevsty/KVM-over-USB/releases)
 
 一个简单的KVM USB方案
 
