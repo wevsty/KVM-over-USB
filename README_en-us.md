@@ -1,7 +1,8 @@
 # KVM over USB
+[![Python version](https://img.shields.io/badge/Python-3.13-blue)](https://www.python.org)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![black_checks](https://badgen.net/github/checks/wevsty/KVM-over-USB/main?label=black)](https://github.com/wevsty/KVM-over-USB/actions/workflows/code_checks.yml)
-[![flake8_checks](https://badgen.net/github/checks/wevsty/KVM-over-USB/main?label=flake8)](https://github.com/wevsty/KVM-over-USB/actions/workflows/code_checks.yml)
+[![black_check](https://badgen.net/github/checks/wevsty/KVM-over-USB/main?label=black_check)](https://github.com/wevsty/KVM-over-USB/actions/workflows/code_checks.yml)
+[![flake8_check](https://badgen.net/github/checks/wevsty/KVM-over-USB/main?label=flake8_check)](https://github.com/wevsty/KVM-over-USB/actions/workflows/code_checks.yml)
 [![release_version](https://badgen.net/github/release/wevsty/KVM-over-USB)](https://github.com/wevsty/KVM-over-USB/releases)
 
 A simple KVM USB solution
