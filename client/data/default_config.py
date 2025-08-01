@@ -5,7 +5,7 @@ connection:
 controller:
   baud_rate: 9600
   port: auto
-  timeout: 0.3
+  timeout: 0.5
   type: ch9329
 mouse:
   cursor_offset_x: 4
