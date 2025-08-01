@@ -13,7 +13,7 @@ from mouse_buffer import (
     MouseWheelStateEnum,
 )
 
-VERBOSE_LOG_OUTPUT: bool = True
+VERBOSE_LOG_OUTPUT: bool = False
 
 
 class KvmCardMiniHidBuffer:
