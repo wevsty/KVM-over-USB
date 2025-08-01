@@ -598,8 +598,12 @@ class AppMainWindow(MainWindow):
         controller_event_thread.start()
         self.controller_event.moveToThread(controller_event_thread)
         # 每秒自动检查控制器连接
-        controller_check_connection_timer = self.timer.create("CONTROLLER_CHECK_CONNECTION_TIMER")
-        controller_check_connection_timer.timeout.connect(self.check_controller_connection)
+        controller_check_connection_timer = self.timer.create(
+            "CONTROLLER_CHECK_CONNECTION_TIMER"
+        )
+        controller_check_connection_timer.timeout.connect(
+            self.check_controller_connection
+        )
         controller_check_connection_timer.setInterval(1000)
         # controller_check_connection_timer.start()
 
@@ -1388,12 +1392,16 @@ class AppMainWindow(MainWindow):
         self.controller_command_send("device_open", None)
         self.controller_command_send("keyboard_read", None)
         self.mouse_capture_triggered()
-        check_connection_timer = self.timer.get("CONTROLLER_CHECK_CONNECTION_TIMER")
+        check_connection_timer = self.timer.get(
+            "CONTROLLER_CHECK_CONNECTION_TIMER"
+        )
         check_connection_timer.start()
 
     # 断开控制器
     def disconnect_controller(self):
-        check_connection_timer = self.timer.get("CONTROLLER_CHECK_CONNECTION_TIMER")
+        check_connection_timer = self.timer.get(
+            "CONTROLLER_CHECK_CONNECTION_TIMER"
+        )
         check_connection_timer.stop()
         self.controller_command_send("device_close", None)
 
