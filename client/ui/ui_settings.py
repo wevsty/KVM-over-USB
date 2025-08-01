@@ -245,10 +245,4 @@ class SettingsDialog(QDialog, settings_ui.Ui_SettingsDialog):
 
 
 if __name__ == "__main__":
-    from PySide6.QtWidgets import QApplication
-
-    app = QApplication()
-    my_window = SettingsDialog()
-    my_window.show()
-    app.exec()
     pass
