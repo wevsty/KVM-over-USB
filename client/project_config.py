@@ -38,7 +38,8 @@ class MainConfig(RequiredConfig):
     def __init__(self, file_path: str = "config.yaml"):
         super().__init__(file_path, None)
         self.root: dict = self.data
-        self.audio: dict | None = None
+
+        self.connection: dict | None = None
         self.controller: dict | None = None
         self.mouse: dict | None = None
         self.paste_board: dict | None = None
@@ -51,7 +52,8 @@ class MainConfig(RequiredConfig):
 
     def split_data_node(self):
         self.root: dict = self.data
-        self.audio = self.root.get("audio", None)
+
+        self.connection = self.root.get("connection", None)
         self.controller = self.root.get("controller", None)
         self.mouse = self.root.get("mouse", None)
         self.paste_board = self.root.get("paste_board", None)

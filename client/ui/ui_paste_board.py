@@ -121,7 +121,7 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
     def send_file(self) -> None:
         if self.file_path is None:
             return
-        if os.path.isfile(self.file_path) is False:
+        if not os.path.isfile(self.file_path):
             return
         if self.send_worker.is_sending():
             return

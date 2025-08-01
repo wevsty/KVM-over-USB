@@ -6,11 +6,29 @@ class StatusBaseException(RuntimeError):
     pass
 
 
-class StatusValueTypeException(StatusBaseException):
+class StatusKeyError(StatusBaseException):
+    pass
+
+
+class StatusValueError(StatusBaseException):
     pass
 
 
 class StatusBuffer(UserDict[str, typing.Any]):
+    def exists(self, key: str) -> bool:
+        if key in self.data:
+            return True
+        return False
+
+    def create(self, key: str, value: typing.Any = None) -> None:
+        self.data[key] = value
+
+    def delete(self, key: str) -> None:
+        self.data.pop(key, None)
+
+    def value(self, key: str) -> typing.Any:
+        return self.data[key]
+
     def set_value(self, key: str, value: typing.Any) -> None:
         self.data[key] = value
 
@@ -21,50 +39,46 @@ class StatusBuffer(UserDict[str, typing.Any]):
         if isinstance(value, (int, float)):
             self.set_value(key, value)
         else:
-            raise StatusValueTypeException(
-                "The value type should be a int or float"
-            )
+            raise StatusValueError("The value type should be a int or float")
 
     def get_number(self, key: str) -> int | float:
         value = self.get_value(key)
         if isinstance(value, (int, float)):
             return value
         else:
-            raise StatusValueTypeException(
-                "The value type should be a int or float"
-            )
+            raise StatusValueError("The value type should be a int or float")
 
     def set_string(self, key: str, value: str) -> None:
         if isinstance(value, str):
             self.set_value(key, value)
         else:
-            raise StatusValueTypeException("The value type should be a string")
+            raise StatusValueError("The value type should be a string")
 
     def get_string(self, key: str) -> str:
         value = self.get_value(key)
         if isinstance(value, str):
             return value
         else:
-            raise StatusValueTypeException("The value type should be a string")
+            raise StatusValueError("The value type should be a string")
 
     def set_bool(self, key: str, value: bool) -> None:
         if isinstance(value, bool):
             self.set_value(key, value)
         else:
-            raise StatusValueTypeException("The value type should be a bool")
+            raise StatusValueError("The value type should be a bool")
 
     def get_bool(self, key: str) -> bool:
         value = self.get_value(key)
         if isinstance(value, bool):
             return value
         else:
-            raise StatusValueTypeException("The value type should be a bool")
+            raise StatusValueError("The value type should be a bool")
 
     # 反转bool
     def reverse_bool(self, key: str) -> None:
         value = self.get_value(key)
         if not isinstance(value, bool):
-            raise StatusValueTypeException("The value type should be a bool")
+            raise StatusValueError("The value type should be a bool")
         next_value = not value
         self.set_bool(key, next_value)
 

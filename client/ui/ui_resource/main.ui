@@ -30,13 +30,13 @@
     <property name="title">
      <string>Device</string>
     </property>
-    <addaction name="action_video_device_setup"/>
-    <addaction name="action_video_device_connect"/>
-    <addaction name="action_video_device_disconnect"/>
+    <addaction name="action_device_connect"/>
+    <addaction name="action_device_disconnect"/>
     <addaction name="separator"/>
-    <addaction name="action_controller_device_setup"/>
     <addaction name="action_device_reload"/>
     <addaction name="action_device_reset"/>
+    <addaction name="separator"/>
+    <addaction name="action_settings"/>
     <addaction name="separator"/>
     <addaction name="action_minimize"/>
     <addaction name="action_exit"/>
@@ -96,8 +96,9 @@
     <addaction name="action_resize_window"/>
     <addaction name="action_topmost"/>
     <addaction name="separator"/>
-    <addaction name="action_keep_ratio"/>
-    <addaction name="action_capture_frame"/>
+    <addaction name="action_keep_aspect_ratio"/>
+    <addaction name="separator"/>
+    <addaction name="action_capture_image"/>
     <addaction name="action_record_video"/>
    </widget>
    <widget class="QMenu" name="menu_about">
@@ -134,7 +135,7 @@
     <string/>
    </property>
   </action>
-  <action name="action_video_device_connect">
+  <action name="action_device_connect">
    <property name="text">
     <string>Connect</string>
    </property>
@@ -142,7 +143,7 @@
     <string>Connect device</string>
    </property>
   </action>
-  <action name="action_video_device_disconnect">
+  <action name="action_device_disconnect">
    <property name="text">
     <string>Disconnect</string>
    </property>
@@ -240,7 +241,7 @@
     <string>Resize window</string>
    </property>
   </action>
-  <action name="action_keep_ratio">
+  <action name="action_keep_aspect_ratio">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -269,11 +270,6 @@
     <string>Hide cursor</string>
    </property>
   </action>
-  <action name="action_capture_frame">
-   <property name="text">
-    <string>Capture frame</string>
-   </property>
-  </action>
   <action name="action_quick_paste">
    <property name="checkable">
     <bool>true</bool>
@@ -295,14 +291,6 @@
     <string>Num Keyboard</string>
    </property>
   </action>
-  <action name="action_record_video">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Record video</string>
-   </property>
-  </action>
   <action name="action_system_hook">
    <property name="checkable">
     <bool>true</bool>
@@ -322,12 +310,12 @@
     <string>Relative mouse</string>
    </property>
   </action>
-  <action name="action_controller_device_setup">
+  <action name="action_settings">
    <property name="text">
-    <string>Controller device setup</string>
+    <string>Settings</string>
    </property>
    <property name="statusTip">
-    <string>Controller setup</string>
+    <string>Settings</string>
    </property>
   </action>
   <action name="action_about_qt">
@@ -375,6 +363,19 @@
    </property>
    <property name="text">
     <string>Correction cursor</string>
+   </property>
+  </action>
+  <action name="action_capture_image">
+   <property name="text">
+    <string>Capture image</string>
+   </property>
+  </action>
+  <action name="action_record_video">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Record video</string>
    </property>
   </action>
  </widget>

@@ -1,4 +1,4 @@
-class HexData:
+class HexConvert:
     @staticmethod
     def hex_to_int(data: str) -> int:
         return int(data, 16)

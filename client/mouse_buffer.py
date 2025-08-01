@@ -48,13 +48,13 @@ class MouseButton:
 
 @dataclass
 class MousePoint:
-    x: int = 0
-    y: int = 0
+    x: float = 0
+    y: float = 0
 
-    def get(self) -> tuple[int, int]:
+    def get(self) -> tuple[float, float]:
         return self.x, self.y
 
-    def set(self, x: int, y: int) -> None:
+    def set(self, x: float, y: float) -> None:
         self.x = x
         self.y = y
 
@@ -68,10 +68,10 @@ class MouseStateBuffer:
     button: MouseButton = field(default_factory=MouseButton)
     wheel: MouseWheelStateEnum = MouseWheelStateEnum.STOP
 
-    def get_point(self) -> tuple[int, int]:
+    def get_point(self) -> tuple[float, float]:
         return self.point.get()
 
-    def set_point(self, x: int, y: int) -> None:
+    def set_point(self, x: float, y: float) -> None:
         self.point.set(x, y)
 
     def set_button(

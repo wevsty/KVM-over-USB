@@ -39,6 +39,13 @@ class KeyboardKeyBuffer:
                 return ks.state
         return KeyStateEnum.RELEASE
 
+    def is_pressed(self, key_code: int):
+        pressed: bool = False
+        for ks in self.keyboard_buffer:
+            if ks.code == key_code and ks.state == KeyStateEnum.PRESS:
+                pressed = True
+        return pressed
+
     def clear_released(self):
         replace_buffer: list[KeyStateItem] = list()
         for ks in self.keyboard_buffer:

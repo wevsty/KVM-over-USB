@@ -1,4 +1,4 @@
-CH9329_HID_MAP = {
+HID_CODE_TO_KEY_NAME = {
     "0x00": "",
     "0x04": "a",
     "0x05": "b",

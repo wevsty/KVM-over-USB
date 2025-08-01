@@ -1,34 +1,19 @@
 MAIN_DEFAULT_CONFIG_DATA = """
-config_version: v2
-audio:
-  audio_device_in: None
-  audio_device_out: None
-  audio_support: false
+config_version: v3
+connection:
+  auto_connect: false
 controller:
-  baud: 9600
+  baud_rate: 9600
   port: auto
+  timeout: 0.3
+  type: ch9329
 mouse:
   cursor_offset_x: 4
   cursor_offset_y: 6
   relative_speed: 0.6
-  report_freq: 60
+  report_frequency: 60
 paste_board:
   interval: 1
-ui:
-  fullscreen_tip: true
-  quick_paste: true
-video:
-  auto_connect: false
-  device: None
-  format: None
-  keep_aspect_ratio: true
-  resolution_x: 1280
-  resolution_y: 720
-video_record:
-  encoding_bitrate: 10000000
-  encoding_mode: ConstantQualityEncoding
-  frame_rate: 0
-  quality: HighQuality
 shortcut_keys:
   Alt+F4:
   - alt_left
@@ -50,6 +35,23 @@ shortcut_keys:
   Meta+R:
   - win_left
   - r
+ui:
+  fullscreen_tip: true
+  quick_paste: true
+  tips_fullscreen: true
+  window_auto_maximized: false
+  window_auto_to_center: true
+video:
+  device: Integrated Webcam
+  format: NV12
+  keep_aspect_ratio: true
+  resolution_x: 1280
+  resolution_y: 720
+video_record:
+  encoding_bitrate: 10000000
+  encoding_mode: ConstantQualityEncoding
+  frame_rate: 0
+  quality: HighQuality
 """
 MAIN_DEFAULT_CONFIG_DATA = MAIN_DEFAULT_CONFIG_DATA.strip()
 
