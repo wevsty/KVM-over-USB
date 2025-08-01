@@ -1,0 +1,36 @@
+name: code_checks
+
+on:
+  push:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  Run:
+    name: "code_static_checks"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: "actions/checkout@v4"
+
+      - name: Setup Python
+        uses: "actions/setup-python@v5"
+        with:
+          python-version: '3.13'
+          # caching pip dependencies
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -VV
+          python -m site
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install black flake8-bugbear
+      
+      - name: "Check with black"
+        run: "black --check --verbose --config ./client/pyproject.toml ./client"
+        
+      - name: "Check with flake8"
+        run: "flake8 --verbose --config=./client/flake8.cfg ./client"
+      
