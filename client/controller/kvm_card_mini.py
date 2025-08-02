@@ -284,15 +284,15 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         buffer[0] = 0
         try:
             self.hid_device.write(buffer)
-        except ValueError as _error:
+        except ValueError:
             logger.error("Device is not open")
             status_code = 1
-        except OSError as _error:
+        except OSError:
             # 函数应该抛出的是 IOError
             # Python 3.3 起 IOError 是 OSError 的子类
             logger.error("Error writing data to device")
             status_code = 2
-        except NameError as _error:
+        except NameError:
             logger.error("Uninitialized device")
             status_code = 3
         return status_code
@@ -304,11 +304,11 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         while True:
             try:
                 data = self.hid_device.read(64)
-            except ValueError as _error:
+            except ValueError:
                 logger.error("Device is not open")
                 status_code = 1
                 break
-            except OSError as _error:
+            except OSError:
                 # 函数应该抛出的是 IOError
                 logger.error("Error reading data from device")
                 status_code = 2
