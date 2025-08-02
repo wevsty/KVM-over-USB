@@ -18,13 +18,17 @@ Because for normal users, it is unrealistic to ask users to produce their own or
 
 
 ### Hardware list
-1. Video capture card: You can use video capture cards with chips such as MS2109 or MS2130, which are sold in the market for about 5-15 USD. 
-2. CH340 to CH9329 USB Connection Cable: CH340 is a common USB to serial chip, access CH9329 through the serial port, and finally connect CH9329 to the controlled device can be. 
-3. HDMI cable. 
-4. If the device does not have enough USB ports, it is recommended to use it with a USB HUB. 
+1. Video capture card: Video capture cards using chips such as MS2109 or MS2130 can be used, with market prices ranging from approximately 5 - 20 USD.  
+2. USB cable for converting CH340 to CH9329.  
+3. HDMI cable.  
+4. If the device does not have enough USB ports, it is recommended to use a USB hub. 
 
-Note 1: There are finished cables available on shopping platforms, which can be purchased directly at a market price of about 20 CNY. 
-Note 2: If you have special needs, you can also purchase a USB to serial cable with other chips (e.g. FT232) and then purchase a CH9329 module with a serial interface. 
+Special notes:  
+CH340 is a common USB-to-serial port chip that connects to CH9329 via a serial port. Other USB-to-serial port chips can also be used if needed. 
+
+The CH340 to CH9329 connection cable is recommended because finished cables are available for purchase on shopping platforms, making them easier to obtain. The current market price is approximately 2 - 5 USD.
+ 
+If there are special requirements, you can also purchase USB-to-serial port connection cables using other chips (e.g., FT232) and then use a CH9329 module with a serial interface.
 
 ### Schematic
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/connection_schematic.svg)
@@ -33,7 +37,12 @@ Note 2: If you have special needs, you can also purchase a USB to serial cable w
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/hardware_photos.jpg)
 
 ### Other Compatible Hardware 
-According to the feedback from our users, the NanoKVM-USB manufactured by Sipeed can also be used with the client provided in this project.
+In addition, this project's client software is also compatible with some similar products. For specific information, please refer to the table below.
+
+| Manufacturer | Product Name | Device Type |
+| --- | --- | --- |
+| - | KVM-Card-Mini | KVM-Card-Mini Series |
+| Sipeed | NanoKVM-USB | CH9329 Series |
 
 ## Software
 The software client of the project is based on the source code of [KVM-Card-Mini-PySide6](https://github.com/ElluIFX/KVM-Card-Mini-PySide6) with modifications, and adapts CH9329 for keyboard and mouse input.
@@ -61,29 +70,22 @@ https://github.com/wevsty/KVM-over-USB/releases
 
 ### Usage
 
-1. If you are using the CH340 USB to serial chip, you may need to install the CH340 driver first.
+#### 1. Connect the hardware to the computer.  
+Note: If you are using a CH340 USB-to-serial chip, you may need to install the CH340 driver first.
 
-CH340 driver download address: https://www.wch.cn/downloads/CH341SER_EXE.html
-After successful installation, you can check the serial port number through the device manager.
+CH340 driver download link: https://www.wch.cn/downloads/CH341SER_EXE.html  
+
+After successful installation, you can view the serial port number via Device Manager.  
 
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/device_manager_port.png)
 
-Note: The port number may be randomized and not fixed.
+#### 2. Run the client
 
-2. Execute usb_kvm_client
+Select Device Menu -> Settings -> Select Video Camera and Controller -> OK. 
 
-Video Connection:
+![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/settings.png)
 
-Select Device menu -> Video Device -> Select the correct video capture card -> OK.
-
-![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/video_device_setup.png)
-
-Controller Connection:
-In most cases, the default configuration will automatically select the serial port, but if you have more than one serial port on your device, you may need to manually select the serial port name.
-
-Select Device Menu -> Controller Settings -> Select the correct serial port -> OK.
-
-![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/controller_device_setup.png)
+After configuration, you can connect using Device Menu -> Connect.
 
 ### Demo
 
