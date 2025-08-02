@@ -39,6 +39,9 @@ black = "^25.1"
 isort = "^6.0.1"
 flake8-bugbear = "^24.12.12"
 
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
