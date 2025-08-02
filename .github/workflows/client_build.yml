@@ -1,4 +1,4 @@
-name: usb_kvm_client_release
+name: client_build
 "on":
   # Sequence of patterns matched against refs/tags
   push:
@@ -40,8 +40,10 @@ jobs:
               echo "$RUNNER_OS not supported"
               exit 1
           fi
-          
-      - name: Build with nuitka
+        shell: bash
+        
+      - name: Build with nuitka on windows
+        if: runner.os == 'Windows'
         uses: Nuitka/Nuitka-Action@main
         with:
           nuitka-version: main
@@ -52,9 +54,9 @@ jobs:
             -u
             -O
           include-data-dir: |
-            .\data=data
-            .\icons=icons
-            .\translate=translate
+            ./data=data
+            ./icons=icons
+            ./translate=translate
           enable-plugins: pyside6
           include-qt-plugins: multimedia
           # file information
@@ -63,30 +65,56 @@ jobs:
           file-description: a open source usb kvm client
           # windows flag
           windows-console-mode: disable
-          windows-icon-from-ico: .\icons\main.ico
-          onefile-windows-splash-screen-image: .\icons\splash.png
+          windows-icon-from-ico: ./icons/main.ico
+          onefile-windows-splash-screen-image: ./icons/splash.png
           quiet: true
 
+      - name: Build with nuitka on linux
+        if: runner.os == 'Linux'
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          working-directory: ./client
+          script-name: usb_kvm_client.py
+          mode: app
+          python-flag: |
+            -u
+            -O
+          include-data-dir: |
+            ./data=data
+            ./icons=icons
+            ./translate=translate
+          enable-plugins: pyside6
+          include-qt-plugins: multimedia
+          quiet: true
+          
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ runner.os }} Build
+          name: ${{ runner.os }}_build
           path: |
             ./client/build/*.exe
             ./client/build/*.bin
-            ./client/build/*.app/**/*
-            ./client/build/*.dist/**/*
           include-hidden-files: true
+
   release:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
+        with:
+          path: ./download-artifact
+        
+      - name: Display structure of downloaded files
+        run: ls -R ./download-artifact
+  
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ./client/build/*
+          files: |
+            ./download-artifact/Linux_build/*
+            ./download-artifact/Windows_build/*
           tag_name: ${{ github.ref_name }}
           body: "Release of ${{ github.ref_name }}."
         env:

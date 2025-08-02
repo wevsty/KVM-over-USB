@@ -11,5 +11,7 @@ python.exe -m nuitka --mode=app --python-flag=-u --python-flag=-O --enable-plugi
 
 # 非单文件模式
 # python.exe -m nuitka --mode=standalone --python-flag=-u --python-flag=-O --enable-plugin=pyside6 --output-dir=build --windows-console-mode=disable .\usb_kvm_client.py --include-data-dir=.\icons=icons --include-data-dir=.\data=data --include-data-dir=.\translate=translate --include-qt-plugins=multimedia --quiet
+# on linux
+# python -m nuitka --mode=app --python-flag=-u --python-flag=-O --enable-plugin=pyside6 --output-dir=build --windows-console-mode=disable ./usb_kvm_client.py --include-data-dir=./icons=icons --include-data-dir=./data=data --include-data-dir=./translate=translate --include-qt-plugins=multimedia --quiet
 New-Item -Name "releases" -ItemType "directory" -Force
 Move-Item -Path .\build\usb_kvm_client.exe -Destination .\releases\usb_kvm_client.exe -Force
