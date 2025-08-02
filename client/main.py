@@ -11,8 +11,7 @@ import sys
 import tempfile
 import typing
 
-import pyWinhook as pyHook
-import pythoncom
+from loguru import logger
 from PySide6.QtCore import (
     QEvent,
     QMutex,
@@ -61,7 +60,6 @@ from PySide6.QtWidgets import (
     QStatusBar,
     QWidget,
 )
-from loguru import logger
 
 import keyboard_buffer
 from controller.general import ControllerGeneralDevice
@@ -94,6 +92,11 @@ from ui.ui_main import MainWindow
 from ui.ui_messagebox import MessageBox
 from ui.ui_paste_board import PasteBoardDialog
 from ui.ui_settings import SettingsDialog
+
+# 特定系统依赖
+if platform.system() == "Windows":
+    import pythoncom
+    import pyWinhook as pyHook
 
 
 class ControllerEventProxy(QObject):
@@ -617,7 +620,8 @@ class AppMainWindow(MainWindow):
         # 键盘钩子
         self.hook_manager = None
         self.hook_pressed_keys = []
-        self.init_system_hook()
+        if platform.system() == "Windows":
+            self.init_system_hook()
 
         # 绑定信号
         self.init_connect_signal()
@@ -753,8 +757,7 @@ class AppMainWindow(MainWindow):
 
     # 初始化系统hook
     def init_system_hook(self):
-        system_name = platform.system().lower()
-        if system_name == "windows":  # sys.platform == "win32":
+        if platform.system() == "Windows":
             pass
         else:
             return
@@ -1276,8 +1279,8 @@ class AppMainWindow(MainWindow):
 
     # 系统钩子
     def system_hook_triggered(self):
-        system_name = platform.system().lower()
-        if system_name == "windows":  # sys.platform == "win32":
+        system_name = platform.system()
+        if system_name == "Windows":
             pass
         else:
             QMessageBox.critical(
@@ -1943,7 +1946,8 @@ class AppMainWindow(MainWindow):
     ######################################################################
     # Hook
     ######################################################################
-    def hook_keyboard_down_event(self, event):
+    # hook 键盘按键按下事件
+    def hook_keyboard_down_event(self, event) -> bool:
         logger.debug(f"Hook: {event.Key} {event.ScanCode}")
         if event.Key in self.SCANCODE_REMAP:
             scan_code = self.SCANCODE_REMAP[event.Key]
@@ -1954,14 +1958,17 @@ class AppMainWindow(MainWindow):
             self.update_keyboard_buffer_with_scancode(
                 scan_code, KeyStateEnum.PRESS
             )
+        # 如果返回 True 则按键事件会继续传播
+        # 如果返回 False 则按键事件会继续传播
+        # 因为不希望事件传输给其他程序所以永远返回 False
         return False
 
-    def hook_keyboard_up_event(self, event):
+    # hook 键盘按键弹起事件
+    def hook_keyboard_up_event(self, event) -> bool:
         if event.Key in self.SCANCODE_REMAP:
             scan_code = self.SCANCODE_REMAP[event.Key]
         else:
             scan_code = event.ScanCode
-        # self.key_release(scan_code)
         self.update_keyboard_buffer_with_scancode(
             scan_code, KeyStateEnum.RELEASE
         )
@@ -1969,6 +1976,9 @@ class AppMainWindow(MainWindow):
             self.hook_pressed_keys.remove(scan_code)
         except ValueError:
             pass
+        # 如果返回 True 则按键事件会继续传播
+        # 如果返回 False 则按键事件会继续传播
+        # 因为不希望事件传输给其他程序所以永远返回 False
         return False
 
     ######################################################################
