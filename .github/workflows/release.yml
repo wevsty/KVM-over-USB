@@ -1,0 +1,93 @@
+name: usb_kvm_client_release
+"on":
+  # Sequence of patterns matched against refs/tags
+  push:
+    tags:
+      # Push events to matching v*, i.e. v1.0, v20.15.10
+      - v*
+  # Allows you to run this workflow manually from the Actions tab 
+  workflow_dispatch:
+jobs:
+  build:
+    strategy:
+      matrix:
+        # os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check-out repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          architecture: 'x64'
+          cache: 'pip'
+          cache-dependency-path: |
+            **/requirements*.txt
+            **/client/data/requirements*.txt
+
+      - name: Install Dependencies
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              pip install -r ./client/data/requirements_for_posix.txt
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              pip install -r ./client/data/requirements.txt
+          else
+              echo "$RUNNER_OS not supported"
+              exit 1
+          fi
+          
+      - name: Build with nuitka
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          working-directory: ./client
+          script-name: usb_kvm_client.py
+          mode: app
+          python-flag: |
+            -u
+            -O
+          include-data-dir: |
+            .\data=data
+            .\icons=icons
+            .\translate=translate
+          enable-plugins: pyside6
+          include-qt-plugins: multimedia
+          # file information
+          product-name: usb kvm client
+          product-version: 1.0.0.0
+          file-description: a open source usb kvm client
+          # windows flag
+          windows-console-mode: disable
+          windows-icon-from-ico: .\icons\main.ico
+          onefile-windows-splash-screen-image: .\icons\splash.png
+          quiet: true
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }} Build
+          path: |
+            ./client/build/*.exe
+            ./client/build/*.bin
+            ./client/build/*.app/**/*
+            ./client/build/*.dist/**/*
+          include-hidden-files: true
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./client/build/*
+          tag_name: ${{ github.ref_name }}
+          body: "Release of ${{ github.ref_name }}."
+        env:
+          GITHUB_TOKEN: ${{ secrets.PROJECT_TOKEN }}
