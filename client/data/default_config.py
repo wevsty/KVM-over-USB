@@ -1,5 +1,5 @@
 MAIN_DEFAULT_CONFIG_DATA = """
-config_version: v3
+config_version: v4
 connection:
   auto_connect: false
 controller:
@@ -36,9 +36,9 @@ shortcut_keys:
   - win_left
   - r
 ui:
-  fullscreen_tip: true
   quick_paste: true
   tips_fullscreen: true
+  tips_system_hook: true
   window_auto_maximized: false
   window_auto_to_center: true
 video:

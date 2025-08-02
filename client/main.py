@@ -952,7 +952,7 @@ class AppMainWindow(MainWindow):
             if self.config.ui["tips_fullscreen"]:
                 _, close_next_tip = MessageBox.optional_information(
                     self,
-                    self.tr("Tips Fullscreen"),
+                    self.tr("Tip"),
                     self.tr("Press Ctrl+Alt+F11 to toggle fullscreen.\n")
                     + self.tr(
                         "Or stay cursor at left top corner to show menubar."
@@ -1277,11 +1277,28 @@ class AppMainWindow(MainWindow):
             QMessageBox.critical(
                 self,
                 self.tr("Error"),
-                self.tr("system hook only support windows"),
+                self.tr("System hook only support windows"),
                 QMessageBox.StandardButton.Ok,
                 QMessageBox.StandardButton.NoButton,
             )
             return
+        if self.config.ui["tips_system_hook"] and self.status["hook_state"] is False:
+            _, close_next_tip = MessageBox.optional_information(
+                self,
+                self.tr("Tip"),
+                self.tr("System hook will disable program shortcuts.\n")
+                + self.tr("Some features will be unavailable.\n"),
+                self.tr("Don't show again."),
+                False,
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.NoButton,
+            )
+            if (
+                close_next_tip is True
+                and self.config.ui["tips_system_hook"] is True
+            ):
+                self.config.ui["tips_system_hook"] = False
+                self.save_config()
         pythoncom_timer = self.timer.get("PYTHONCOM_TIMER")
         self.status.reverse_bool("hook_state")
         hook_state = self.status.get_bool("hook_state")
