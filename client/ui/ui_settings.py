@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtMultimedia import QMediaDevices
 from PySide6.QtWidgets import QComboBox, QDialog
 
-from controller.general_serial import SerialDevice
+from controller.serial_device import SerialDevice
 from ui.ui_resource import settings_ui
 
 

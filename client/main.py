@@ -1430,7 +1430,7 @@ class AppMainWindow(MainWindow):
     # 检查控制器连接
     def check_controller_connection(self):
         if self.status.is_enabled("controller"):
-            self.controller_command_send("device_check_connection", None)
+            self.controller_command_send("check_connection", None)
 
     # 控制器发送命令信号
     def controller_command_send(self, command: str, data: typing.Any):
@@ -1461,7 +1461,7 @@ class AppMainWindow(MainWindow):
                 )
         elif command == "device_close":
             self.status.set_bool("controller", False)
-        elif command == "device_check_connection":
+        elif command == "check_connection":
             if status != 0:
                 # 检查连接返回失败
                 self.disconnect_controller()

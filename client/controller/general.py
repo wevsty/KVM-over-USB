@@ -33,8 +33,8 @@ class ControllerGeneralDevice(ControllerDeviceBase):
     def device_close(self) -> None:
         return self.controller.device_close()
 
-    def device_check_connection(self) -> bool:
-        return self.controller.device_check_connection()
+    def check_connection(self) -> bool:
+        return self.controller.check_connection()
 
     # 设备事件
     # 返回0为成功
@@ -50,8 +50,8 @@ class ControllerGeneralDevice(ControllerDeviceBase):
             status_code = self.generate_status_code(status)
         elif command == "device_close":
             self.device_close()
-        elif command == "device_check_connection":
-            status = self.device_check_connection()
+        elif command == "check_connection":
+            status = self.check_connection()
             status_code = self.generate_status_code(status)
         else:
             command, status_code, reply = self.controller.device_event(
