@@ -1277,16 +1277,19 @@ class AppMainWindow(MainWindow):
             QMessageBox.critical(
                 self,
                 self.tr("Error"),
-                self.tr("System hook only support windows"),
+                self.tr("System hook only support windows."),
                 QMessageBox.StandardButton.Ok,
                 QMessageBox.StandardButton.NoButton,
             )
             return
-        if self.config.ui["tips_system_hook"] and self.status["hook_state"] is False:
+        if (
+            self.config.ui["tips_system_hook"]
+            and self.status["hook_state"] is False
+        ):
             _, close_next_tip = MessageBox.optional_information(
                 self,
                 self.tr("Tip"),
-                self.tr("System hook will disable program shortcuts.\n")
+                self.tr("System hook will disable program shortcut key.\n")
                 + self.tr("Some features will be unavailable.\n"),
                 self.tr("Don't show again."),
                 False,
