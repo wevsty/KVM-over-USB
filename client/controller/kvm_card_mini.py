@@ -222,12 +222,13 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         status = False
         if self.hid_device_path is None:
             return status
-        self.hid_device.open_path(self.hid_device_path)
-        # self.hid_device.set_nonblocking(True)
-        product: str = self.hid_device.get_product_string()
-        if len(product) != 0:
+        try:
+            self.hid_device.open_path(self.hid_device_path)
             self.is_open = True
-        status = True
+            status = True
+            # self.hid_device.set_nonblocking(True)
+        except OSError as error:
+            logger.info(error)
         self.update_board_indicator_light(0, 0, 30)
         return status
 
@@ -278,17 +279,23 @@ class ControllerKvmCardMini(ControllerDeviceBase):
     ######################################################################
     # 写入 command 到 HID 设备
     def write_hid_data(self, buffer: list[int]) -> int:
+        status_code: int = 0
         buffer = buffer[-1:] + buffer[:-1]
         buffer[0] = 0
         try:
             self.hid_device.write(buffer)
-        except (OSError, ValueError):
+        except ValueError as _error:
+            logger.error("Device is not open")
+            status_code = 1
+        except OSError as _error:
+            # 函数应该抛出的是 IOError
+            # Python 3.3 起 IOError 是 OSError 的子类
             logger.error("Error writing data to device")
-            return 1
-        except NameError:
+            status_code = 2
+        except NameError as _error:
             logger.error("Uninitialized device")
-            return 4
-        return 0
+            status_code = 3
+        return status_code
 
     def read_hid_data(self) -> tuple[int, list[int]]:
         status_code: int = 0
@@ -297,10 +304,15 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         while True:
             try:
                 data = self.hid_device.read(64)
-            except (OSError, ValueError):
+            except ValueError as _error:
+                logger.error("Device is not open")
+                status_code = 1
+                break
+            except OSError as _error:
+                # 函数应该抛出的是 IOError
                 logger.error("Error reading data from device")
                 status_code = 2
-                return status_code, data
+                break
             if data is not None and len(data) != 0:
                 if VERBOSE_LOG_OUTPUT:
                     logger.debug(f"hid > {data}")
@@ -354,6 +366,8 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         return status_code, reply_dict
 
     def keyboard_send_event(self, buffer: KeyboardKeyBuffer):
+        if not self.device_check_connection():
+            return
         keys = buffer.buffer()
         if len(keys) > 1:
             pass
@@ -366,10 +380,16 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         self.sleep_ms(5)
 
     def keyboard_recv_event(self, _command: str) -> tuple[int, dict]:
+        status_code: int = 1
+        reply: dict = dict()
+        if not self.device_check_connection():
+            return status_code, reply
         status_code, reply = self.keyboard_receive_status()
         return status_code, reply
 
     def mouse_send_event(self, command: str, buffer: MouseStateBuffer):
+        if not self.device_check_connection():
+            return
         if command == "mouse_absolute_write":
             self.hid_buffer.update_mouse_absolute_buffer(buffer)
             self.write_hid_data(self.hid_buffer.mouse_abs_buffer)
