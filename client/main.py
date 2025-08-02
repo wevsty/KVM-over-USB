@@ -485,15 +485,6 @@ class MainWindowStatusbarManager:
 class AppMainWindow(MainWindow):
     # 窗口标题
     WINDOW_TITLE: str = "USB KVM Client"
-    # 定时器默认延迟
-    DEFAULT_TIMER_DELAY: int = 1000
-
-    SCANCODE_REMAP = {
-        "Lcontrol": 0x001D,
-        "Rcontrol": 0x011D,
-        "Lwin": 0x015B,
-        "Rwin": 0x015C,
-    }
 
     def __init__(self, parent: QWidget | None = None):
         # 初始化父类
@@ -1949,10 +1940,7 @@ class AppMainWindow(MainWindow):
     # hook 键盘按键按下事件
     def hook_keyboard_down_event(self, event) -> bool:
         logger.debug(f"Hook: {event.Key} {event.ScanCode}")
-        if event.Key in self.SCANCODE_REMAP:
-            scan_code = self.SCANCODE_REMAP[event.Key]
-        else:
-            scan_code = event.ScanCode
+        scan_code = event.ScanCode
         if scan_code not in self.hook_pressed_keys:
             self.hook_pressed_keys.append(scan_code)
             self.update_keyboard_buffer_with_scancode(
@@ -1960,15 +1948,12 @@ class AppMainWindow(MainWindow):
             )
         # 如果返回 True 则按键事件会继续传播
         # 如果返回 False 则按键事件会继续传播
-        # 因为不希望事件传输给其他程序所以永远返回 False
+        # 因为不希望事件继续传递所以永远返回 False
         return False
 
     # hook 键盘按键弹起事件
     def hook_keyboard_up_event(self, event) -> bool:
-        if event.Key in self.SCANCODE_REMAP:
-            scan_code = self.SCANCODE_REMAP[event.Key]
-        else:
-            scan_code = event.ScanCode
+        scan_code = event.ScanCode
         self.update_keyboard_buffer_with_scancode(
             scan_code, KeyStateEnum.RELEASE
         )
@@ -1978,7 +1963,7 @@ class AppMainWindow(MainWindow):
             pass
         # 如果返回 True 则按键事件会继续传播
         # 如果返回 False 则按键事件会继续传播
-        # 因为不希望事件传输给其他程序所以永远返回 False
+        # 因为不希望事件继续传递所以永远返回 False
         return False
 
     ######################################################################
@@ -2084,7 +2069,6 @@ class AppMainWindow(MainWindow):
         x, y = p.x(), p.y()
         # 全屏状态下检测鼠标位置
         if self.status.is_enabled("fullscreen"):
-            # self.fullscreen_action_timer.start(self.DEFAULT_TIMER_DELAY)
             self.handle_mouse_on_fullscreen_event(x, y)
         # 非鼠标捕获的情况下显示光标
         if not self.status.is_enabled("mouse_capture"):
