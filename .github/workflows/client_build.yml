@@ -108,13 +108,17 @@ jobs:
         
       - name: Display structure of downloaded files
         run: ls -R ./download-artifact
-  
+
+      - name: Compress to zip file
+        run: |
+          zip ./download-artifact/usb_kvm_client_for_linux.zip ./download-artifact/Linux_build/*.bin -v -1
+          zip ./download-artifact/usb_kvm_client_for_windows.zip ./download-artifact/Windows_build/*.exe -v -1
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ./download-artifact/Linux_build/*
-            ./download-artifact/Windows_build/*
+            ./download-artifact/*.zip
           tag_name: ${{ github.ref_name }}
           body: "Release of ${{ github.ref_name }}."
         env:
