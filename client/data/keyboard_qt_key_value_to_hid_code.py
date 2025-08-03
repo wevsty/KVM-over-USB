@@ -14,8 +14,8 @@ QT_KEY_VALUE_TO_HID_CODE: dict[int, int] = {
     Qt.Key.Key_Delete: 0x4C,
     Qt.Key.Key_Pause: 0x48,
     Qt.Key.Key_Print: 0x46,
-    Qt.Key.Key_SysReq: 0x9A,
-    Qt.Key.Key_Clear: 0xA2,
+    Qt.Key.Key_SysReq: 0x46,
+    Qt.Key.Key_Clear: 0x53,
     Qt.Key.Key_Home: 0x4A,
     Qt.Key.Key_End: 0x4D,
     Qt.Key.Key_Left: 0x50,
@@ -67,11 +67,11 @@ QT_KEY_VALUE_TO_HID_CODE: dict[int, int] = {
     Qt.Key.Key_Percent: 0x22,
     Qt.Key.Key_Ampersand: 0x24,
     Qt.Key.Key_Apostrophe: 0x34,
-    Qt.Key.Key_ParenLeft: 0xB6,
-    Qt.Key.Key_ParenRight: 0xB7,
-    Qt.Key.Key_Asterisk: 0x55,
+    Qt.Key.Key_ParenLeft: 0x26,
+    Qt.Key.Key_ParenRight: 0x27,
+    Qt.Key.Key_Asterisk: 0x25,
     Qt.Key.Key_Plus: 0x57,
-    Qt.Key.Key_Comma: 0x85,
+    Qt.Key.Key_Comma: 0x36,
     Qt.Key.Key_Minus: 0x2D,
     Qt.Key.Key_Slash: 0x38,
     # 数字键
@@ -133,12 +133,12 @@ QT_KEY_VALUE_TO_HID_CODE: dict[int, int] = {
     Qt.Key.Key_hyphen: 0x2D,
 }
 
-'''
+"""
 # 转换 Qt.Key 为 hid code
 def convert_qt_key_value_to_hid_code(key_value: int) -> int:
     hid_code: int = QT_KEY_VALUE_TO_HID_CODE.get(key_value, 0xFFFFFFFF)
     return hid_code
-'''
+"""
 
 if __name__ == "__main__":
     pass
