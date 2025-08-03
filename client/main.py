@@ -66,6 +66,7 @@ from controller.general import ControllerGeneralDevice
 from data.hex_convert import HexConvert
 from data.keyboard_key_name_to_hid_code import KEY_NAME_TO_HID_CODE
 from data.keyboard_scancode_to_hid_code import SCANCODE_TO_HID_CODE
+from data.keyboard_qt_key_value_to_hid_code import QT_KEY_VALUE_TO_HID_CODE
 from data.keyboard_shift_symbol import SHIFT_SYMBOL
 from keyboard_buffer import (
     KeyboardIndicatorBuffer,
@@ -212,6 +213,8 @@ class KeyboardHidCodeData:
         self.key_name_to_hid_code: dict[str, int] = dict()
         # dict[scancode, hid_code]
         self.scancode_to_hid_code: dict[int, int] = dict()
+        # dict[int, int]
+        self.qt_key_value_to_hid_code: dict[int, int] = dict()
         # 载入数据
         self.load_keyboard_code_data()
 
@@ -225,6 +228,7 @@ class KeyboardHidCodeData:
         self.key_name_to_hid_code = dict()
         for key, hex_value in KEY_NAME_TO_HID_CODE.items():
             self.key_name_to_hid_code[key] = HexConvert.hex_to_int(hex_value)
+        self.qt_key_value_to_hid_code = QT_KEY_VALUE_TO_HID_CODE
 
     # 转换 scan code 到 hid code
     def convert_scan_code_to_hid_code(self, scancode: int) -> tuple[bool, int]:
@@ -244,6 +248,22 @@ class KeyboardHidCodeData:
         hid_code: int | None = self.key_name_to_hid_code.get(key_name, None)
         if hid_code is None:
             logger.warning(f"Unknown key name: {key_name}")
+            hid_code = 0
+            return status, hid_code
+        else:
+            status = True
+        return status, hid_code
+
+    # 转换 qt key value 到 hid code
+    def convert_qt_key_value_to_hid_code(
+        self, key_value: int
+    ) -> tuple[bool, int]:
+        status: bool = False
+        hid_code: int | None = self.qt_key_value_to_hid_code.get(
+            key_value, None
+        )
+        if hid_code is None:
+            logger.warning(f"Unknown qt key value: {key_value}")
             hid_code = 0
             return status, hid_code
         else:
@@ -1546,7 +1566,19 @@ class AppMainWindow(MainWindow):
             self.keyboard_hid_code_data.convert_scan_code_to_hid_code(scancode)
         )
         if not status:
-            logger.warning(f"Unknown keyboard scancode: {scancode}")
+            return
+        self.update_keyboard_buffer_with_hid_code(hid_code, state)
+
+    # 更新键盘缓冲区(qt key value)
+    def update_keyboard_buffer_with_qt_key_value(
+        self, key_value: int, state: KeyStateEnum
+    ) -> None:
+        status, hid_code = (
+            self.keyboard_hid_code_data.convert_qt_key_value_to_hid_code(
+                key_value
+            )
+        )
+        if not status:
             return
         self.update_keyboard_buffer_with_hid_code(hid_code, state)
 
@@ -2180,10 +2212,12 @@ class AppMainWindow(MainWindow):
         keyboard_modifiers = event.modifiers()
         keyboard_key = event.key()
 
-        if keyboard_modifiers == (
-            Qt.KeyboardModifier.ControlModifier
-            | Qt.KeyboardModifier.AltModifier
-        ):
+        # 程序控制组合键
+        program_shortcut_key: int = (
+            Qt.KeyboardModifier.ControlModifier.value
+            | Qt.KeyboardModifier.AltModifier.value
+        )
+        if keyboard_modifiers.value == program_shortcut_key:
             is_register_function_keys: bool = True
             # Ctrl+Alt+F11 退出全屏
             if keyboard_key == Qt.Key.Key_F11:
@@ -2211,6 +2245,7 @@ class AppMainWindow(MainWindow):
         if self.status.is_enabled("pause_keyboard"):
             return status
         # 如果是指示器按键则更新指示器buffer
+        is_indicator_key: bool = True
         if keyboard_key == Qt.Key.Key_CapsLock:
             self.update_keyboard_indicator_buffer("caps_lock")
         elif keyboard_key == Qt.Key.Key_ScrollLock:
@@ -2218,10 +2253,19 @@ class AppMainWindow(MainWindow):
         elif keyboard_key == Qt.Key.Key_NumLock:
             self.update_keyboard_indicator_buffer("num_lock")
         else:
-            # 如果是非指示器按键则更新普通buffer
-            self.update_keyboard_buffer_with_scancode(
-                event.nativeScanCode(), KeyStateEnum.PRESS
-            )
+            is_indicator_key = False
+
+        # 如果是非指示器按键则更新普通buffer
+        if not is_indicator_key:
+            system_name = platform.system()
+            if system_name == "Windows":
+                self.update_keyboard_buffer_with_scancode(
+                    event.nativeScanCode(), KeyStateEnum.PRESS
+                )
+            else:
+                self.update_keyboard_buffer_with_qt_key_value(
+                    keyboard_key, KeyStateEnum.PRESS
+                )
         status = True
         return status
 
@@ -2234,9 +2278,15 @@ class AppMainWindow(MainWindow):
             return status
         if self.status.is_enabled("pause_keyboard"):
             return status
-        self.update_keyboard_buffer_with_scancode(
-            event.nativeScanCode(), KeyStateEnum.RELEASE
-        )
+        system_name = platform.system()
+        if system_name == "Windows":
+            self.update_keyboard_buffer_with_scancode(
+                event.nativeScanCode(), KeyStateEnum.RELEASE
+            )
+        else:
+            self.update_keyboard_buffer_with_qt_key_value(
+                event.key(), KeyStateEnum.RELEASE
+            )
         status = True
         return status
 

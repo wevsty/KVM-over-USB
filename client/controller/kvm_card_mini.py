@@ -192,7 +192,7 @@ class ControllerKvmCardMini(ControllerDeviceBase):
     def __init__(self):
         self.product_id: int = 0x2107
         self.vendor_id: int = 0x413D
-        self.usage_page: int = 0xFF00
+        # self.usage_page: int = 0xFF00
         self.hid_device = hid.device()
         self.hid_device_path: bytes | None = None
         self.is_open: bool = False
@@ -203,20 +203,17 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         hid_enumerate: typing.List[typing.Dict[str : typing.Any]] = (
             hid.enumerate()
         )
+        logger.debug(hid_enumerate)
         for i in range(len(hid_enumerate)):
             hid_device_info: typing.Dict[str : typing.Any] = hid_enumerate[i]
             vid = hid_device_info["vendor_id"]
             pid = hid_device_info["product_id"]
-            page = hid_device_info["usage_page"]
-            if (
-                vid == self.vendor_id
-                and pid == self.product_id
-                and page == self.usage_page
-            ):
+            if vid == self.vendor_id and pid == self.product_id:
                 self.hid_device_path: bytes = hid_device_info["path"]
                 product_string = hid_device_info["product_string"]
                 logger.info(f"Found target device: {self.hid_device_path}")
                 logger.info(f"Product: {product_string}")
+                break
 
     def device_open(self) -> bool:
         status = False
