@@ -65,12 +65,10 @@ poetry install
 
 请访问 releases 页面下载已编译好的客户端。
 
-注意：目前客户端（控制端）仅提供 Windows 支持。
-
 https://github.com/wevsty/KVM-over-USB/releases
 
 
-### 使用方法
+### Windows下使用方法
 
 #### 1. 将硬件连接至计算机。
 注意：如果您使用的USB转串口芯片为 CH340 ，您可能需要首先安装 CH340 的驱动程序。
@@ -88,6 +86,28 @@ CH340 驱动程序下载地址： https://www.wch.cn/downloads/CH341SER_EXE.html
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/settings.png)
 
 设定完毕后可以使用 设备菜单 -> 连接 进行连接。 
+
+### 其他操作系统用户
+
+本客户端目前已支持在 ubuntu 等 Linux 发行版上使用。
+
+需要注意的是在 Linux 下使用时需要注意权限问题。
+
+举例：
+当硬件为 KVM-Card-Mini 时，使用之前需要设置 HID 访问权限或授予程序 root 权限。
+
+以下代码将允许任何用户访问 KVM-Card-Mini 提供的 HID 设备。
+```bash
+sudo -s
+cat > /etc/udev/rules.d/99-kvm-card-mini.rules << EOF
+# KVM Card Mini
+SUBSYSTEM=="usb", ATTRS{idVendor}=="413d", ATTRS{idProduct}=="2107", MODE="0666"
+KERNEL=="hidraw*", ATTRS{idVendor}=="413d", ATTRS{idProduct}=="2107", MODE="0666"
+
+EOF
+udevadm control --reload-rules
+udevadm trigger
+```
 
 ### 演示
 

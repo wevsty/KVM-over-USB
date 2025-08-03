@@ -63,12 +63,11 @@ poetry install
 ### Client download
 
 Please visit the releases page to download the compiled client.
-Note: Currently the client (console) is only supported for Windows.
 
 https://github.com/wevsty/KVM-over-USB/releases
 
 
-### Usage
+### How to use on Windows
 
 #### 1. Connect the hardware to the computer.  
 Note: If you are using a CH340 USB-to-serial chip, you may need to install the CH340 driver first.
@@ -86,6 +85,29 @@ Select Device Menu -> Settings -> Select Video Camera and Controller -> OK.
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/settings.png)
 
 After configuration, you can connect using Device Menu -> Connect.
+
+### Other operating system users
+
+This client currently supports use on Linux distributions such as Ubuntu.
+
+Please note that when using Linux, you need to pay attention to permission issues.
+
+Example:
+When the hardware is KVM-Card-Mini, you need to set HID access permissions or grant root permissions to the program before use.
+
+The following code will allow any user to access the HID device provided by KVM-Card-Mini.
+
+```bash
+sudo -s
+cat > /etc/udev/rules.d/99-kvm-card-mini.rules << EOF
+# KVM Card Mini
+SUBSYSTEM=="usb", ATTRS{idVendor}=="413d", ATTRS{idProduct}=="2107", MODE="0666"
+KERNEL=="hidraw*", ATTRS{idVendor}=="413d", ATTRS{idProduct}=="2107", MODE="0666"
+
+EOF
+udevadm control --reload-rules
+udevadm trigger
+```
 
 ### Demo
 
