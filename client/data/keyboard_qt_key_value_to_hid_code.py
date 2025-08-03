@@ -28,6 +28,7 @@ QT_KEY_VALUE_TO_HID_CODE: dict[int, int] = {
     Qt.Key.Key_Control: 0xE0,
     Qt.Key.Key_Meta: 0xE3,
     Qt.Key.Key_Alt: 0xE2,
+    Qt.Key.Key_AltGr: 0xE6,
     Qt.Key.Key_CapsLock: 0x39,
     Qt.Key.Key_NumLock: 0x53,
     Qt.Key.Key_ScrollLock: 0x47,
@@ -73,6 +74,7 @@ QT_KEY_VALUE_TO_HID_CODE: dict[int, int] = {
     Qt.Key.Key_Plus: 0x57,
     Qt.Key.Key_Comma: 0x36,
     Qt.Key.Key_Minus: 0x2D,
+    Qt.Key.Key_Period: 0x37,
     Qt.Key.Key_Slash: 0x38,
     # 数字键
     Qt.Key.Key_0: 0x27,
