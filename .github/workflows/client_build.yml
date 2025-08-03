@@ -111,8 +111,8 @@ jobs:
 
       - name: Compress to zip file
         run: |
-          zip ./download-artifact/usb_kvm_client_for_linux.zip ./download-artifact/Linux_build/*.bin -v -1
-          zip ./download-artifact/usb_kvm_client_for_windows.zip ./download-artifact/Windows_build/*.exe -v -1
+          zip ./download-artifact/usb_kvm_client_for_linux.zip ./download-artifact/Linux_build/*.bin -v -1 -j
+          zip ./download-artifact/usb_kvm_client_for_windows.zip ./download-artifact/Windows_build/*.exe -v -1 -j
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
