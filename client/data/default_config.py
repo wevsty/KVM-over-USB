@@ -1,5 +1,5 @@
 MAIN_DEFAULT_CONFIG_DATA = """
-config_version: v4
+config_version: v5
 connection:
   auto_connect: false
 controller:
@@ -39,6 +39,7 @@ ui:
   quick_paste: true
   tips_fullscreen: true
   tips_system_hook: true
+  tips_system_warning: true
   window_auto_maximized: false
   window_auto_to_center: true
 video:

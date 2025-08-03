@@ -640,6 +640,10 @@ class AppMainWindow(MainWindow):
         # Window accept mouse events
         self.setMouseTracking(True)
 
+        # 显示操作系统警告
+        self.tips_system_warning()
+
+        # 启动自动连接
         self.auto_connect_on_startup()
 
     def load_icon(self, file_name: str) -> QIcon:
@@ -1407,6 +1411,30 @@ class AppMainWindow(MainWindow):
             pass
         if file_path is not None:
             subprocess.run(file_path)
+
+    # 非 windows 警告
+    def tips_system_warning(self):
+        system_name = platform.system().lower()
+        if system_name == "windows":
+            return
+        if self.config.ui["tips_system_warning"] is False:
+            return
+        _, close_next_tip = MessageBox.optional_information(
+            self,
+            self.tr("Tip"),
+            self.tr("The current operating system is not Windows.\n")
+            + self.tr("Some features will be unavailable.\n"),
+            self.tr("Don't show again."),
+            False,
+            QMessageBox.StandardButton.Ok,
+            QMessageBox.StandardButton.NoButton,
+        )
+        if (
+            close_next_tip is True
+            and self.config.ui["tips_system_warning"] is True
+        ):
+            self.config.ui["tips_system_warning"] = False
+            self.save_config()
 
     ######################################################################
     # 控制器相关函数
@@ -2244,6 +2272,7 @@ class AppMainWindow(MainWindow):
             return status
         if self.status.is_enabled("pause_keyboard"):
             return status
+
         # 如果是指示器按键则更新指示器buffer
         is_indicator_key: bool = True
         if keyboard_key == Qt.Key.Key_CapsLock:
