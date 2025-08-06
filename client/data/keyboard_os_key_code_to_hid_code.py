@@ -963,12 +963,6 @@ WINDOWS_SCANCODE_TO_HID_CODE: dict[int, int] = {
 0xE05C: 0xE7,
 }
 
-"""
-# 转换 Qt.Key 为 hid code
-def convert_qt_key_value_to_hid_code(key_value: int) -> int:
-    hid_code: int = QT_KEY_VALUE_TO_HID_CODE.get(key_value, 0xFFFFFFFF)
-    return hid_code
-"""
 
 def qt_key_event_to_os_key_code(event: QKeyEvent) -> tuple[bool, int]:
     status: bool = True
