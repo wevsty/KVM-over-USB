@@ -28,7 +28,7 @@ class MessageBox(QMessageBox):
         msg.setCheckBox(checkbox)
         button_value = msg.exec()
         checkbox_status = checkbox.isChecked()
-        return button_value, checkbox_status
+        return QMessageBox.StandardButton(button_value), checkbox_status
 
 
 if __name__ == "__main__":

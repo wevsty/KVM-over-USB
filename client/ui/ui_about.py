@@ -22,9 +22,10 @@ class AboutDialog(QDialog, about_ui.Ui_AboutDialog):
         )
         self.load_dependencies_info()
 
+    # noinspection PyTypeChecker
     @staticmethod
     def detect_file_bom(path: str) -> tuple[str, int]:
-        __BOM_TABLE__ = {
+        __BOM_TABLE__: dict[bytes, str] = {
             codecs.BOM_UTF8: "utf-8",
             codecs.BOM_UTF16_LE: "utf-16",
             codecs.BOM_UTF16_BE: "utf-16",
