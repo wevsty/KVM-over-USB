@@ -38,7 +38,6 @@ shortcut_keys:
 ui:
   quick_paste: true
   tips_fullscreen: true
-  tips_system_hook: true
   tips_system_warning: true
   window_auto_maximized: false
   window_auto_to_center: true

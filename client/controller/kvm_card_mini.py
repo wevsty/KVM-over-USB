@@ -114,17 +114,17 @@ class KvmCardMiniHidBuffer:
 
     def update_mouse_absolute_buffer(self, buffer: MouseStateBuffer) -> None:
         hid_buffer = self.mouse_abs_buffer
+
         # 填充按键信息
         mouse_button_code = self.mouse_state_buffer_to_b2(buffer)
         mouse_button_state = buffer.button.state
         if mouse_button_state == MouseButtonStateEnum.PRESS:
             hid_buffer[2] = hid_buffer[2] | mouse_button_code
-        elif mouse_button_state == MouseButtonStateEnum.RELEASE:
+        else:
+            # mouse_button_state == MouseButtonStateEnum.RELEASE
             hid_buffer[2] = hid_buffer[2] ^ mouse_button_code
             if hid_buffer[2] < 0 or hid_buffer[2] > 7:
                 hid_buffer[2] = 0
-        else:
-            hid_buffer[2] = 0
 
         # 填充鼠标坐标
         x_hid = buffer.point.x
@@ -148,17 +148,17 @@ class KvmCardMiniHidBuffer:
 
     def update_mouse_relative_buffer(self, buffer: MouseStateBuffer) -> None:
         hid_buffer = self.mouse_rel_buffer
+
         # 填充按键信息
         mouse_button_code = self.mouse_state_buffer_to_b2(buffer)
         mouse_button_state = buffer.button.state
         if mouse_button_state == MouseButtonStateEnum.PRESS:
             hid_buffer[2] = hid_buffer[2] | mouse_button_code
-        elif mouse_button_state == MouseButtonStateEnum.RELEASE:
+        else:
+            # mouse_button_state == MouseButtonStateEnum.RELEASE
             hid_buffer[2] = hid_buffer[2] ^ mouse_button_code
             if hid_buffer[2] < 0 or hid_buffer[2] > 7:
                 hid_buffer[2] = 0
-        else:
-            hid_buffer[2] = 0
 
         # 填充鼠标坐标
         x_hid = int(buffer.point.x)
@@ -221,9 +221,9 @@ class ControllerKvmCardMini(ControllerDeviceBase):
             return status
         try:
             self.hid_device.open_path(self.hid_device_path)
+            # self.hid_device.set_nonblocking(True)
             self.is_open = True
             status = True
-            # self.hid_device.set_nonblocking(True)
         except OSError as error:
             logger.info(error)
         self.update_board_indicator_light(0, 0, 30)
@@ -366,15 +366,15 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         if not self.check_connection():
             return
         keys = buffer.buffer()
-        if len(keys) > 1:
-            pass
+        if VERBOSE_LOG_OUTPUT:
+            logger.debug(keys)
         for key in keys:
             if key.state == KeyStateEnum.PRESS:
                 self.hid_buffer.keyboard_press(key.code)
             else:
                 self.hid_buffer.keyboard_release(key.code)
         self.write_hid_data(self.hid_buffer.keyboard_buffer)
-        self.sleep_ms(5)
+        self.sleep_ms(1)
 
     def keyboard_recv_event(self, _command: str) -> tuple[int, dict]:
         status_code: int = 1

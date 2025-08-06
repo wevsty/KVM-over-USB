@@ -15,7 +15,7 @@ class MessageBox(QMessageBox):
         optional_checked: bool = False,
         buttons: QMessageBox.StandardButton = QMessageBox.StandardButton.Ok,
         default_button: QMessageBox.StandardButton = QMessageBox.StandardButton.NoButton,
-    ) -> (QMessageBox.StandardButton, bool):
+    ) -> tuple[QMessageBox.StandardButton, bool]:
         msg = MessageBox(parent)
         msg.setIcon(QMessageBox.Icon.Information)
         msg.setWindowTitle(title)

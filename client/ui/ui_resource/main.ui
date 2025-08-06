@@ -55,6 +55,7 @@
     <addaction name="separator"/>
     <addaction name="menu_shortcut_keys"/>
     <addaction name="action_custom_key"/>
+    <addaction name="action_disable_hotkey"/>
     <addaction name="separator"/>
     <addaction name="action_paste_board"/>
     <addaction name="action_quick_paste"/>
@@ -376,6 +377,14 @@
    </property>
    <property name="text">
     <string>Record video</string>
+   </property>
+  </action>
+  <action name="action_disable_hotkey">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Disable hotkey</string>
    </property>
   </action>
  </widget>

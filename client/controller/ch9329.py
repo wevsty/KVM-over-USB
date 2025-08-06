@@ -6,7 +6,6 @@ from serial import Serial
 import random
 from controller.base import ControllerDeviceBase
 from controller.serial_device import SerialDevice
-from data.hex_convert import HexConvert
 from data.keyboard_hid_code_to_key_name import HID_CODE_TO_KEY_NAME
 from keyboard_buffer import KeyboardKeyBuffer, KeyStateEnum
 from mouse_buffer import (
@@ -31,7 +30,7 @@ class ControllerCh9329(ControllerDeviceBase):
     ]
 
     def __init__(self):
-        self.hid_code_hex_to_key_name: dict[str, str] = HID_CODE_TO_KEY_NAME
+        self.hid_code_to_key_name: dict[int, str] = HID_CODE_TO_KEY_NAME
         self.connection: Serial | None = None
         self.port: str = "auto"
         self.baud_rate: int = 9600
@@ -216,12 +215,9 @@ class ControllerCh9329(ControllerDeviceBase):
     ######################################################################
     # hid code 转换成 键名称
     def convert_hid_code_to_key_name(self, code: int) -> str:
-        string_key: str = HexConvert.int_to_hex(code)
-        key_name: str | None = self.hid_code_hex_to_key_name.get(
-            string_key, None
-        )
+        key_name: str | None = self.hid_code_to_key_name.get(code, None)
         if key_name is None:
-            logger.error(f"hid key not found: {string_key}")
+            logger.error(f"Key name not found: {key_name}")
             key_name = ""
         return key_name
 

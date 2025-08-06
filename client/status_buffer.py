@@ -36,10 +36,7 @@ class StatusBuffer(UserDict[str, typing.Any]):
         return self.data[key]
 
     def set_number(self, key: str, value: int | float) -> None:
-        if isinstance(value, (int, float)):
-            self.set_value(key, value)
-        else:
-            raise StatusValueError("The value type should be a int or float")
+        self.set_value(key, value)
 
     def get_number(self, key: str) -> int | float:
         value = self.get_value(key)
@@ -49,10 +46,7 @@ class StatusBuffer(UserDict[str, typing.Any]):
             raise StatusValueError("The value type should be a int or float")
 
     def set_string(self, key: str, value: str) -> None:
-        if isinstance(value, str):
-            self.set_value(key, value)
-        else:
-            raise StatusValueError("The value type should be a string")
+        self.set_value(key, value)
 
     def get_string(self, key: str) -> str:
         value = self.get_value(key)
@@ -62,10 +56,7 @@ class StatusBuffer(UserDict[str, typing.Any]):
             raise StatusValueError("The value type should be a string")
 
     def set_bool(self, key: str, value: bool) -> None:
-        if isinstance(value, bool):
-            self.set_value(key, value)
-        else:
-            raise StatusValueError("The value type should be a bool")
+        self.set_value(key, value)
 
     def get_bool(self, key: str) -> bool:
         value = self.get_value(key)

@@ -11,6 +11,7 @@ import sys
 import tempfile
 import typing
 
+
 from loguru import logger
 from PySide6.QtCore import (
     QEvent,
@@ -63,10 +64,12 @@ from PySide6.QtWidgets import (
 
 import keyboard_buffer
 from controller.general import ControllerGeneralDevice
-from data.hex_convert import HexConvert
 from data.keyboard_key_name_to_hid_code import KEY_NAME_TO_HID_CODE
-from data.keyboard_scancode_to_hid_code import SCANCODE_TO_HID_CODE
-from data.keyboard_qt_key_value_to_hid_code import QT_KEY_VALUE_TO_HID_CODE
+from data.keyboard_os_key_code_to_hid_code import (
+    qt_key_event_to_hid_code,
+    os_scancode_code_to_hid_code,
+)
+
 from data.keyboard_shift_symbol import SHIFT_SYMBOL
 from keyboard_buffer import (
     KeyboardIndicatorBuffer,
@@ -207,39 +210,36 @@ class QtTimerManager:
                 timer_object.stop()
 
 
-class KeyboardHidCodeData:
+class KeyboardCodeData:
     def __init__(self):
         # dict[key_name, hid_code]
         self.key_name_to_hid_code: dict[str, int] = dict()
-        # dict[scancode, hid_code]
-        self.scancode_to_hid_code: dict[int, int] = dict()
-        # dict[int, int]
-        self.qt_key_value_to_hid_code: dict[int, int] = dict()
         # 载入数据
         self.load_keyboard_code_data()
 
     # 载入键盘代码数据
     def load_keyboard_code_data(self):
-        self.scancode_to_hid_code = dict()
-        for hex_key, hex_value in SCANCODE_TO_HID_CODE.items():
-            self.scancode_to_hid_code[HexConvert.hex_to_int(hex_key)] = (
-                HexConvert.hex_to_int(hex_value)
-            )
-        self.key_name_to_hid_code = dict()
-        for key, hex_value in KEY_NAME_TO_HID_CODE.items():
-            self.key_name_to_hid_code[key] = HexConvert.hex_to_int(hex_value)
-        self.qt_key_value_to_hid_code = QT_KEY_VALUE_TO_HID_CODE
+        self.key_name_to_hid_code = KEY_NAME_TO_HID_CODE
 
     # 转换 scan code 到 hid code
-    def convert_scan_code_to_hid_code(self, scancode: int) -> tuple[bool, int]:
-        status: bool = False
-        hid_code: int | None = self.scancode_to_hid_code.get(scancode, None)
-        if hid_code is None:
+    @staticmethod
+    def convert_scan_code_to_hid_code(scancode: int) -> tuple[bool, int]:
+        status, hid_code = os_scancode_code_to_hid_code(scancode)
+        if not status:
             logger.warning(f"Unknown keyboard scancode: {scancode}")
-            hid_code = 0
-            return status, hid_code
-        else:
-            status = True
+        return status, hid_code
+
+    # 转换 QKeyEvent 为 hid code
+    @staticmethod
+    def convert_qt_key_event_to_hid_code(event: QKeyEvent) -> tuple[bool, int]:
+        status, hid_code = qt_key_event_to_hid_code(event)
+        if not status:
+            logger.warning(
+                f"Unknown keyboard key: "
+                f"nativeScanCode={event.nativeScanCode()}"
+                f"nativeVirtualKey={event.nativeVirtualKey()}"
+                f"KeyValue={event.key()}"
+            )
         return status, hid_code
 
     # 转换 key name 到 hid code
@@ -248,22 +248,6 @@ class KeyboardHidCodeData:
         hid_code: int | None = self.key_name_to_hid_code.get(key_name, None)
         if hid_code is None:
             logger.warning(f"Unknown key name: {key_name}")
-            hid_code = 0
-            return status, hid_code
-        else:
-            status = True
-        return status, hid_code
-
-    # 转换 qt key value 到 hid code
-    def convert_qt_key_value_to_hid_code(
-        self, key_value: int
-    ) -> tuple[bool, int]:
-        status: bool = False
-        hid_code: int | None = self.qt_key_value_to_hid_code.get(
-            key_value, None
-        )
-        if hid_code is None:
-            logger.warning(f"Unknown qt key value: {key_value}")
             hid_code = 0
             return status, hid_code
         else:
@@ -361,53 +345,53 @@ class VideoSession(QObject):
         self.video_record.setVideoResolution(QSize())
 
 
-class MainWindowStatusbarManager:
+class MainWindowStatusBarManager:
     def __init__(self, status_bar: QStatusBar):
-        self.statusbar_labels: collections.OrderedDict[str, QLabel] = (
+        self.status_bar_labels: collections.OrderedDict[str, QLabel] = (
             collections.OrderedDict()
         )
-        self.keyboard_hid_code_data = KeyboardHidCodeData()
+        self.keyboard_hid_code_data = KeyboardCodeData()
         self.current_message: str = ""
         self.status_bar: QStatusBar = status_bar
-        self.init_statusbar()
+        self.init_status_bar()
 
-    def init_statusbar(self) -> None:
+    def init_status_bar(self) -> None:
         self.init_labels()
         # 设置样式
         self.status_bar.setStyleSheet("padding: 0px;")
         # 设置分割线
         self.status_bar.addPermanentWidget(QLabel())
         # 把 labels 加入状态栏
-        for _, label_object in self.statusbar_labels.items():
+        for _, label_object in self.status_bar_labels.items():
             self.status_bar.addPermanentWidget(label_object)
         # 增加一个空 label 占位
         self.status_bar.addPermanentWidget(QLabel())
         self.status_bar.reformat()
 
     def init_labels(self) -> None:
-        self.statusbar_labels["CTRL"] = QLabel()
-        self.statusbar_labels["SHIFT"] = QLabel()
-        self.statusbar_labels["ALT"] = QLabel()
-        self.statusbar_labels["META"] = QLabel()
-        self.statusbar_labels["CAPS_LOCK"] = QLabel()
-        self.statusbar_labels["NUM_LOCK"] = QLabel()
-        self.statusbar_labels["SCR_LOCK"] = QLabel()
+        self.status_bar_labels["CTRL"] = QLabel()
+        self.status_bar_labels["SHIFT"] = QLabel()
+        self.status_bar_labels["ALT"] = QLabel()
+        self.status_bar_labels["META"] = QLabel()
+        self.status_bar_labels["CAPS_LOCK"] = QLabel()
+        self.status_bar_labels["NUM_LOCK"] = QLabel()
+        self.status_bar_labels["SCR_LOCK"] = QLabel()
 
         # 设置显示文字
-        self.statusbar_labels["CTRL"].setText("CTRL")
-        self.statusbar_labels["SHIFT"].setText("SHIFT")
-        self.statusbar_labels["ALT"].setText("ALT")
-        self.statusbar_labels["META"].setText("META")
-        self.statusbar_labels["CAPS_LOCK"].setText("CAPS")
-        self.statusbar_labels["NUM_LOCK"].setText("NUM")
-        self.statusbar_labels["SCR_LOCK"].setText("SCR")
+        self.status_bar_labels["CTRL"].setText("CTRL")
+        self.status_bar_labels["SHIFT"].setText("SHIFT")
+        self.status_bar_labels["ALT"].setText("ALT")
+        self.status_bar_labels["META"].setText("META")
+        self.status_bar_labels["CAPS_LOCK"].setText("CAPS")
+        self.status_bar_labels["NUM_LOCK"].setText("NUM")
+        self.status_bar_labels["SCR_LOCK"].setText("SCR")
 
         # 设置字体
         font = QFont()
         font.setBold(True)
         # font.setPointSize(10)
 
-        for _, label_object in self.statusbar_labels.items():
+        for _, label_object in self.status_bar_labels.items():
             # 设置字体
             label_object.setFont(font)
             # 设置样式
@@ -421,9 +405,9 @@ class MainWindowStatusbarManager:
     # 设置 label 指示状态
     def update_label_indication_status(self, label_name: str, enable: bool):
         if enable:
-            self.statusbar_labels[label_name].setStyleSheet("color: black")
+            self.status_bar_labels[label_name].setStyleSheet("color: black")
         else:
-            self.statusbar_labels[label_name].setStyleSheet("color: grey")
+            self.status_bar_labels[label_name].setStyleSheet("color: grey")
 
     # 通过键盘缓冲区更新 label 显示
     def update_label_status(
@@ -522,15 +506,19 @@ class AppMainWindow(MainWindow):
                 "fullscreen": False,
                 "topmost_window": False,
                 "keep_aspect_ratio": False,
+                # 键盘使用的状态标志
+                "pause_keyboard": False,
+                "disable_hotkey": False,
+                "quick_paste": True,
+                "hook_state": False,
+                # 鼠标使用的状态标志
+                "pause_mouse": False,
                 "mouse_capture": False,
                 "relative_mode": False,
                 "hide_cursor": False,
                 "correction_cursor": False,
-                "pause_keyboard": False,
-                "pause_mouse": False,
-                "quick_paste": True,
+                # 其他
                 "block_input": False,
-                "hook_state": False,
             }
         )
 
@@ -551,7 +539,7 @@ class AppMainWindow(MainWindow):
         )
 
         # 加载键盘代码数据
-        self.keyboard_hid_code_data = KeyboardHidCodeData()
+        self.keyboard_code_data = KeyboardCodeData()
 
         # 加载配置文件
         self.config: MainConfig = MainConfig()
@@ -579,7 +567,7 @@ class AppMainWindow(MainWindow):
         self.init_menu_checked_state()
 
         # 初始化状态栏
-        self.statusbar_manager = MainWindowStatusbarManager(self.statusbar)
+        self.status_bar_manager = MainWindowStatusBarManager(self.statusbar)
 
         # 初始化 video widget
         self.video_widget: QVideoWidget | None = None
@@ -703,6 +691,7 @@ class AppMainWindow(MainWindow):
         self.action_custom_key.setIcon(
             self.load_icon("keyboard-settings-outline.png")
         )
+        self.action_disable_hotkey.setIcon(self.load_icon("hotkey.png"))
         self.action_paste_board.setIcon(self.load_icon("paste.png"))
         self.action_quick_paste.setIcon(self.load_icon("quick_paste.png"))
         self.action_system_hook.setIcon(self.load_icon("hook.png"))
@@ -821,6 +810,9 @@ class AppMainWindow(MainWindow):
         self.custom_key_dialog.custom_key_save_signal.connect(
             self.custom_key_save
         )
+        self.action_disable_hotkey.triggered.connect(
+            self.disable_hotkey_triggered
+        )
         self.action_paste_board.triggered.connect(
             lambda: self.paste_board_dialog.exec()
         )
@@ -888,7 +880,7 @@ class AppMainWindow(MainWindow):
 
         # keyboard 菜单需要的信号连接
         self.indicator_lights_dialog.lock_key_clicked_signal.connect(
-            self.update_keyboard_indicator_buffer
+            self.update_keyboard_indicator_buffer_with_hid_code
         )
 
         # controller event
@@ -979,7 +971,7 @@ class AppMainWindow(MainWindow):
                     self.tr("Tip"),
                     self.tr("Press Ctrl+Alt+F11 to toggle fullscreen.\n")
                     + self.tr(
-                        "Or stay cursor at left top corner to show menubar."
+                        "Or stay cursor at left top corner to show menu bar."
                     ),
                     self.tr("Don't show again."),
                     False,
@@ -998,6 +990,8 @@ class AppMainWindow(MainWindow):
             self.statusBar().hide()
             self.menuBar().hide()
         else:
+            event_timer = self.timer.get("FULLSCREEN_EVENT_TIMER")
+            event_timer.stop()
             self.showNormal()
             self.action_fullscreen.setChecked(False)
             self.action_resize_window.setEnabled(True)
@@ -1008,10 +1002,10 @@ class AppMainWindow(MainWindow):
     def execute_fullscreen_event_command(self):
         event_timer = self.timer.get("FULLSCREEN_EVENT_TIMER")
         command = self.fullscreen_event_command
-        if command == "show_menubar":
+        if command == "show_menu_bar":
             if self.menuBar().isHidden():
                 self.menuBar().show()
-        elif command == "show_statusbar":
+        elif command == "show_status_bar":
             if self.statusBar().isHidden():
                 self.statusBar().show()
         elif command == "hide_all":
@@ -1038,7 +1032,7 @@ class AppMainWindow(MainWindow):
                 current_window_flag & ~Qt.WindowStaysOnTopHint
                 | Qt.WindowCloseButtonHint
             )
-        self.statusbar_manager.show_message(
+        self.status_bar_manager.show_message(
             self.tr("Window topmost: ")
             + self.to_enabled_string(self.status.is_enabled("topmost_window"))
         )
@@ -1053,7 +1047,7 @@ class AppMainWindow(MainWindow):
         else:
             self.video_widget.setAspectRatioMode(Qt.IgnoreAspectRatio)
             self.action_keep_aspect_ratio.setChecked(False)
-        self.statusbar_manager.show_message(
+        self.status_bar_manager.show_message(
             self.tr("Keep aspect ratio: ")
             + self.to_enabled_string(self.status["keep_aspect_ratio"])
         )
@@ -1070,7 +1064,7 @@ class AppMainWindow(MainWindow):
         if file_name == "":
             return
         preview.save(file_name)
-        self.statusbar_manager.show_message(
+        self.status_bar_manager.show_message(
             self.tr("Image saved to") + f" {file_name}"
         )
 
@@ -1095,7 +1089,7 @@ class AppMainWindow(MainWindow):
             self.status.set_bool("video_recording", False)
             self.action_record_video.setText(self.tr("Record video"))
             self.action_record_video.setChecked(False)
-            self.statusbar_manager.show_message(
+            self.status_bar_manager.show_message(
                 self.tr("Video recording stopped")
             )
         else:
@@ -1117,7 +1111,7 @@ class AppMainWindow(MainWindow):
             self.status.set_bool("video_recording", True)
             self.action_record_video.setText(self.tr("Stop recording"))
             self.action_record_video.setChecked(True)
-            self.statusbar_manager.show_message(
+            self.status_bar_manager.show_message(
                 self.tr("Video recording started")
             )
 
@@ -1138,9 +1132,7 @@ class AppMainWindow(MainWindow):
         key_code_list = list()
         for key_name in keys:
             status, key_code = (
-                self.keyboard_hid_code_data.convert_key_name_to_hid_code(
-                    key_name
-                )
+                self.keyboard_code_data.convert_key_name_to_hid_code(key_name)
             )
             if not status:
                 continue
@@ -1149,11 +1141,13 @@ class AppMainWindow(MainWindow):
             self.update_keyboard_buffer_with_hid_code(
                 key_code, KeyStateEnum.PRESS
             )
+            self.send_keyboard_buffer()
         self.random_sleep_ms()
         for key_code in key_code_list:
             self.update_keyboard_buffer_with_hid_code(
                 key_code, KeyStateEnum.RELEASE
             )
+            self.send_keyboard_buffer()
 
     # 快捷键触发
     def shortcut_key_trigger(self, action_name: str):
@@ -1187,6 +1181,11 @@ class AppMainWindow(MainWindow):
             pass
         pass
 
+    # 禁用热键菜单触发
+    def disable_hotkey_triggered(self):
+        hotkey_status = self.action_disable_hotkey.isChecked()
+        self.status.set_bool("disable_hotkey", hotkey_status)
+
     # 屏蔽或者恢复用户输入
     def user_input_block(self, block: bool):
         self.status.set_bool("block_input", block)
@@ -1195,12 +1194,16 @@ class AppMainWindow(MainWindow):
     def keyboard_send_string(self, data: str):
         self.user_input_block(True)
         status, shift_hid_code = (
-            self.keyboard_hid_code_data.convert_key_name_to_hid_code("shift")
+            self.keyboard_code_data.convert_key_name_to_hid_code("shift")
         )
         assert status is not False
         # 强制关闭 capslock
         if self.keyboard_indicator_buffer.caps_lock:
             self.update_keyboard_indicator_buffer("caps_lock")
+
+        # 强制清空缓冲区
+        self.clear_keyboard_buffer()
+        self.send_keyboard_buffer()
 
         for character in data:
             if not character.isascii():
@@ -1214,9 +1217,7 @@ class AppMainWindow(MainWindow):
             if character.isupper():
                 shift_flag = True
             status, key_code = (
-                self.keyboard_hid_code_data.convert_key_name_to_hid_code(
-                    character
-                )
+                self.keyboard_code_data.convert_key_name_to_hid_code(character)
             )
 
             if not status:
@@ -1226,26 +1227,32 @@ class AppMainWindow(MainWindow):
                 self.update_keyboard_buffer_with_hid_code(
                     shift_hid_code, KeyStateEnum.PRESS
                 )
-                # self.random_sleep_ms(20, 30)
+                self.send_keyboard_buffer()
+
                 self.update_keyboard_buffer_with_hid_code(
                     key_code, KeyStateEnum.PRESS
                 )
-                # self.random_sleep_ms(20, 30)
+                self.send_keyboard_buffer()
+
                 self.update_keyboard_buffer_with_hid_code(
                     key_code, KeyStateEnum.RELEASE
                 )
-                # self.random_sleep_ms(20, 30)
+                self.send_keyboard_buffer()
+
                 self.update_keyboard_buffer_with_hid_code(
                     shift_hid_code, KeyStateEnum.RELEASE
                 )
+                self.send_keyboard_buffer()
             else:
                 self.update_keyboard_buffer_with_hid_code(
                     key_code, KeyStateEnum.PRESS
                 )
-                # self.random_sleep_ms(20, 30)
+                self.send_keyboard_buffer()
+
                 self.update_keyboard_buffer_with_hid_code(
                     key_code, KeyStateEnum.RELEASE
                 )
+                self.send_keyboard_buffer()
             self.sleep_ms(self.config.paste_board["interval"])
         self.user_input_block(False)
 
@@ -1254,7 +1261,7 @@ class AppMainWindow(MainWindow):
         self.status.reverse_bool("quick_paste")
         quick_paste = self.status.get_bool("quick_paste")
         self.action_quick_paste.setChecked(quick_paste)
-        self.statusbar_manager.show_message(
+        self.status_bar_manager.show_message(
             self.tr("Quick paste: ") + self.to_enabled_string(quick_paste)
         )
 
@@ -1264,12 +1271,14 @@ class AppMainWindow(MainWindow):
         clipboard = QApplication.clipboard()
         text = clipboard.text()
         if len(text) == 0:
-            self.statusbar_manager.show_message(self.tr("Clipboard is empty"))
+            self.status_bar_manager.show_message(self.tr("Clipboard is empty"))
             return
-        self.statusbar_manager.show_message(
+        self.status_bar_manager.show_message(
             self.tr("Quick pasting") + f" {len(text)} " + self.tr("characters")
         )
-        self.clear_keyboard_key_buffer()
+        self.clear_keyboard_buffer()
+        self.send_keyboard_buffer()
+
         self.keyboard_send_string(text)
 
     # 发送请求同步键盘指示灯状态
@@ -1306,31 +1315,11 @@ class AppMainWindow(MainWindow):
                 QMessageBox.StandardButton.NoButton,
             )
             return
-        if (
-            self.config.ui["tips_system_hook"]
-            and self.status["hook_state"] is False
-        ):
-            _, close_next_tip = MessageBox.optional_information(
-                self,
-                self.tr("Tip"),
-                self.tr("System hook will disable program shortcut key.\n")
-                + self.tr("Some features will be unavailable.\n"),
-                self.tr("Don't show again."),
-                False,
-                QMessageBox.StandardButton.Ok,
-                QMessageBox.StandardButton.NoButton,
-            )
-            if (
-                close_next_tip is True
-                and self.config.ui["tips_system_hook"] is True
-            ):
-                self.config.ui["tips_system_hook"] = False
-                self.save_config()
         pythoncom_timer = self.timer.get("PYTHONCOM_TIMER")
         self.status.reverse_bool("hook_state")
         hook_state = self.status.get_bool("hook_state")
         self.action_system_hook.setChecked(hook_state)
-        self.statusbar_manager.show_message(
+        self.status_bar_manager.show_message(
             self.tr("System hook: ") + self.to_enabled_string(hook_state)
         )
         if hook_state:
@@ -1343,7 +1332,7 @@ class AppMainWindow(MainWindow):
     # 捕获鼠标功能
     def mouse_capture_triggered(self) -> None:
         self.status.set_bool("mouse_capture", True)
-        self.statusbar_manager.show_message(
+        self.status_bar_manager.show_message(
             self.tr("Mouse capture on (Press Ctrl+Alt+F12 to release)")
         )
 
@@ -1356,7 +1345,7 @@ class AppMainWindow(MainWindow):
         self.status.reverse_bool("relative_mode")
         relative_mode = self.status.get_bool("relative_mode")
         self.action_relative_mouse.setChecked(relative_mode)
-        self.statusbar_manager.show_message(
+        self.status_bar_manager.show_message(
             self.tr("Relative mouse: ") + self.to_enabled_string(relative_mode)
         )
 
@@ -1365,7 +1354,7 @@ class AppMainWindow(MainWindow):
         self.status.reverse_bool("hide_cursor")
         hide_cursor = self.status.get_bool("hide_cursor")
         self.action_hide_cursor.setChecked(hide_cursor)
-        self.statusbar_manager.show_message(
+        self.status_bar_manager.show_message(
             self.tr("Hide cursor when capture mouse: ")
             + self.to_enabled_string(hide_cursor)
         )
@@ -1375,7 +1364,7 @@ class AppMainWindow(MainWindow):
         self.status.reverse_bool("correction_cursor")
         correction_cursor = self.status.get_bool("correction_cursor")
         self.action_correction_cursor.setChecked(correction_cursor)
-        self.statusbar_manager.show_message(
+        self.status_bar_manager.show_message(
             self.tr("Correction cursor: ")
             + self.to_enabled_string(correction_cursor)
         )
@@ -1452,6 +1441,7 @@ class AppMainWindow(MainWindow):
     def connect_controller(self):
         self.init_controller()
         self.controller_command_send("device_open", None)
+        self.reload_controller("all")
         self.controller_command_send("keyboard_read", None)
         self.mouse_capture_triggered()
         check_connection_timer = self.timer.get(
@@ -1469,6 +1459,14 @@ class AppMainWindow(MainWindow):
 
     # 重载控制器
     def reload_controller(self, cmd: str):
+        # cmd = ["mouse", "keyboard", "all", "any"]
+        if cmd == "mouse":
+            self.clear_mouse_buffer()
+        elif cmd == "keyboard":
+            self.clear_keyboard_buffer()
+        else:
+            self.clear_mouse_buffer()
+            self.clear_keyboard_buffer()
         self.controller_command_send("device_reload", cmd)
 
     # 重置控制器
@@ -1499,12 +1497,12 @@ class AppMainWindow(MainWindow):
             if status == 0:
                 # open 成功
                 self.status.set_bool("controller", True)
-                self.statusbar_manager.show_message(
+                self.status_bar_manager.show_message(
                     self.tr("Controller connected")
                 )
             else:
                 self.status.set_bool("controller", False)
-                self.statusbar_manager.show_message(
+                self.status_bar_manager.show_message(
                     self.tr("Controller connect failure")
                 )
         elif command == "device_close":
@@ -1518,7 +1516,7 @@ class AppMainWindow(MainWindow):
             if status == 0:
                 logger.debug("keyboard indicator read succeed")
                 self.keyboard_indicator_buffer.from_dict(data)
-                self.statusbar_manager.update_label_status(
+                self.status_bar_manager.update_label_status(
                     self.keyboard_key_buffer, self.keyboard_indicator_buffer
                 )
             else:
@@ -1555,20 +1553,25 @@ class AppMainWindow(MainWindow):
         )
         self.mouse_buffer = MouseStateBuffer()
 
+    # 发送键盘缓冲区到控制器
+    def send_keyboard_buffer(self):
+        self.controller_command_send(
+            "keyboard_write", self.keyboard_key_buffer.dup()
+        )
+        self.status_bar_manager.update_label_status(
+            self.keyboard_key_buffer, self.keyboard_indicator_buffer
+        )
+
     # 清空键盘按键缓冲区
-    def clear_keyboard_key_buffer(self):
+    def clear_keyboard_buffer(self):
         self.keyboard_key_buffer.clear()
         self.controller_command_send(
             "keyboard_write", self.keyboard_key_buffer.dup()
         )
 
-    # 清空鼠标按键缓冲区
-    def clear_mouse_key_buffer(self):
-        self.mouse_buffer.clear_button()
-        self.mouse_buffer.clear_wheel()
-        self.controller_command_send(
-            "mouse_relative_write", self.mouse_buffer.dup()
-        )
+    # 清空鼠标缓冲区
+    def clear_mouse_buffer(self):
+        self.mouse_buffer.clear()
 
     # 更新键盘缓冲区(hid_code)
     def update_keyboard_buffer_with_hid_code(
@@ -1578,20 +1581,13 @@ class AppMainWindow(MainWindow):
             self.keyboard_key_buffer.key_press(hid_code)
         else:
             self.keyboard_key_buffer.key_release(hid_code)
-        self.controller_command_send(
-            "keyboard_write", self.keyboard_key_buffer.dup()
-        )
-        self.keyboard_key_buffer.clear_released()
-        self.statusbar_manager.update_label_status(
-            self.keyboard_key_buffer, self.keyboard_indicator_buffer
-        )
 
     # 更新键盘缓冲区(scancode)
     def update_keyboard_buffer_with_scancode(
         self, scancode: int, state: KeyStateEnum
     ) -> None:
         status, hid_code = (
-            self.keyboard_hid_code_data.convert_scan_code_to_hid_code(scancode)
+            self.keyboard_code_data.convert_scan_code_to_hid_code(scancode)
         )
         if not status:
             return
@@ -1602,9 +1598,7 @@ class AppMainWindow(MainWindow):
         self, key_value: int, state: KeyStateEnum
     ) -> None:
         status, hid_code = (
-            self.keyboard_hid_code_data.convert_qt_key_value_to_hid_code(
-                key_value
-            )
+            self.keyboard_code_data.convert_qt_key_value_to_hid_code(key_value)
         )
         if not status:
             return
@@ -1616,49 +1610,34 @@ class AppMainWindow(MainWindow):
     ) -> None:
         self.update_keyboard_buffer_with_hid_code(hid_code, state)
 
-    # 更新键盘状态键缓冲区
-    def update_keyboard_indicator_buffer(self, key_name: str) -> None:
-        if key_name == "num_lock":
-            status, key_code = (
-                self.keyboard_hid_code_data.convert_key_name_to_hid_code(
-                    "num_lock"
-                )
-            )
-            assert status is True
-            self.keyboard_indicator_buffer.num_lock = (
-                not self.keyboard_indicator_buffer.num_lock
-            )
-        elif key_name == "caps_lock":
-            status, key_code = (
-                self.keyboard_hid_code_data.convert_key_name_to_hid_code(
-                    "caps_lock"
-                )
-            )
-            assert status is True
+    # 使用hid code更新键盘状态键缓冲区
+    def update_keyboard_indicator_buffer_with_hid_code(
+        self, hid_code: int
+    ) -> None:
+        _, caps_lock = self.keyboard_code_data.convert_key_name_to_hid_code(
+            "caps_lock"
+        )
+        _, scroll_lock = self.keyboard_code_data.convert_key_name_to_hid_code(
+            "scroll_lock"
+        )
+        _, num_lock = self.keyboard_code_data.convert_key_name_to_hid_code(
+            "num_lock"
+        )
+
+        if hid_code == caps_lock:
             self.keyboard_indicator_buffer.caps_lock = (
                 not self.keyboard_indicator_buffer.caps_lock
             )
-        elif key_name == "scroll_lock":
-            status, key_code = (
-                self.keyboard_hid_code_data.convert_key_name_to_hid_code(
-                    "scroll_lock"
-                )
+        elif hid_code == num_lock:
+            self.keyboard_indicator_buffer.num_lock = (
+                not self.keyboard_indicator_buffer.num_lock
             )
-            assert status is True
+        elif hid_code == scroll_lock:
             self.keyboard_indicator_buffer.scroll_lock = (
                 not self.keyboard_indicator_buffer.scroll_lock
             )
         else:
-            logger.error(f"Error key name: {key_name}")
-            raise ValueError(f"Error key name: {key_name}")
-        self.update_keyboard_buffer_with_hid_code(key_code, KeyStateEnum.PRESS)
-        # self.random_sleep_ms(20, 25)
-        self.update_keyboard_buffer_with_hid_code(
-            key_code, KeyStateEnum.RELEASE
-        )
-        self.statusbar_manager.update_label_status(
-            self.keyboard_key_buffer, self.keyboard_indicator_buffer
-        )
+            pass
 
     # 更新鼠标坐标缓冲区(绝对坐标模式)
     def update_mouse_position_buffer_with_absolute_mode(self, x: int, y: int):
@@ -1698,11 +1677,11 @@ class AppMainWindow(MainWindow):
         y_hid = max(min(y_hid, 1), 0)
         self.mouse_buffer.set_point(x_hid, y_hid)
         """
-        self.statusbar_manager.show_message(
+        self.status_bar_manager.show_message(
             f"X={x_hid * x_res:.0f}, Y={y_hid * y_res:.0f}"
         )
         """
-        self.statusbar_manager.show_message(
+        self.status_bar_manager.show_message(
             f"X={x_hid * x_res:.0f}, Y={y_hid * y_res:.0f}"
         )
         # logger.debug(f"X={x_hid * x_res:.0f}, Y={y_hid * y_res:.0f}")
@@ -1725,7 +1704,11 @@ class AppMainWindow(MainWindow):
             self.mouse_last_pos = mouse_pos
             self.mouse_buffer.set_point(rel_x, rel_y)
             # logger.debug(f"relative mode X={rel_x}, Y={rel_y}")
-            self.statusbar_manager.show_message(
+            if self.status.is_enabled("disable_hotkey"):
+                # 为了保证用户可以退出相对坐标模式，程序自身热键将强制启用
+                self.action_disable_hotkey.setChecked(False)
+                self.disable_hotkey_triggered()
+            self.status_bar_manager.show_message(
                 self.tr("Press Ctrl+Alt+F12 to release mouse")
             )
             if (
@@ -2017,15 +2000,31 @@ class AppMainWindow(MainWindow):
     ######################################################################
     # Hook
     ######################################################################
+    # pyhook scan code 转换表
+    SCAN_CODE_REMAP = {
+        "Lcontrol": 0x001D,
+        "Rcontrol": 0xE01D,
+        # menu is alt
+        "Lmenu": 0x0038,
+        "Rmenu": 0xE038,
+        "Lwin": 0xE05B,
+        "Rwin": 0xE05C,
+    }
+
     # hook 键盘按键按下事件
     def hook_keyboard_down_event(self, event) -> bool:
-        logger.debug(f"Hook: {event.Key} {event.ScanCode}")
-        scan_code = event.ScanCode
+        logger.debug(f"Hook: {event.Key} {hex(event.ScanCode)}")
+        if event.Key in self.SCAN_CODE_REMAP:
+            scan_code = self.SCAN_CODE_REMAP[event.Key]
+        else:
+            scan_code = event.ScanCode
+        status, hid_code = (
+            self.keyboard_code_data.convert_scan_code_to_hid_code(scan_code)
+        )
+        if status:
+            self.handle_key_press_with_hid_code(hid_code)
         if scan_code not in self.hook_pressed_keys:
             self.hook_pressed_keys.append(scan_code)
-            self.update_keyboard_buffer_with_scancode(
-                scan_code, KeyStateEnum.PRESS
-            )
         # 如果返回 True 则按键事件会继续传播
         # 如果返回 False 则按键事件会继续传播
         # 因为不希望事件继续传递所以永远返回 False
@@ -2033,10 +2032,15 @@ class AppMainWindow(MainWindow):
 
     # hook 键盘按键弹起事件
     def hook_keyboard_up_event(self, event) -> bool:
-        scan_code = event.ScanCode
-        self.update_keyboard_buffer_with_scancode(
-            scan_code, KeyStateEnum.RELEASE
+        if event.Key in self.SCAN_CODE_REMAP:
+            scan_code = self.SCAN_CODE_REMAP[event.Key]
+        else:
+            scan_code = event.ScanCode
+        status, hid_code = (
+            self.keyboard_code_data.convert_scan_code_to_hid_code(scan_code)
         )
+        if status:
+            self.handle_key_release_with_hid_code(hid_code)
         try:
             self.hook_pressed_keys.remove(scan_code)
         except ValueError:
@@ -2130,10 +2134,10 @@ class AppMainWindow(MainWindow):
         # next_command = current_command
         if y < const_pixel and x < const_pixel:
             # 鼠标在左上角
-            next_command = "show_menubar"
+            next_command = "show_menu_bar"
         elif x > width - const_pixel and y > height - const_pixel:
             # 鼠标在右下角
-            next_command = "show_statusbar"
+            next_command = "show_status_bar"
         else:
             # 鼠标在其他地方
             next_command = "hide_all"
@@ -2232,70 +2236,115 @@ class AppMainWindow(MainWindow):
             self.mouse_buffer.wheel = MouseWheelStateEnum.STOP
         self.mouse_report_scroll()
 
+    # 检测处理程序自身的快捷键
+    def handle_self_hotkey_press(self):
+        handle_status = False
+
+        # 如果禁止热键则不处理
+        if self.status.is_enabled("disable_hotkey"):
+            return handle_status
+
+        # 检测是否按下了 ctrl
+        _, ctrl_left = self.keyboard_code_data.convert_key_name_to_hid_code(
+            "ctrl_left"
+        )
+        _, ctrl_right = self.keyboard_code_data.convert_key_name_to_hid_code(
+            "ctrl_right"
+        )
+        if not (
+            self.keyboard_key_buffer.is_pressed(ctrl_left)
+            or self.keyboard_key_buffer.is_pressed(ctrl_right)
+        ):
+            return handle_status
+
+        # 检测是否按下了 alt
+        _, alt_left = self.keyboard_code_data.convert_key_name_to_hid_code(
+            "alt_left"
+        )
+        _, alt_right = self.keyboard_code_data.convert_key_name_to_hid_code(
+            "alt_right"
+        )
+        if not (
+            self.keyboard_key_buffer.is_pressed(alt_left)
+            or self.keyboard_key_buffer.is_pressed(alt_right)
+        ):
+            return handle_status
+
+        # Ctrl+Alt+F11 退出全屏
+        _, f11 = self.keyboard_code_data.convert_key_name_to_hid_code("f11")
+        if self.status.is_enabled(
+            "fullscreen"
+        ) and self.keyboard_key_buffer.is_pressed(f11):
+            self.fullscreen_state_toggle()
+            handle_status = True
+
+        # Ctrl+Alt+F12 关闭鼠标捕获
+        _, f12 = self.keyboard_code_data.convert_key_name_to_hid_code("f12")
+        if self.status.is_enabled(
+            "mouse_capture"
+        ) and self.keyboard_key_buffer.is_pressed(f12):
+            self.mouse_capture_release_triggered()
+            self.reload_controller("mouse")
+            self.status_bar_manager.show_message(self.tr("Mouse capture off"))
+            handle_status = True
+
+        # Ctrl+Alt+V quick paste
+        _, v = self.keyboard_code_data.convert_key_name_to_hid_code("v")
+        if self.keyboard_key_buffer.is_pressed(v) and self.status.is_enabled(
+            "quick_paste"
+        ):
+            self.quick_paste_trigger()
+            handle_status = True
+
+        # 清空缓冲区确保只响应一次
+        if handle_status:
+            self.keyboard_key_buffer.clear()
+        return handle_status
+
+    # 处理键盘按下事件
+    def handle_key_press_with_hid_code(self, hid_code: int) -> None:
+        # 指示器按键则更新指示器buffer
+        self.update_keyboard_indicator_buffer_with_hid_code(hid_code)
+        # 更新键盘buffer
+        self.update_keyboard_buffer_with_hid_code(hid_code, KeyStateEnum.PRESS)
+
+        # 检测是否处于阻止输入状态
+        if self.status.is_enabled("block_input"):
+            return
+        if self.status.is_enabled("pause_keyboard"):
+            return
+        # 检测是否是程序注册的快捷键
+        self.handle_self_hotkey_press()
+        # 向控制器发送命令
+        self.send_keyboard_buffer()
+
+    # 处理键盘松开事件
+    def handle_key_release_with_hid_code(self, hid_code: int) -> None:
+        if self.status.is_enabled("block_input"):
+            return
+        if self.status.is_enabled("pause_keyboard"):
+            return
+
+        # 更新键盘buffer
+        self.update_keyboard_buffer_with_hid_code(
+            hid_code, KeyStateEnum.RELEASE
+        )
+
+        # 向控制器发送命令
+        self.send_keyboard_buffer()
+        # 从缓冲区中清理已松开的按键
+        self.keyboard_key_buffer.clear_released()
+
     # 键盘按下事件
-    def handle_key_press_event(self, event: QKeyEvent) -> bool:
+    def handle_key_press_with_event(self, event: QKeyEvent) -> bool:
         status: bool = False
         if event.isAutoRepeat():
             return status
-        keyboard_modifiers = event.modifiers()
-        keyboard_key = event.key()
-
-        # 程序控制组合键
-        program_shortcut_key: int = (
-            Qt.KeyboardModifier.ControlModifier.value
-            | Qt.KeyboardModifier.AltModifier.value
+        status, hid_code = (
+            self.keyboard_code_data.convert_qt_key_event_to_hid_code(event)
         )
-        if keyboard_modifiers.value == program_shortcut_key:
-            is_register_function_keys: bool = True
-            # Ctrl+Alt+F11 退出全屏
-            if keyboard_key == Qt.Key.Key_F11:
-                self.fullscreen_state_toggle()
-            # Ctrl+Alt+F12 关闭鼠标捕获
-            elif keyboard_key == Qt.Key.Key_F12:
-                self.mouse_capture_release_triggered()
-                self.reload_controller("mouse")
-                self.statusbar_manager.show_message(
-                    self.tr("Mouse capture off")
-                )
-            # Ctrl+Alt+V quick paste
-            elif keyboard_key == Qt.Key.Key_V and self.status.is_enabled(
-                "quick_paste"
-            ):
-                self.quick_paste_trigger()
-            else:
-                is_register_function_keys = False
-            # 如果是已注册的功能键则不传递给被控端
-            if is_register_function_keys:
-                self.clear_keyboard_key_buffer()
-                return status
-        if self.status.is_enabled("block_input"):
-            return status
-        if self.status.is_enabled("pause_keyboard"):
-            return status
-
-        # 如果是指示器按键则更新指示器buffer
-        is_indicator_key: bool = True
-        if keyboard_key == Qt.Key.Key_CapsLock:
-            self.update_keyboard_indicator_buffer("caps_lock")
-        elif keyboard_key == Qt.Key.Key_ScrollLock:
-            self.update_keyboard_indicator_buffer("scroll_lock")
-        elif keyboard_key == Qt.Key.Key_NumLock:
-            self.update_keyboard_indicator_buffer("num_lock")
-        else:
-            is_indicator_key = False
-
-        # 如果是非指示器按键则更新普通buffer
-        if not is_indicator_key:
-            system_name = platform.system()
-            if system_name == "Windows":
-                self.update_keyboard_buffer_with_scancode(
-                    event.nativeScanCode(), KeyStateEnum.PRESS
-                )
-            else:
-                self.update_keyboard_buffer_with_qt_key_value(
-                    keyboard_key, KeyStateEnum.PRESS
-                )
-        status = True
+        if status:
+            self.handle_key_press_with_hid_code(hid_code)
         return status
 
     # 键盘松开事件
@@ -2303,38 +2352,37 @@ class AppMainWindow(MainWindow):
         status: bool = False
         if event.isAutoRepeat():
             return status
-        if self.status.is_enabled("block_input"):
-            return status
-        if self.status.is_enabled("pause_keyboard"):
-            return status
-        system_name = platform.system()
-        if system_name == "Windows":
-            self.update_keyboard_buffer_with_scancode(
-                event.nativeScanCode(), KeyStateEnum.RELEASE
-            )
-        else:
-            self.update_keyboard_buffer_with_qt_key_value(
-                event.key(), KeyStateEnum.RELEASE
-            )
+        status, hid_code = (
+            self.keyboard_code_data.convert_qt_key_event_to_hid_code(event)
+        )
+        if status:
+            self.handle_key_release_with_hid_code(hid_code)
         status = True
         return status
 
     # 窗口改变事件
-    def handle_change_event(self, event) -> None:
+    def handle_change_event(self, event: QEvent) -> None:
         # 窗口失焦事件
-        if event.type() == QEvent.WindowDeactivate:
+        window_activate_event: list[QEvent.Type] = [
+            QEvent.ActivationChange,
+            QEvent.WindowActivate,
+            QEvent.WindowDeactivate,
+        ]
+        if event.type() in window_activate_event:
             if not self.isActiveWindow() and self.status.is_enabled(
                 "controller"
             ):
                 # 窗口失去焦点时释放键盘和鼠标
                 # 防止卡键
                 self.reload_controller("all")
-        # logger.debug(f"window change event: {event}")
+                pass
+        logger.debug(f"window change event: {event}")
 
     # 关闭事件
     def handle_close_event(self) -> None:
-        self.threads.quit_all()
+        self.disconnect_controller()
         self.timer.quit_all()
+        self.threads.quit_all()
 
     ######################################################################
     # 覆盖窗口事件
@@ -2362,15 +2410,13 @@ class AppMainWindow(MainWindow):
 
     # 键盘按下事件
     def keyPressEvent(self, event: QKeyEvent) -> None:
-        status = self.handle_key_press_event(event)
-        if status:
-            super().keyPressEvent(event)
+        super().keyPressEvent(event)
+        self.handle_key_press_with_event(event)
 
     # 键盘松开事件
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
-        status = self.handle_key_release_event(event)
-        if status:
-            super().keyReleaseEvent(event)
+        super().keyReleaseEvent(event)
+        self.handle_key_release_event(event)
 
     # 窗口改变事件
     def changeEvent(self, event: QEvent) -> None:
