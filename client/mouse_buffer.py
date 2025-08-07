@@ -6,6 +6,7 @@ from enum import IntEnum, auto
 class MouseButtonStateEnum(IntEnum):
     PRESS = auto()
     RELEASE = auto()
+    UNKNOWN = auto()
 
 
 class MouseButtonCodeEnum(IntEnum):
@@ -43,7 +44,7 @@ class MouseButton:
 
     def reset(self):
         self.code = MouseButtonCodeEnum.UNKNOWN_BUTTON
-        self.state = MouseButtonStateEnum.RELEASE
+        self.state = MouseButtonStateEnum.UNKNOWN
 
 
 @dataclass

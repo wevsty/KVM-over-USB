@@ -37,9 +37,9 @@ class ControllerCh9329(ControllerDeviceBase):
         self.timeout: float = 1.0
         self.screen_x: int = 0
         self.screen_y: int = 0
-
         self.min_interval: float = 0.2
         self.max_interval: float = 0.5
+        self.relative_click = False
 
     def random_interval(self) -> float:
         return random.uniform(self.min_interval, self.max_interval)
@@ -50,6 +50,7 @@ class ControllerCh9329(ControllerDeviceBase):
         self.timeout: int = config["timeout"]
         self.screen_x: int = config["resolution_x"]
         self.screen_y: int = config["resolution_y"]
+        self.relative_click: bool = config["relative_click"]
 
     def device_open(self) -> bool:
         status, self.connection = SerialDevice.create_serial_connection(
@@ -152,18 +153,25 @@ class ControllerCh9329(ControllerDeviceBase):
             # 滚轮不动
             wheel = 0
 
+        button_name = "null"
         if buffer.button.state == MouseButtonStateEnum.RELEASE:
-            self.mouse_send_data("null", real_x, real_y, wheel, False)
+            button_name = "null"
         elif buffer.button.code == MouseButtonCodeEnum.LEFT_BUTTON:
-            self.mouse_send_data("left", real_x, real_y, wheel, False)
+            button_name = "left"
         elif buffer.button.code == MouseButtonCodeEnum.RIGHT_BUTTON:
-            self.mouse_send_data("right", real_x, real_y, wheel, False)
+            button_name = "right"
         elif buffer.button.code == MouseButtonCodeEnum.MIDDLE_BUTTON:
-            self.mouse_send_data("center", real_x, real_y, wheel, False)
+            button_name = "center"
         elif buffer.button.code == MouseButtonCodeEnum.UNKNOWN_BUTTON:
-            self.mouse_send_data("null", 0, 0, wheel, True)
+            button_name = "null"
         else:
             logger.debug(f"unknown mouse button {buffer.button.code}")
+
+        if buffer.button.state != MouseButtonStateEnum.UNKNOWN:
+            # 如果启用相对点击则附加一个 0 坐标的相对点击
+            if self.relative_click:
+                self.mouse_send_data(button_name, 0, 0, 0, True)
+        self.mouse_send_data(button_name, real_x, real_y, wheel, False)
 
     def mouse_send_relative_data(self, buffer: MouseStateBuffer):
         x, y = buffer.point.get()
@@ -197,18 +205,20 @@ class ControllerCh9329(ControllerDeviceBase):
             # 滚轮不动
             wheel = 0
 
+        button_name = "null"
         if buffer.button.state == MouseButtonStateEnum.RELEASE:
-            self.mouse_send_data("null", x, y, wheel, True)
+            button_name = "null"
         elif buffer.button.code == MouseButtonCodeEnum.LEFT_BUTTON:
-            self.mouse_send_data("left", x, y, wheel, True)
+            button_name = "left"
         elif buffer.button.code == MouseButtonCodeEnum.RIGHT_BUTTON:
-            self.mouse_send_data("right", x, y, wheel, True)
+            button_name = "right"
         elif buffer.button.code == MouseButtonCodeEnum.MIDDLE_BUTTON:
-            self.mouse_send_data("center", x, y, wheel, True)
+            button_name = "center"
         elif buffer.button.code == MouseButtonCodeEnum.UNKNOWN_BUTTON:
-            self.mouse_send_data("null", x, y, wheel, True)
+            button_name = "null"
         else:
             logger.debug(f"unknown mouse button {buffer.button.code}")
+        self.mouse_send_data(button_name, x, y, wheel, True)
 
     ######################################################################
     # ch9329控制器命令函数

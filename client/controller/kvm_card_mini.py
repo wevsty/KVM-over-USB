@@ -120,11 +120,12 @@ class KvmCardMiniHidBuffer:
         mouse_button_state = buffer.button.state
         if mouse_button_state == MouseButtonStateEnum.PRESS:
             hid_buffer[2] = hid_buffer[2] | mouse_button_code
-        else:
-            # mouse_button_state == MouseButtonStateEnum.RELEASE
+        elif mouse_button_state == MouseButtonStateEnum.RELEASE:
             hid_buffer[2] = hid_buffer[2] ^ mouse_button_code
             if hid_buffer[2] < 0 or hid_buffer[2] > 7:
                 hid_buffer[2] = 0
+        else:
+            hid_buffer[2] = 0
 
         # 填充鼠标坐标
         x_hid = buffer.point.x
@@ -154,11 +155,12 @@ class KvmCardMiniHidBuffer:
         mouse_button_state = buffer.button.state
         if mouse_button_state == MouseButtonStateEnum.PRESS:
             hid_buffer[2] = hid_buffer[2] | mouse_button_code
-        else:
-            # mouse_button_state == MouseButtonStateEnum.RELEASE
+        elif mouse_button_state == MouseButtonStateEnum.RELEASE:
             hid_buffer[2] = hid_buffer[2] ^ mouse_button_code
             if hid_buffer[2] < 0 or hid_buffer[2] > 7:
                 hid_buffer[2] = 0
+        else:
+            hid_buffer[2] = 0
 
         # 填充鼠标坐标
         x_hid = int(buffer.point.x)

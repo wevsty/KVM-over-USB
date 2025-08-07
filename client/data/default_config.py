@@ -1,5 +1,5 @@
 MAIN_DEFAULT_CONFIG_DATA = """
-config_version: v5
+config_version: v6
 connection:
   auto_connect: false
 controller:
@@ -10,6 +10,7 @@ controller:
 mouse:
   cursor_offset_x: 4
   cursor_offset_y: 6
+  relative_click: false
   relative_speed: 0.6
   report_frequency: 60
 paste_board:

@@ -1434,6 +1434,7 @@ class AppMainWindow(MainWindow):
         device_config["controller_type"] = self.config.controller["type"]
         device_config["resolution_x"] = self.config.video["resolution_x"]
         device_config["resolution_y"] = self.config.video["resolution_y"]
+        device_config["relative_click"] = self.config.mouse["relative_click"]
 
         self.controller_event.device_init(device_config)
 
@@ -2217,7 +2218,7 @@ class AppMainWindow(MainWindow):
         if self.status.is_enabled("relative_mode"):
             self.mouse_buffer.clear_point()
         self.controller_command_send(command, self.mouse_buffer.dup())
-        self.mouse_buffer.button.reset()
+        self.mouse_buffer.clear_button()
 
     # 鼠标滚动事件
     def handle_mouse_wheel_event(self, event: QWheelEvent) -> None:
