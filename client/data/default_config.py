@@ -10,6 +10,9 @@ controller:
 mouse:
   cursor_offset_x: 4
   cursor_offset_y: 6
+  # Enabling this option will send an additional relative click event in absolute mode.
+  # This option is only available when the controlled end is Linux and a specific script is installed.
+  # In other cases, it may cause the mouse to malfunction.
   relative_click: false
   relative_speed: 0.6
   report_frequency: 60
