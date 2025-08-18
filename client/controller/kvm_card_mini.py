@@ -2,8 +2,9 @@ import time
 import typing
 
 import hid
-from loguru import logger
 from PySide6.QtCore import QThread
+from loguru import logger
+
 from controller.base import ControllerDeviceBase
 from keyboard_buffer import KeyboardKeyBuffer, KeyStateEnum
 from mouse_buffer import (
@@ -147,6 +148,31 @@ class KvmCardMiniHidBuffer:
         else:
             hid_buffer[wheel_bit] = 0x00
 
+    def update_mouse_relative_button_buffer(
+        self, buffer: MouseStateBuffer
+    ) -> None:
+        hid_buffer = self.mouse_rel_buffer
+
+        # 填充按键信息
+        mouse_button_code = self.mouse_state_buffer_to_b2(buffer)
+        mouse_button_state = buffer.button.state
+        if mouse_button_state == MouseButtonStateEnum.PRESS:
+            hid_buffer[2] = hid_buffer[2] | mouse_button_code
+        elif mouse_button_state == MouseButtonStateEnum.RELEASE:
+            hid_buffer[2] = hid_buffer[2] ^ mouse_button_code
+            if hid_buffer[2] < 0 or hid_buffer[2] > 7:
+                hid_buffer[2] = 0
+        else:
+            hid_buffer[2] = 0
+
+        # 填充鼠标坐标
+        hid_buffer[3] = 0
+        hid_buffer[4] = 0
+
+        # 填充滚轮信息
+        wheel_bit = 5
+        hid_buffer[wheel_bit] = 0x00
+
     def update_mouse_relative_buffer(self, buffer: MouseStateBuffer) -> None:
         hid_buffer = self.mouse_rel_buffer
 
@@ -200,8 +226,10 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         self.is_open: bool = False
         self.timeout: float = 1.0
         self.hid_buffer: KvmCardMiniHidBuffer = KvmCardMiniHidBuffer()
+        self.relative_click: bool = False
 
     def device_init(self, config: dict[str, typing.Any]) -> None:
+        self.relative_click: bool = config["relative_click"]
         hid_enumerate: typing.List[typing.Dict[str : typing.Any]] = (
             hid.enumerate()
         )
@@ -390,6 +418,9 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         if not self.check_connection():
             return
         if command == "mouse_absolute_write":
+            if self.relative_click and not buffer.button.is_unknown():
+                self.hid_buffer.update_mouse_relative_button_buffer(buffer)
+                self.write_hid_data(self.hid_buffer.mouse_rel_buffer)
             self.hid_buffer.update_mouse_absolute_buffer(buffer)
             self.write_hid_data(self.hid_buffer.mouse_abs_buffer)
         elif command == "mouse_relative_write":

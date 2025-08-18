@@ -31,7 +31,7 @@ class MouseButton:
     # 鼠标按键编码
     code: MouseButtonCodeEnum = MouseButtonCodeEnum.UNKNOWN_BUTTON
     # 按键对应状态编码
-    state: MouseButtonStateEnum = MouseButtonStateEnum.RELEASE
+    state: MouseButtonStateEnum = MouseButtonStateEnum.UNKNOWN
 
     def get(self) -> tuple[MouseButtonCodeEnum, MouseButtonStateEnum]:
         return self.code, self.state
@@ -45,6 +45,13 @@ class MouseButton:
     def reset(self):
         self.code = MouseButtonCodeEnum.UNKNOWN_BUTTON
         self.state = MouseButtonStateEnum.UNKNOWN
+
+    def is_unknown(self) -> bool:
+        if self.code == MouseButtonCodeEnum.UNKNOWN_BUTTON:
+            return True
+        if self.state == MouseButtonStateEnum.UNKNOWN:
+            return True
+        return False
 
 
 @dataclass
