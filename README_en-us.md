@@ -54,7 +54,7 @@ Assuming you have git, python, and poetry installed, you can run the following c
 ```powershell
 git clone https://github.com/wevsty/KVM-over-USB.git
 cd client
-poetry shell
+poetry env activate
 poetry install
 ./compiler.ps1
 ```

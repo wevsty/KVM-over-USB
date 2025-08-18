@@ -55,8 +55,9 @@ CH340是一个常见的USB转串口芯片，通过串口接入CH9329 。如有�
 ```powershell
 git clone https://github.com/wevsty/KVM-over-USB.git
 cd client
-poetry shell
+poetry env activate
 poetry install
+# 执行 compiler.ps1 请根据实际环境进行修改
 ./compiler.ps1
 ```
 
