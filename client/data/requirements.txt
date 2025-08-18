@@ -1,6 +1,6 @@
 ﻿attrs==25.3.0
 black==25.1.0
-click==8.2.2
+click==8.2.1
 colorama==0.4.6
 flake8==7.3.0
 flake8-bugbear==24.12.12
@@ -27,4 +27,4 @@ PyYAML==6.0.2
 setuptools==80.9.0
 shiboken6==6.9.1
 win32_setctime==1.2.0
-zstandard==0.23.0
+zstandard==0.24.0
