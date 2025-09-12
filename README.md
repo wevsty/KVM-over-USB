@@ -6,7 +6,7 @@
 
 一个简单的KVM USB方案
 
-Documentation English Version: https://github.com/wevsty/KVM-over-USB/blob/main/README_en.md
+Documentation English Version: https://github.com/wevsty/KVM-over-USB/blob/main/document/README_en.md
 
 ## 简介
 
