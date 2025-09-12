@@ -30,7 +30,7 @@ pyside6-essentials = "^6.9.1"
 pyside6 = "^6.9.1"
 pywinhook = { version = "^1.6.2", markers = "platform_system == 'Windows'" }
 pyserial = "^3.5"
-nuitka = "^2.7.12"
+nuitka = "^2.7.14"
 pych9329 = "^0.1.6"
 hidapi = "^0.14.0"
 
