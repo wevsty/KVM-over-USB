@@ -1,54 +1,40 @@
 # KVM over USB
 [![Python version](https://img.shields.io/badge/Python-3.13-blue)](https://www.python.org)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![black_check](https://badgen.net/github/checks/wevsty/KVM-over-USB/main?label=black_check)](https://github.com/wevsty/KVM-over-USB/actions/workflows/code_checks.yml)
 [![flake8_check](https://badgen.net/github/checks/wevsty/KVM-over-USB/main?label=flake8_check)](https://github.com/wevsty/KVM-over-USB/actions/workflows/code_checks.yml)
 [![release_version](https://badgen.net/github/release/wevsty/KVM-over-USB)](https://github.com/wevsty/KVM-over-USB/releases)
 
 一个简单的KVM USB方案
 
-Documentation English Version: https://github.com/wevsty/KVM-over-USB/blob/main/README_en-us.md
+Documentation English Version: https://github.com/wevsty/KVM-over-USB/blob/main/README_en.md
 
 ## 简介
+
 当服务器因为各种因素失去网络连接时想恢复工作是很困难的事，尽管有IPMI一类的技术可以帮助我们解决问题，但往往这类设备是昂贵的。 
-对于家庭用户来说，本方案能帮助你使用其他PC/笔记本电脑通过USB连接快速的管理/维护服务器。 
+对于家庭用户来说，本方案能帮助你使用其他PC通过USB连接快速的管理或者维护服务器。 
 
 
 ## 硬件部分
-因为对于普通用户来说，要求用户自行生产或者委托制造商生产硬件是不现实的，所以本项目推荐使用市面上已有的产品进行组合。
 
-### 硬件清单
-1. 视频采集卡：可以使用 MS2109 或 MS2130 等芯片的视频采集卡，市场售价约为30至100元人民币。 
-2. CH340转CH9329的USB连接线。
-3. HDMI连接线。 
-4. 如设备没有足够多的USB接口，建议搭配一个USB HUB使用。 
+本项目软件部分已支持 CH9329 和 KVM-Card-Mini 系列有关产品，用户可以根据自身喜好选择合适的硬件。
 
-特殊说明：
-CH340是一个常见的USB转串口芯片，通过串口接入CH9329 。如有需要亦可使用其他USB转串口芯片。 
+注：本项目将尽力保持不同硬件之间体验一致，但受限制于硬件本身，部分功能可能受限。
 
-推荐CH340转CH9329的连接线是因为在购物平台上有成品的线，可直接购买，比较容易取得。目前市场售价约20元人民币。 
- 
-如有特殊需要，也可以自行购入使用其他芯片的USB转串口连接线（比如：FT232）然后购买带有串行接口的CH9329模块使用。 
+### CH9329 系列
 
-### 连接原理图
-![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/connection_schematic.svg)
+详情参见文档：[CH9329系列](https://github.com/wevsty/KVM-over-USB/blob/main/document/CH9329_series.md)
 
-### 硬件实物图
-![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/hardware_photos.jpg)
+### KVM-Card-Mini 系列
 
-### 其他兼容硬件
-此外本项目客户端亦可兼容部分同类型产品，具体信息参考下表。
+详情参见文档：[KVM-Card-Mini系列](https://github.com/wevsty/KVM-over-USB/blob/main/document/KVM-Card-Mini_series.md)
 
-| 制造商 | 产品名 | 设备类型 |
-| --- | --- | --- |
-| - | KVM-Card-Mini | KVM-Card-Mini 系列 |
-| Sipeed | NanoKVM-USB | CH9329 系列 |
 
 ## 软件
+
 项目软件客户端基于 [KVM-Card-Mini-PySide6](https://github.com/ElluIFX/KVM-Card-Mini-PySide6) 的源码进行了改动以及重构，适配了 CH9329 作为键盘鼠标输入使用。
 
 
-### 客户端编译
+### 编译客户端
 
 假定您已经安装好 git、python、poetry 后您可以执行如下命令进行编译。
 
@@ -80,6 +66,8 @@ CH340 驱动程序下载地址： https://www.wch.cn/downloads/CH341SER_EXE.html
 
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/document/device_manager_port.png)
 
+如果您使用的是 KVM-Card-Mini 系列硬件，连接到电脑后无需安装任何驱动可即插即用。
+
 #### 2. 执行客户端
 
 选择设备菜单 -> 设置 -> 选择视频摄像头以及控制器 -> 确定。 
@@ -88,7 +76,7 @@ CH340 驱动程序下载地址： https://www.wch.cn/downloads/CH341SER_EXE.html
 
 设定完毕后可以使用 设备菜单 -> 连接 进行连接。 
 
-### 其他操作系统用户
+### Linux用户
 
 本客户端目前已支持在 ubuntu 等 Linux 发行版上使用。
 
@@ -109,6 +97,10 @@ EOF
 udevadm control --reload-rules
 udevadm trigger
 ```
+
+### MacOS用户
+
+本项目已初步支持MacOS，但未进行任何测试亦不提供编译好的二进制文件，如需要在MacOS上使用请使用源码自行进行编译运行。
 
 ### 演示
 
