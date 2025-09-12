@@ -53,6 +53,9 @@ class MouseButton:
             return True
         return False
 
+    def __str__(self):
+        return f"MouseButton(code={self.code.name}, state={self.state.name})"
+
 
 @dataclass
 class MousePoint:
@@ -68,6 +71,9 @@ class MousePoint:
 
     def reset(self) -> None:
         self.set(0, 0)
+
+    def __str__(self):
+        return f"MousePoint(x={self.x:.4f}, y={self.y:.4f})"
 
 
 @dataclass
@@ -116,6 +122,9 @@ class MouseStateBuffer:
         copy.button = deepcopy(self.button)
         copy.wheel = self.wheel
         return copy
+
+    def __str__(self):
+        return f"MouseStateBuffer({str(self.point)}, {str(self.button)}, {str(self.wheel.name)})"
 
 
 if __name__ == "__main__":

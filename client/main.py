@@ -11,8 +11,6 @@ import sys
 import tempfile
 import typing
 
-
-from loguru import logger
 from PySide6.QtCore import (
     QEvent,
     QMutex,
@@ -61,15 +59,16 @@ from PySide6.QtWidgets import (
     QStatusBar,
     QWidget,
 )
+from loguru import logger
 
 import keyboard_buffer
+import project_var
 from controller.general import ControllerGeneralDevice
 from data.keyboard_key_name_to_hid_code import KEY_NAME_TO_HID_CODE
 from data.keyboard_os_key_code_to_hid_code import (
     qt_key_event_to_hid_code,
     os_scancode_code_to_hid_code,
 )
-
 from data.keyboard_shift_symbol import SHIFT_SYMBOL
 from keyboard_buffer import (
     KeyboardIndicatorBuffer,
@@ -725,6 +724,7 @@ class AppMainWindow(MainWindow):
         # menu_about
         self.action_about.setIcon(self.load_icon("python.png"))
         self.action_about_qt.setIcon(self.load_icon("qt.png"))
+        self.action_debug_mode.setIcon(self.load_icon("debug.png"))
 
     # 初始化子窗口图标
     def init_sub_window_icon(self):
@@ -758,6 +758,7 @@ class AppMainWindow(MainWindow):
         if self.config.ui["quick_paste"]:
             self.status.set_bool("quick_paste", True)
             self.action_quick_paste.setChecked(True)
+        self.action_debug_mode.setChecked(project_var.debug_mode)
 
     # 初始化系统hook
     def init_system_hook(self):
@@ -873,6 +874,7 @@ class AppMainWindow(MainWindow):
         # about
         self.action_about.triggered.connect(lambda: self.about_dialog.exec())
         self.action_about_qt.triggered.connect(lambda: QApplication.aboutQt())
+        self.action_debug_mode.triggered.connect(self.switch_debug_mode)
 
     # 初始化信号槽连接
     def init_connect_signal(self) -> None:
@@ -1425,6 +1427,12 @@ class AppMainWindow(MainWindow):
             self.config.ui["tips_system_warning"] = False
             self.save_config()
 
+    # 打开debug模式
+    def switch_debug_mode(self):
+        project_var.debug_mode = not project_var.debug_mode
+        self.action_debug_mode.setChecked(project_var.debug_mode)
+        logger_init()
+
     ######################################################################
     # 控制器相关函数
     ######################################################################
@@ -1556,6 +1564,8 @@ class AppMainWindow(MainWindow):
 
     # 发送键盘缓冲区到控制器
     def send_keyboard_buffer(self):
+        if project_var.debug_mode:
+            logger.debug(f"keyboard send: {str(self.keyboard_key_buffer)}")
         self.controller_command_send(
             "keyboard_write", self.keyboard_key_buffer.dup()
         )
@@ -2198,6 +2208,8 @@ class AppMainWindow(MainWindow):
             command = "mouse_absolute_write"
         if self.status.is_enabled("relative_mode"):
             self.mouse_buffer.clear_point()
+        if project_var.debug_mode:
+            logger.debug(f"mouse send: {str(self.mouse_buffer)}")
         self.controller_command_send(command, self.mouse_buffer.dup())
 
     # 鼠标松开事件
@@ -2441,25 +2453,19 @@ def clear_splash():
             os.unlink(splash_filename)
 
 
-def init_logger(debug_mode: bool):
+def logger_init():
+    logger_fmt = "{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {name} - {message}"
+    log_path = project_binary_directory_path("debug.log")
     # 移除logger handler
     logger.remove()
-    if debug_mode:
-        logger.add(
-            sys.stdout,
-            # :{function}:{line}
-            format="{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {name} - {message}",
-            level="DEBUG",
-        )
-        logger.add("debug.log", rotation="100 MB")
+
+    if project_var.debug_mode:
+        logger.add(sys.stdout, format=logger_fmt, level="DEBUG")
+        logger.add(log_path, enqueue=True, level="DEBUG")
         logger.debug("Debug mode enabled")
     else:
-        logger.add(
-            sys.stdout,
-            # :{function}:{line}
-            format="{time:YYYY-MM-DD HH:mm:ss.SSS} - {level} - {name} - {message}",
-            level="INFO",
-        )
+        logger.add(sys.stdout, format=logger_fmt, level="INFO")
+    logger.info("Logger initialization completed")
 
 
 def command_line_parser():
@@ -2473,7 +2479,9 @@ def command_line_parser():
     )
 
     args = parser.parse_args()
-    init_logger(args.debug)
+    # 根据 debug 参数设置 debug 模式
+    project_var.debug_mode = args.debug
+    logger_init()
 
 
 def os_init():

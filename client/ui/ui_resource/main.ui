@@ -109,6 +109,8 @@
     <addaction name="action_about"/>
     <addaction name="separator"/>
     <addaction name="action_about_qt"/>
+    <addaction name="separator"/>
+    <addaction name="action_debug_mode"/>
    </widget>
    <addaction name="menu_device_menu"/>
    <addaction name="menu_video"/>
@@ -385,6 +387,14 @@
    </property>
    <property name="text">
     <string>Disable hotkey</string>
+   </property>
+  </action>
+  <action name="action_debug_mode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Debug mode</string>
    </property>
   </action>
  </widget>

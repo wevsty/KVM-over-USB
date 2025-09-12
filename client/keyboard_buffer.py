@@ -13,6 +13,9 @@ class KeyStateItem:
     code: int
     state: KeyStateEnum
 
+    def __str__(self):
+        return f"KeyStateItem(code={self.code}, state={self.state.name})"
+
 
 class KeyboardKeyBuffer:
     def __init__(self):
@@ -65,6 +68,11 @@ class KeyboardKeyBuffer:
         copy_self.keyboard_buffer = deepcopy(self.keyboard_buffer)
         return copy_self
 
+    def __str__(self):
+        item_string = ", ".join(str(item) for item in self.keyboard_buffer)
+        return_string = "[%s]" % item_string
+        return return_string
+
 
 class KeyboardIndicatorBuffer:
     def __init__(self):
@@ -89,6 +97,9 @@ class KeyboardIndicatorBuffer:
             "scroll_lock": self.scroll_lock,
         }
         return reply_dict
+
+    def __str__(self):
+        return str(self.to_dict())
 
 
 if __name__ == "__main__":

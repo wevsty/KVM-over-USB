@@ -2,6 +2,7 @@ import time
 import typing
 
 import hid
+import project_var
 from PySide6.QtCore import QThread
 from loguru import logger
 
@@ -13,8 +14,6 @@ from mouse_buffer import (
     MouseStateBuffer,
     MouseWheelStateEnum,
 )
-
-VERBOSE_LOG_OUTPUT: bool = False
 
 
 class KvmCardMiniHidBuffer:
@@ -341,7 +340,7 @@ class ControllerKvmCardMini(ControllerDeviceBase):
                 status_code = 2
                 break
             if data is not None and len(data) != 0:
-                if VERBOSE_LOG_OUTPUT:
+                if project_var.debug_mode:
                     logger.debug(f"hid > {data}")
                 break
             if time.perf_counter() - time_start > 5:
@@ -396,14 +395,16 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         if not self.check_connection():
             return
         keys = buffer.buffer()
-        if VERBOSE_LOG_OUTPUT:
-            logger.debug(keys)
         for key in keys:
             if key.state == KeyStateEnum.PRESS:
                 self.hid_buffer.keyboard_press(key.code)
             else:
                 self.hid_buffer.keyboard_release(key.code)
         self.write_hid_data(self.hid_buffer.keyboard_buffer)
+        if project_var.debug_mode:
+            logger.debug(
+                f"keyboard hid send : {str(self.hid_buffer.keyboard_buffer)}"
+            )
         self.sleep_ms(1)
 
     def keyboard_recv_event(self, _command: str) -> tuple[int, dict]:

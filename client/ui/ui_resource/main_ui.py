@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.1
+## Created by: Qt User Interface Compiler version 6.9.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -113,6 +113,9 @@ class Ui_main_window(object):
         self.action_disable_hotkey = QAction(main_window)
         self.action_disable_hotkey.setObjectName(u"action_disable_hotkey")
         self.action_disable_hotkey.setCheckable(True)
+        self.action_debug_mode = QAction(main_window)
+        self.action_debug_mode.setObjectName(u"action_debug_mode")
+        self.action_debug_mode.setCheckable(True)
         self.centralwidget = QWidget(main_window)
         self.centralwidget.setObjectName(u"centralwidget")
         main_window.setCentralWidget(self.centralwidget)
@@ -195,6 +198,8 @@ class Ui_main_window(object):
         self.menu_about.addAction(self.action_about)
         self.menu_about.addSeparator()
         self.menu_about.addAction(self.action_about_qt)
+        self.menu_about.addSeparator()
+        self.menu_about.addAction(self.action_debug_mode)
 
         self.retranslateUi(main_window)
 
@@ -277,6 +282,7 @@ class Ui_main_window(object):
         self.action_capture_image.setText(QCoreApplication.translate("main_window", u"Capture image", None))
         self.action_record_video.setText(QCoreApplication.translate("main_window", u"Record video", None))
         self.action_disable_hotkey.setText(QCoreApplication.translate("main_window", u"Disable hotkey", None))
+        self.action_debug_mode.setText(QCoreApplication.translate("main_window", u"Debug mode", None))
         self.menu_device_menu.setTitle(QCoreApplication.translate("main_window", u"Device", None))
         self.menu_keyboard.setTitle(QCoreApplication.translate("main_window", u"Keyboard", None))
         self.menu_shortcut_keys.setTitle(QCoreApplication.translate("main_window", u"Shortcut keys", None))
