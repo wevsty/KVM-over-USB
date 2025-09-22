@@ -258,7 +258,7 @@ class VideoSession(QObject):
     def __init__(self, parent: QObject | None = None):
         super().__init__(parent)
         self.parent: QObject | None = parent
-        self.device: QMediaDevices | None = None
+        self.device: QCameraDevice | None = None
         self.camera: QCamera | None = None
         self.video_sink: QVideoSink | None = None
         self.capture_session: QMediaCaptureSession | None = None
@@ -396,7 +396,7 @@ class MainWindowStatusBarManager:
             # 设置样式
             label_object.setStyleSheet("color: grey")
             # 设置聚焦方式
-            label_object.setFocusPolicy(Qt.NoFocus)
+            label_object.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
     def get(self) -> QStatusBar:
         return self.status_bar
@@ -773,6 +773,7 @@ class AppMainWindow(MainWindow):
         pythoncom_timer.timeout.connect(lambda: pythoncom.PumpWaitingMessages())
 
     # 初始化菜单信号
+    # noinspection DuplicatedCode
     def init_menu_connect_signal(self):
         # device 菜单
         self.action_device_connect.triggered.connect(self.connect_devices)
@@ -1026,13 +1027,13 @@ class AppMainWindow(MainWindow):
         if self.status.is_enabled("topmost_window"):
             self.windowHandle().setFlags(
                 current_window_flag
-                | Qt.WindowStaysOnTopHint
-                | Qt.WindowCloseButtonHint
+                | Qt.WindowType.WindowStaysOnTopHint
+                | Qt.WindowType.WindowCloseButtonHint
             )
         else:
             self.windowHandle().setFlags(
-                current_window_flag & ~Qt.WindowStaysOnTopHint
-                | Qt.WindowCloseButtonHint
+                current_window_flag & ~Qt.WindowType.WindowStaysOnTopHint
+                | Qt.WindowType.WindowCloseButtonHint
             )
         self.status_bar_manager.show_message(
             self.tr("Window topmost: ")
@@ -1044,10 +1045,14 @@ class AppMainWindow(MainWindow):
     def keep_aspect_ratio_toggle(self):
         self.status.reverse_bool("keep_aspect_ratio")
         if self.status.is_enabled("keep_aspect_ratio"):
-            self.video_widget.setAspectRatioMode(Qt.KeepAspectRatio)
+            self.video_widget.setAspectRatioMode(
+                Qt.AspectRatioMode.KeepAspectRatio
+            )
             self.action_keep_aspect_ratio.setChecked(True)
         else:
-            self.video_widget.setAspectRatioMode(Qt.IgnoreAspectRatio)
+            self.video_widget.setAspectRatioMode(
+                Qt.AspectRatioMode.IgnoreAspectRatio
+            )
             self.action_keep_aspect_ratio.setChecked(False)
         self.status_bar_manager.show_message(
             self.tr("Keep aspect ratio: ")
@@ -1071,6 +1076,7 @@ class AppMainWindow(MainWindow):
         )
 
     # 保存当前帧命令触发
+    # noinspection PyUnresolvedReferences
     def image_capture_triggered(self) -> None:
         self.video_session.image_capture.imageCaptured.disconnect(
             self.image_capture_done
@@ -1171,7 +1177,7 @@ class AppMainWindow(MainWindow):
         custom_key_data = {name: keys}
         self.config.shortcut_keys.update(custom_key_data)
         self.save_config()
-        self.init_shortcut_keys()
+        self.init_shortcut_keys_menu()
 
     # 快捷键菜单触发
     def shortcut_key_triggered(self, action_name: str):
@@ -1192,16 +1198,44 @@ class AppMainWindow(MainWindow):
     def user_input_block(self, block: bool):
         self.status.set_bool("block_input", block)
 
+    # 键盘模拟按下
+    def keyboard_simulation_press(self, hid_code: int):
+        # 指示器按键则更新指示器buffer
+        self.update_keyboard_indicator_buffer_with_hid_code(hid_code)
+        # 更新键盘buffer
+        self.update_keyboard_buffer_with_hid_code(hid_code, KeyStateEnum.PRESS)
+        self.send_keyboard_buffer()
+
+    # 键盘模拟松开
+    def keyboard_simulation_release(self, hid_code: int):
+        # 指示器按键则更新指示器buffer
+        self.update_keyboard_indicator_buffer_with_hid_code(hid_code)
+        # 更新键盘buffer
+        self.update_keyboard_buffer_with_hid_code(hid_code, KeyStateEnum.PRESS)
+        self.send_keyboard_buffer()
+
+    # 键盘模拟单击按键
+    def keyboard_simulation_click(self, hid_code: int):
+        self.keyboard_simulation_press(hid_code)
+        # 固定等待1ms
+        self.sleep_ms(1)
+        self.keyboard_simulation_release(hid_code)
+
     # 使用键盘发送字符串
     def keyboard_send_string(self, data: str):
         self.user_input_block(True)
+        # 获取必要的 hid code
         status, shift_hid_code = (
             self.keyboard_code_data.convert_key_name_to_hid_code("shift")
         )
         assert status is not False
+        status, caps_lock_hid_code = (
+            self.keyboard_code_data.convert_key_name_to_hid_code("caps_lock")
+        )
+        assert status is not False
         # 强制关闭 capslock
         if self.keyboard_indicator_buffer.caps_lock:
-            self.update_keyboard_indicator_buffer("caps_lock")
+            self.keyboard_simulation_click(caps_lock_hid_code)
 
         # 强制清空缓冲区
         self.clear_keyboard_buffer()
@@ -1221,40 +1255,17 @@ class AppMainWindow(MainWindow):
             status, key_code = (
                 self.keyboard_code_data.convert_key_name_to_hid_code(character)
             )
-
             if not status:
                 logger.critical(f"character key code not found: {character}")
                 continue
             if shift_flag:
-                self.update_keyboard_buffer_with_hid_code(
-                    shift_hid_code, KeyStateEnum.PRESS
-                )
-                self.send_keyboard_buffer()
-
-                self.update_keyboard_buffer_with_hid_code(
-                    key_code, KeyStateEnum.PRESS
-                )
-                self.send_keyboard_buffer()
-
-                self.update_keyboard_buffer_with_hid_code(
-                    key_code, KeyStateEnum.RELEASE
-                )
-                self.send_keyboard_buffer()
-
-                self.update_keyboard_buffer_with_hid_code(
-                    shift_hid_code, KeyStateEnum.RELEASE
-                )
-                self.send_keyboard_buffer()
+                self.keyboard_simulation_press(shift_hid_code)
+                self.keyboard_simulation_press(key_code)
+                self.keyboard_simulation_release(shift_hid_code)
+                self.keyboard_simulation_release(key_code)
             else:
-                self.update_keyboard_buffer_with_hid_code(
-                    key_code, KeyStateEnum.PRESS
-                )
-                self.send_keyboard_buffer()
-
-                self.update_keyboard_buffer_with_hid_code(
-                    key_code, KeyStateEnum.RELEASE
-                )
-                self.send_keyboard_buffer()
+                self.keyboard_simulation_press(key_code)
+                self.keyboard_simulation_release(key_code)
             self.sleep_ms(self.config.paste_board["interval"])
         self.user_input_block(False)
 
@@ -1543,11 +1554,11 @@ class AppMainWindow(MainWindow):
     @staticmethod
     def convert_to_button_code(value: Qt.MouseButton) -> MouseButtonCodeEnum:
         convert_table: dict[Qt.MouseButton, MouseButtonCodeEnum] = {
-            Qt.LeftButton: MouseButtonCodeEnum.LEFT_BUTTON,
-            Qt.RightButton: MouseButtonCodeEnum.RIGHT_BUTTON,
-            Qt.MiddleButton: MouseButtonCodeEnum.MIDDLE_BUTTON,
-            Qt.XButton1: MouseButtonCodeEnum.XBUTTON1_BUTTON,
-            Qt.XButton2: MouseButtonCodeEnum.XBUTTON2_BUTTON,
+            Qt.MouseButton.LeftButton: MouseButtonCodeEnum.LEFT_BUTTON,
+            Qt.MouseButton.RightButton: MouseButtonCodeEnum.RIGHT_BUTTON,
+            Qt.MouseButton.MiddleButton: MouseButtonCodeEnum.MIDDLE_BUTTON,
+            Qt.MouseButton.XButton1: MouseButtonCodeEnum.XBUTTON1_BUTTON,
+            Qt.MouseButton.XButton2: MouseButtonCodeEnum.XBUTTON2_BUTTON,
         }
         button_code = convert_table.get(
             value, MouseButtonCodeEnum.UNKNOWN_BUTTON
@@ -1599,17 +1610,6 @@ class AppMainWindow(MainWindow):
     ) -> None:
         status, hid_code = (
             self.keyboard_code_data.convert_scan_code_to_hid_code(scancode)
-        )
-        if not status:
-            return
-        self.update_keyboard_buffer_with_hid_code(hid_code, state)
-
-    # 更新键盘缓冲区(qt key value)
-    def update_keyboard_buffer_with_qt_key_value(
-        self, key_value: int, state: KeyStateEnum
-    ) -> None:
-        status, hid_code = (
-            self.keyboard_code_data.convert_qt_key_value_to_hid_code(key_value)
         )
         if not status:
             return
@@ -1787,11 +1787,14 @@ class AppMainWindow(MainWindow):
     # 初始化 video widget
     def init_video_widget(self) -> None:
         self.video_widget = QVideoWidget()
-        self.video_widget.setAttribute(Qt.WA_OpaquePaintEvent)
+        self.video_widget.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
         self.takeCentralWidget()
         self.setCentralWidget(self.video_widget)
         self.video_widget.setMouseTracking(True)
-        self.video_widget.children()[0].setMouseTracking(True)
+        # self.video_widget.children()[0].setMouseTracking(True)
+        for children in self.video_widget.children():
+            if isinstance(children, QWidget):
+                children.setMouseTracking(True)
         self.video_widget.hide()
 
         s_format = QSurfaceFormat.defaultFormat()
@@ -1809,7 +1812,7 @@ class AppMainWindow(MainWindow):
         )
         """
         self.video_disconnect_label.setPixmap(image_pixmap)
-        self.video_disconnect_label.setAlignment(Qt.AlignCenter)
+        self.video_disconnect_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.video_disconnect_label.setMouseTracking(True)
         self.takeCentralWidget()
         self.setCentralWidget(self.video_disconnect_label)
@@ -1919,9 +1922,13 @@ class AppMainWindow(MainWindow):
             self.showMaximized()
         # 保持视频比例
         if self.config.video["keep_aspect_ratio"]:
-            self.video_widget.setAspectRatioMode(Qt.KeepAspectRatio)
+            self.video_widget.setAspectRatioMode(
+                Qt.AspectRatioMode.KeepAspectRatio
+            )
         else:
-            self.video_widget.setAspectRatioMode(Qt.IgnoreAspectRatio)
+            self.video_widget.setAspectRatioMode(
+                Qt.AspectRatioMode.IgnoreAspectRatio
+            )
 
     ######################################################################
     # 视频设备相关函数
@@ -1932,7 +1939,7 @@ class AppMainWindow(MainWindow):
         self, error: QCamera.Error, message: str
     ) -> None:
         error_s = (
-            f"Device: {self.video_device.description()}\n"
+            f"Device: {self.video_session.device.description()}\n"
             f"Error code: {error}\n"
             f"Message: {message}\n"
         )
@@ -1946,6 +1953,7 @@ class AppMainWindow(MainWindow):
         )
 
     # 视频设备初始化
+    # noinspection PyUnresolvedReferences
     def init_video_device(self) -> bool:
         status: bool = False
         try:
@@ -2167,7 +2175,7 @@ class AppMainWindow(MainWindow):
             self.handle_mouse_on_fullscreen_event(x, y)
         # 非鼠标捕获的情况下显示光标
         if not self.status.is_enabled("mouse_capture"):
-            self.setCursor(Qt.ArrowCursor)
+            self.setCursor(Qt.CursorShape.ArrowCursor)
             return
         # 阻止输入的情况下不响应移动事件
         if self.status.is_enabled("block_input"):
@@ -2179,16 +2187,16 @@ class AppMainWindow(MainWindow):
         if self.status.is_enabled("hide_cursor") or self.status.is_enabled(
             "relative_mode"
         ):
-            self.setCursor(Qt.BlankCursor)
+            self.setCursor(Qt.CursorShape.BlankCursor)
         else:
-            self.setCursor(Qt.ArrowCursor)
+            self.setCursor(Qt.CursorShape.ArrowCursor)
         self.update_mouse_position_buffer(x, y)
 
     # 鼠标按下事件
     def handle_mouse_press_event(self, event: QMouseEvent) -> None:
         if (
             not self.status.is_enabled("mouse_capture")
-            and event.button() == Qt.LeftButton
+            and event.button() == Qt.MouseButton.LeftButton
             and self.status.is_enabled("camera")
         ):
             self.mouse_capture_triggered()
@@ -2377,9 +2385,9 @@ class AppMainWindow(MainWindow):
     def handle_change_event(self, event: QEvent) -> None:
         # 窗口失焦事件
         window_activate_event: list[QEvent.Type] = [
-            QEvent.ActivationChange,
-            QEvent.WindowActivate,
-            QEvent.WindowDeactivate,
+            QEvent.Type.ActivationChange,
+            QEvent.Type.WindowActivate,
+            QEvent.Type.WindowDeactivate,
         ]
         if event.type() in window_activate_event:
             if not self.isActiveWindow() and self.status.is_enabled(
@@ -2488,6 +2496,7 @@ def os_init():
     system_name = platform.system().lower()
     if system_name == "windows":  # sys.platform == "win32":
         app_id = "open_source_software.usb_kvm_client.gui.1"
+        # noinspection PyUnresolvedReferences
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
         # 4K分辨率下字体发虚
         # 设置环境变量让渲染使用 freetype
