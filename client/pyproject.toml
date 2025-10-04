@@ -22,12 +22,12 @@ extend-exclude = """
 
 [tool.poetry.dependencies]
 python = "<3.14,>=3.12"
-pyyaml = "^6.0.2"
+pyyaml = "^6.0.3"
 loguru = "^0.7.2"
 pywin32 = { version = ">=311", markers = "platform_system == 'Windows'" }
-pyside6-addons = "^6.9.1"
-pyside6-essentials = "^6.9.1"
-pyside6 = "^6.9.1"
+pyside6-addons = "^6.9.3"
+pyside6-essentials = "^6.9.3"
+pyside6 = "^6.9.3"
 pywinhook = { version = "^1.6.2", markers = "platform_system == 'Windows'" }
 pyserial = "^3.5"
 nuitka = "^2.7.14"
@@ -36,7 +36,7 @@ hidapi = "^0.14.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1"
-isort = "^6.0.1"
+isort = "^6.1.0"
 flake8-bugbear = "^24.12.12"
 
 [tool.poetry.requires-plugins]
