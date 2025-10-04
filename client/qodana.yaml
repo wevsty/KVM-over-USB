@@ -12,4 +12,4 @@ exclude:
     paths:
       - /ui/ui_resource
 
-linter: jetbrains/qodana-<linter>:2025.2
+linter: "jetbrains/qodana-<linter>:2025.2"

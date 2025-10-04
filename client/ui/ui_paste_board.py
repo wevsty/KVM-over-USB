@@ -74,8 +74,13 @@ class PasteBoardDialog(QDialog, paste_board_ui.Ui_PasteBoardDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.setWindowFlags(Qt.CustomizeWindowHint | Qt.WindowCloseButtonHint)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.CustomizeWindowHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        self.setWindowFlags(
+            self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint
+        )
         self.push_button_file_select.clicked.connect(
             self.select_file_button_clicked
         )

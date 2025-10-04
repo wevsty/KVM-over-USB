@@ -13,8 +13,13 @@ class IndicatorLightsDialog(
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.setWindowFlags(Qt.CustomizeWindowHint | Qt.WindowCloseButtonHint)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.CustomizeWindowHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        self.setWindowFlags(
+            self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint
+        )
         self.keyboard_indicator_lights = KeyboardIndicatorBuffer()
         self.push_button_num_lock.clicked.connect(
             lambda clicked: self.lock_key_clicked_signal.emit("num_lock")

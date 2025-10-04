@@ -14,8 +14,13 @@ class CustomKeyDialog(QDialog, custom_key_ui.Ui_CustomKeyDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.setWindowFlags(Qt.CustomizeWindowHint | Qt.WindowCloseButtonHint)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.CustomizeWindowHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        self.setWindowFlags(
+            self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint
+        )
         self.shortcut_key_clear()
         self.key_sequence_edit.keySequenceChanged.connect(
             self.shortcut_key_changed

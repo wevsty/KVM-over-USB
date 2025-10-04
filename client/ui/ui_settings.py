@@ -57,8 +57,13 @@ class SettingsDialog(QDialog, settings_ui.Ui_SettingsDialog):
         super().__init__(parent)
         self.setupUi(self)
 
-        self.setWindowFlags(Qt.CustomizeWindowHint | Qt.WindowCloseButtonHint)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.CustomizeWindowHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
+        self.setWindowFlags(
+            self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint
+        )
 
         self.video_config: dict[str, typing.Any] = dict()
         self.controller_config: dict[str, typing.Any] = dict()
