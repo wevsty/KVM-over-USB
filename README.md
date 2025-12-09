@@ -1,5 +1,6 @@
 # KVM over USB
 [![Python version](https://img.shields.io/badge/Python-3.13-blue)](https://www.python.org)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![flake8_check](https://badgen.net/github/checks/wevsty/KVM-over-USB/main?label=flake8_check)](https://github.com/wevsty/KVM-over-USB/actions/workflows/code_checks.yml)
 [![release_version](https://badgen.net/github/release/wevsty/KVM-over-USB)](https://github.com/wevsty/KVM-over-USB/releases)
@@ -36,14 +37,14 @@ Documentation English Version: https://github.com/wevsty/KVM-over-USB/blob/main/
 
 ### 编译客户端
 
-假定您已经安装好 git、python、poetry 后您可以执行如下命令进行编译。
+假定您已经安装好 git、python、uv 后您可以执行如下命令进行编译。
 
 ```powershell
 git clone https://github.com/wevsty/KVM-over-USB.git
 cd client
-poetry env activate
-poetry install
-# 执行 compiler.ps1 请根据实际环境进行修改
+uv venv
+uv sync
+# 执行 compiler.ps1 时请根据实际环境进行修改
 ./compiler.ps1
 ```
 

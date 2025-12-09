@@ -1,4 +1,4 @@
-pip freeze | Out-File ./data/requirements.txt -Encoding utf8
+uv pip freeze | Out-File ./data/requirements.txt -Encoding utf8
 
 $requirementsPath = "./data/requirements.txt"
 $requirementsForLinuxPath = "./data/requirements_for_posix.txt"

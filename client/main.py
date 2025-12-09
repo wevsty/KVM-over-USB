@@ -2468,11 +2468,13 @@ def logger_init():
     logger.remove()
 
     if project_var.debug_mode:
-        logger.add(sys.stdout, format=logger_fmt, level="DEBUG")
+        if sys.stdout is not None:
+            logger.add(sys.stdout, format=logger_fmt, level="DEBUG")
         logger.add(log_path, enqueue=True, level="DEBUG")
         logger.debug("Debug mode enabled")
     else:
-        logger.add(sys.stdout, format=logger_fmt, level="INFO")
+        if sys.stdout is not None:
+            logger.add(sys.stdout, format=logger_fmt, level="INFO")
     logger.info("Logger initialization completed")
 
 

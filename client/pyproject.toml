@@ -1,47 +1,44 @@
-[tool.poetry]
+[project]
+authors = [
+    {name = "wevsty", email = "ty@wevs.org"},
+]
+requires-python = "<3.15,>=3.12"
+dependencies = [
+    "pyyaml<7.0.0,>=6.0.3",
+    "loguru<1.0.0,>=0.7.2",
+    "pywin32>=311; platform_system == \"Windows\"",
+    "pyside6-addons<7.0.0,>=6.10.1",
+    "pyside6-essentials<7.0.0,>=6.10.1",
+    "pyside6<7.0.0,>=6.10.1",
+    "pywinhook<2.0.0,>=1.6.2; platform_system == \"Windows\"",
+    "pyserial<4.0,>=3.5",
+    "nuitka<3.0.0,>=2.8.9",
+    "pych9329<1.0.0,>=0.1.6",
+    "hidapi<1.0.0,>=0.15.0",
+]
 name = "usb_kvm_client"
 version = "1.0.0.0"
 description = "simple USB KVM client"
-authors = ["wevsty <ty@wevs.org>"]
-package-mode = false
+
+[dependency-groups]
+dev = [
+    "black<27.0,>=25.12",
+    "isort<8.0.0,>=7.0.0",
+    "flake8-bugbear<26.0.0,>=25.11.29",
+]
 
 [tool.black]
 line-length = 80
-target-version = ["py313"]
+target-version = ["py314"]
 include = "\\.pyi?$"
 extend-exclude = """
 # A regex preceded with ^/ will apply only to files and directories
 # in the root of the project.
 (
   ^/.idea/.*
+  | /.venv/.*
   | /build/.*
   | /ui_resource/.*
   | /data/.*
 )
 """
-
-[tool.poetry.dependencies]
-python = "<3.14,>=3.12"
-pyyaml = "^6.0.3"
-loguru = "^0.7.2"
-pywin32 = { version = ">=311", markers = "platform_system == 'Windows'" }
-pyside6-addons = "^6.9.3"
-pyside6-essentials = "^6.9.3"
-pyside6 = "^6.9.3"
-pywinhook = { version = "^1.6.2", markers = "platform_system == 'Windows'" }
-pyserial = "^3.5"
-nuitka = "^2.7.14"
-pych9329 = "^0.1.6"
-hidapi = "^0.14.0"
-
-[tool.poetry.group.dev.dependencies]
-black = "^25.1"
-isort = "^6.1.0"
-flake8-bugbear = "^24.12.12"
-
-[tool.poetry.requires-plugins]
-poetry-plugin-export = ">=1.8"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
