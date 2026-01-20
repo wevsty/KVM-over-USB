@@ -1383,6 +1383,7 @@ class AppMainWindow(MainWindow):
         )
 
     # 工具菜单执行系统工具
+    # noinspection PyDeprecation
     def menu_tools_actions(self, action_name: str):
         system_name = platform.system().lower()
         if system_name == "windows":  # sys.platform == "win32":
@@ -1400,7 +1401,10 @@ class AppMainWindow(MainWindow):
         if action_name == "devmgmt.msc":
             mmc_path = shutil.which("mmc.exe")
             msc_path = shutil.which("devmgmt.msc")
-            file_path = f"{mmc_path} {msc_path}"
+            if mmc_path is None or msc_path is None:
+                file_path = None
+            else:
+                file_path = f"{mmc_path} {msc_path}"
         elif action_name == "osk":
             file_path = shutil.which("osk.exe")
         elif action_name == "calc":
