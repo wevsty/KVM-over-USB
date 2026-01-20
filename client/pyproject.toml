@@ -22,7 +22,7 @@ description = "simple USB KVM client"
 
 [dependency-groups]
 dev = [
-    "black<27.0,>=25.12",
+    "black<27.0,>=26.1.0",
     "isort<8.0.0,>=7.0.0",
     "flake8-bugbear<26.0.0,>=25.11.29",
 ]
