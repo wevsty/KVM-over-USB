@@ -229,12 +229,12 @@ class ControllerKvmCardMini(ControllerDeviceBase):
 
     def device_init(self, config: dict[str, typing.Any]) -> None:
         self.relative_click: bool = config["relative_click"]
-        hid_enumerate: typing.List[typing.Dict[str : typing.Any]] = (
+        hid_enumerate: typing.List[typing.Dict[str, typing.Any]] = (
             hid.enumerate()
         )
         logger.debug(hid_enumerate)
         for i in range(len(hid_enumerate)):
-            hid_device_info: typing.Dict[str : typing.Any] = hid_enumerate[i]
+            hid_device_info: typing.Dict[str, typing.Any] = hid_enumerate[i]
             vid = hid_device_info["vendor_id"]
             pid = hid_device_info["product_id"]
             if vid == self.vendor_id and pid == self.product_id:
