@@ -247,7 +247,7 @@ class KeyboardCodeData:
         hid_code: int | None = self.key_name_to_hid_code.get(key_name, None)
         if hid_code is None:
             logger.warning(f"Unknown key name: {key_name}")
-            hid_code = 0
+            hid_code: int = 0
             return status, hid_code
         else:
             status = True
@@ -494,8 +494,8 @@ class AppMainWindow(MainWindow):
         super().__init__(parent)
 
         # 初始化状态
-        self.status = StatusBuffer()
-        self.status = StatusBuffer(
+        self.status: StatusBuffer = StatusBuffer()
+        self.status: StatusBuffer = StatusBuffer(
             {
                 "screen_height": 0,
                 "screen_width": 0,
@@ -1211,7 +1211,9 @@ class AppMainWindow(MainWindow):
         # 指示器按键则更新指示器buffer
         self.update_keyboard_indicator_buffer_with_hid_code(hid_code)
         # 更新键盘buffer
-        self.update_keyboard_buffer_with_hid_code(hid_code, KeyStateEnum.PRESS)
+        self.update_keyboard_buffer_with_hid_code(
+            hid_code, KeyStateEnum.RELEASE
+        )
         self.send_keyboard_buffer()
 
     # 键盘模拟单击按键
@@ -1267,6 +1269,11 @@ class AppMainWindow(MainWindow):
                 self.keyboard_simulation_press(key_code)
                 self.keyboard_simulation_release(key_code)
             self.sleep_ms(self.config.paste_board["interval"])
+
+        # 再次强制清空缓冲区
+        self.clear_keyboard_buffer()
+        self.send_keyboard_buffer()
+
         self.user_input_block(False)
 
     # 快速粘贴功能开关切换
