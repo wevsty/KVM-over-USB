@@ -12,7 +12,7 @@ dependencies = [
     "pyside6<7.0.0,>=6.10.1",
     "pywinhook<2.0.0,>=1.6.2; platform_system == \"Windows\"",
     "pyserial<4.0,>=3.5",
-    "nuitka<3.0.0,>=2.8.9",
+    "nuitka<5.0.0,>=4.1.2",
     "pych9329<1.0.0,>=0.1.6",
     "hidapi<1.0.0,>=0.15.0",
 ]
@@ -23,7 +23,7 @@ description = "simple USB KVM client"
 [dependency-groups]
 dev = [
     "black<27.0,>=26.1.0",
-    "isort<8.0.0,>=7.0.0",
+    "isort<9.0.0,>=8.0.0",
     "flake8-bugbear<26.0.0,>=25.11.29",
 ]
 
