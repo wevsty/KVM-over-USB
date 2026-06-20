@@ -883,7 +883,7 @@ class AppMainWindow(MainWindow):
 
         # keyboard 菜单需要的信号连接
         self.indicator_lights_dialog.lock_key_clicked_signal.connect(
-            self.update_keyboard_indicator_buffer_with_hid_code
+            self.keyboard_simulation_click_with_keyname
         )
 
         # controller event
@@ -1200,16 +1200,12 @@ class AppMainWindow(MainWindow):
 
     # 键盘模拟按下
     def keyboard_simulation_press(self, hid_code: int):
-        # 指示器按键则更新指示器buffer
-        self.update_keyboard_indicator_buffer_with_hid_code(hid_code)
         # 更新键盘buffer
         self.update_keyboard_buffer_with_hid_code(hid_code, KeyStateEnum.PRESS)
         self.send_keyboard_buffer()
 
     # 键盘模拟松开
     def keyboard_simulation_release(self, hid_code: int):
-        # 指示器按键则更新指示器buffer
-        self.update_keyboard_indicator_buffer_with_hid_code(hid_code)
         # 更新键盘buffer
         self.update_keyboard_buffer_with_hid_code(
             hid_code, KeyStateEnum.RELEASE
@@ -1218,10 +1214,21 @@ class AppMainWindow(MainWindow):
 
     # 键盘模拟单击按键
     def keyboard_simulation_click(self, hid_code: int):
+        # 指示器按键则更新指示器buffer
+        self.update_keyboard_indicator_buffer_with_hid_code(hid_code)
         self.keyboard_simulation_press(hid_code)
         # 固定等待1ms
-        self.sleep_ms(1)
+        self.sleep_ms(10)
         self.keyboard_simulation_release(hid_code)
+
+    # 键盘模拟单击按键
+    def keyboard_simulation_click_with_keyname(self, data: str):
+        result, hid_code = self.keyboard_code_data.convert_key_name_to_hid_code(
+            data
+        )
+        if not result:
+            return
+        self.keyboard_simulation_click(hid_code)
 
     # 使用键盘发送字符串
     def keyboard_send_string(self, data: str):
