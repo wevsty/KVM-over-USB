@@ -102,26 +102,89 @@ if platform.system() == "Windows":
     import pyWinhook as pyHook
 
 
-class ControllerEventProxy(QObject):
-    command_send_signal = Signal(str, object)
-    command_reply_signal = Signal(str, int, object)
+class ControllerEventExecutor(QObject):
+    device_execute_signal = Signal()
+    device_reply_signal = Signal(str, int, typing.Any)
 
     def __init__(self, parent: QObject | None = None):
         super().__init__(parent)
-        self.mutex = QMutex()
-        self.mutex_locker = QMutexLocker(self.mutex)
+        self.device_mutex = QMutex()
+        self.deque_mutex = QMutex()
         self.controller_device = ControllerGeneralDevice()
-        self.command_send_signal.connect(self.command_send)
-        self.command_reply_signal.connect(self.command_reply)
+        self.deque: typing.Deque[typing.Tuple[str, typing.Any]] = collections.deque()
+
+        self.device_execute_signal.connect(
+            self.device_execute, type=Qt.ConnectionType.QueuedConnection
+        )
+        # reply 预留好了槽
+        # 但不需要使用所以暂时注释掉
+        # self.device_reply_signal.connect(self.device_reply, type=Qt.ConnectionType.QueuedConnection)
 
     def device_init(self, buffer: typing.Any) -> bool:
-        with self.mutex_locker:
+        with QMutexLocker(self.device_mutex):
             self.controller_device.device_init(buffer)
         return True
 
-    def command_send(
-        self, command: str, buffer: object
-    ) -> tuple[str, int, object]:
+    def device_close(self) -> None:
+        with QMutexLocker(self.device_mutex):
+            self.controller_device.device_close()
+
+    def device_event(self, command: str, buffer: typing.Any) -> None:
+        with QMutexLocker(self.deque_mutex):
+            self.deque.append((command, buffer))
+
+    def device_execute(self):
+        with QMutexLocker(self.deque_mutex):
+            try:
+                command, buffer = self.deque.popleft()
+            except IndexError:
+                return
+            while len(self.deque) > 0:
+                # 如果下一条命令和上一条命令一样切都为 mouse_absolute_write 则可以安全的跳过指令
+                if command == "mouse_absolute_write":
+                    next_command, next_buffer = self.deque.popleft()
+                    if next_command == command:
+                        command = next_command
+                        buffer = next_buffer
+                        continue
+                    else:
+                        self.deque.appendleft((next_command, next_buffer))
+                break
+        with QMutexLocker(self.device_mutex):
+            status_code: int
+            reply: typing.Any
+            _, status_code, reply = self.controller_device.device_event(
+                command, buffer
+            )
+            self.device_reply_signal.emit(command, status_code, reply)
+        pass
+
+    def device_reply(self, command: str, status: int, data: typing.Any) -> None:
+        pass
+
+
+class ControllerEventProxy(QObject):
+    command_send_signal = Signal(str, typing.Any)
+    command_reply_signal = Signal(str, int, typing.Any)
+
+    def __init__(self, parent: QObject | None = None):
+        super().__init__(parent)
+        self.device_event_executor = ControllerEventExecutor()
+        self.execute_thread = QThread()
+
+        self.command_send_signal.connect(self.command_send)
+        self.command_reply_signal.connect(self.command_reply)
+        self.device_event_executor.device_reply_signal.connect(self.command_reply_signal)
+        self.device_event_executor.moveToThread(self.execute_thread)
+        self.execute_thread.start()
+
+    def device_init(self, buffer: typing.Any) -> bool:
+        return self.device_event_executor.device_init(buffer)
+
+    def device_close(self) -> None:
+        self.device_event_executor.device_close()
+
+    def command_send(self, command: str, buffer: typing.Any) -> None:
         """
         command list:
         "device_open"
@@ -129,21 +192,21 @@ class ControllerEventProxy(QObject):
         "device_check"
         "device_reload"
         "device_reset"
+        "device_sleep"
         "keyboard_read"
         "keyboard_write"
         "mouse_relative_write"
         "mouse_absolute_write"
         """
-        status_code: int = 1
-        reply = None
-        with self.mutex_locker:
-            _, status_code, reply = self.controller_device.device_event(
-                command, buffer
-            )
-            self.command_reply_signal.emit(command, status_code, reply)
-        return command, status_code, reply
+        # 把命令放入队列
+        self.device_event_executor.device_event(command, buffer)
 
-    def command_reply(self, command: str, status: int, data: object):
+        # 执行队列中的一个命令
+        self.device_event_executor.device_execute_signal.emit()
+
+    def command_reply(
+        self, command: str, status: int, data: typing.Any
+    ) -> None:
         pass
 
 
@@ -927,17 +990,6 @@ class AppMainWindow(MainWindow):
         else:
             return self.tr("Disable")
 
-    # 固定延迟
-    @staticmethod
-    def sleep_ms(interval: int = 1):
-        QThread.msleep(interval)
-
-    # 随机延迟
-    @staticmethod
-    def random_sleep_ms(min_interval: int = 0, max_interval: int = 100):
-        random_time = int(random.uniform(min_interval, max_interval))
-        QThread.msleep(random_time)
-
     ######################################################################
     # 主窗口相关函数
     ######################################################################
@@ -1150,7 +1202,7 @@ class AppMainWindow(MainWindow):
                 key_code, KeyStateEnum.PRESS
             )
             self.send_keyboard_buffer()
-        self.random_sleep_ms()
+        self.controller_sleep_ms(1)
         for key_code in key_code_list:
             self.update_keyboard_buffer_with_hid_code(
                 key_code, KeyStateEnum.RELEASE
@@ -1217,8 +1269,6 @@ class AppMainWindow(MainWindow):
         # 指示器按键则更新指示器buffer
         self.update_keyboard_indicator_buffer_with_hid_code(hid_code)
         self.keyboard_simulation_press(hid_code)
-        # 固定等待1ms
-        self.sleep_ms(10)
         self.keyboard_simulation_release(hid_code)
 
     # 键盘模拟单击按键
@@ -1275,7 +1325,7 @@ class AppMainWindow(MainWindow):
             else:
                 self.keyboard_simulation_press(key_code)
                 self.keyboard_simulation_release(key_code)
-            self.sleep_ms(self.config.paste_board["interval"])
+            self.controller_sleep_ms(self.config.paste_board["interval"])
 
         # 再次强制清空缓冲区
         self.clear_keyboard_buffer()
@@ -1514,7 +1564,17 @@ class AppMainWindow(MainWindow):
     # 检查控制器连接
     def check_controller_connection(self):
         if self.status.is_enabled("controller"):
-            self.controller_command_send("check_connection", None)
+            self.controller_command_send("device_check_connection", None)
+
+    # 控制器发送睡眠时间信号
+    # interval 为睡眠毫秒数
+    def controller_sleep_ms(self, interval: int = 1):
+        self.controller_command_send("device_sleep", interval)
+
+    # 控制器发送随机睡眠时间信号
+    def controller_random_sleep_ms(self, min_interval: int = 0, max_interval: int = 100):
+        random_time = int(random.uniform(min_interval, max_interval))
+        self.controller_sleep_ms(random_time)
 
     # 控制器发送命令信号
     def controller_command_send(self, command: str, data: typing.Any):
@@ -1527,6 +1587,7 @@ class AppMainWindow(MainWindow):
         ignored_command = [
             "device_reload",
             "device_reset",
+            "device_sleep",
             "mouse_relative_write",
             "mouse_absolute_write",
             "keyboard_write",
@@ -1545,7 +1606,7 @@ class AppMainWindow(MainWindow):
                 )
         elif command == "device_close":
             self.status.set_bool("controller", False)
-        elif command == "check_connection":
+        elif command == "device_check_connection":
             if status != 0:
                 # 检查连接返回失败
                 self.disconnect_controller()
@@ -1601,6 +1662,10 @@ class AppMainWindow(MainWindow):
         self.status_bar_manager.update_label_status(
             self.keyboard_key_buffer, self.keyboard_indicator_buffer
         )
+        # 从缓冲区中清理已松开的按键
+        self.keyboard_key_buffer.clear_released()
+        # 控制器固定等待至少 1ms 确保系统能正确的响应按键信号
+        self.controller_sleep_ms(1)
 
     # 清空键盘按键缓冲区
     def clear_keyboard_buffer(self):
@@ -2371,8 +2436,6 @@ class AppMainWindow(MainWindow):
 
         # 向控制器发送命令
         self.send_keyboard_buffer()
-        # 从缓冲区中清理已松开的按键
-        self.keyboard_key_buffer.clear_released()
 
     # 键盘按下事件
     def handle_key_press_with_event(self, event: QKeyEvent) -> bool:
