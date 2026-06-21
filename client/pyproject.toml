@@ -2,7 +2,7 @@
 authors = [
     {name = "wevsty", email = "ty@wevs.org"},
 ]
-requires-python = "<3.15,>=3.12"
+requires-python = "<3.16,>=3.12"
 dependencies = [
     "pyyaml<7.0.0,>=6.0.3",
     "loguru<1.0.0,>=0.7.2",
