@@ -1,5 +1,5 @@
 # KVM over USB
-[![Python version](https://img.shields.io/badge/Python-3.13-blue)](https://www.python.org)
+[![Python version](https://img.shields.io/badge/Python-3.14-blue)](https://www.python.org)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![flake8_check](https://badgen.net/github/checks/wevsty/KVM-over-USB/main?label=flake8_check)](https://github.com/wevsty/KVM-over-USB/actions/workflows/code_checks.yml)
