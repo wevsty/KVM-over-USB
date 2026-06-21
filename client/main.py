@@ -111,10 +111,12 @@ class ControllerEventExecutor(QObject):
         self.device_mutex = QMutex()
         self.deque_mutex = QMutex()
         self.controller_device = ControllerGeneralDevice()
-        self.deque: typing.Deque[typing.Tuple[str, typing.Any]] = collections.deque()
+        self.deque: typing.Deque[typing.Tuple[str, typing.Any]] = (
+            collections.deque()
+        )
 
         self.device_execute_signal.connect(
-            self.device_execute, type=Qt.ConnectionType.QueuedConnection
+            self.device_event_execute, type=Qt.ConnectionType.QueuedConnection
         )
         # reply 预留好了槽
         # 但不需要使用所以暂时注释掉
@@ -129,11 +131,11 @@ class ControllerEventExecutor(QObject):
         with QMutexLocker(self.device_mutex):
             self.controller_device.device_close()
 
-    def device_event(self, command: str, buffer: typing.Any) -> None:
+    def device_event_store(self, command: str, buffer: typing.Any) -> None:
         with QMutexLocker(self.deque_mutex):
             self.deque.append((command, buffer))
 
-    def device_execute(self):
+    def device_event_execute(self):
         with QMutexLocker(self.deque_mutex):
             try:
                 command, buffer = self.deque.popleft()
@@ -174,7 +176,9 @@ class ControllerEventProxy(QObject):
 
         self.command_send_signal.connect(self.command_send)
         self.command_reply_signal.connect(self.command_reply)
-        self.device_event_executor.device_reply_signal.connect(self.command_reply_signal)
+        self.device_event_executor.device_reply_signal.connect(
+            self.command_reply_signal
+        )
         self.device_event_executor.moveToThread(self.execute_thread)
         self.execute_thread.start()
 
@@ -199,7 +203,7 @@ class ControllerEventProxy(QObject):
         "mouse_absolute_write"
         """
         # 把命令放入队列
-        self.device_event_executor.device_event(command, buffer)
+        self.device_event_executor.device_event_store(command, buffer)
 
         # 执行队列中的一个命令
         self.device_event_executor.device_execute_signal.emit()
@@ -1572,7 +1576,9 @@ class AppMainWindow(MainWindow):
         self.controller_command_send("device_sleep", interval)
 
     # 控制器发送随机睡眠时间信号
-    def controller_random_sleep_ms(self, min_interval: int = 0, max_interval: int = 100):
+    def controller_random_sleep_ms(
+        self, min_interval: int = 0, max_interval: int = 100
+    ):
         random_time = int(random.uniform(min_interval, max_interval))
         self.controller_sleep_ms(random_time)
 
