@@ -24,7 +24,7 @@ class ControllerDeviceBase(ABC):
         pass
 
     @abstractmethod
-    def check_connection(self) -> bool:
+    def device_check_connection(self) -> bool:
         pass
 
     @abstractmethod

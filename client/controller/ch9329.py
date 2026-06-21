@@ -65,7 +65,7 @@ class ControllerCh9329(ControllerDeviceBase):
         SerialDevice.close_serial_connection(self.connection)
         self.connection = None
 
-    def check_connection(self) -> bool:
+    def device_check_connection(self) -> bool:
         result: bool = False
         if self.connection is None:
             return result
@@ -239,7 +239,7 @@ class ControllerCh9329(ControllerDeviceBase):
         wheel: int = 0,
         relative: bool = False,
     ):
-        if not self.check_connection():
+        if not self.device_check_connection():
             return
         if not relative:
             mouse.send_absolute_data(
@@ -255,7 +255,7 @@ class ControllerCh9329(ControllerDeviceBase):
             mouse.send_relative_data(self.connection, x, y, button_name, wheel)
 
     def keyboard_send_data(self, keys: list, function_keys: list):
-        if not self.check_connection():
+        if not self.device_check_connection():
             return False
         if len(keys) > 6:
             keys = keys[0:6]
@@ -269,7 +269,7 @@ class ControllerCh9329(ControllerDeviceBase):
     def keyboard_receive_status(self) -> tuple[int, dict[str, bool]]:
         status: bool = False
         reply_dict: dict = dict()
-        if not self.check_connection():
+        if not self.device_check_connection():
             return status, reply_dict
         # clear connection buffer
         # self.connection.readall()
@@ -287,7 +287,7 @@ class ControllerCh9329(ControllerDeviceBase):
         return status_code, reply_dict
 
     def ch9329_release(self, release_type: str = "all"):
-        if not self.check_connection():
+        if not self.device_check_connection():
             return
         if release_type == "mouse":
             mouse.release(self.connection)
@@ -301,7 +301,7 @@ class ControllerCh9329(ControllerDeviceBase):
 
     # 复位芯片
     def ch9329_reset(self):
-        if not self.check_connection():
+        if not self.device_check_connection():
             return
         chip_command.send_command_reset(self.connection)
         self.connection.flush()
@@ -309,7 +309,7 @@ class ControllerCh9329(ControllerDeviceBase):
 
     # 恢复出厂设置
     def ch9329_restore_factory_settings(self):
-        if not self.check_connection():
+        if not self.device_check_connection():
             return
         chip_command.send_command_restore_factory_config(self.connection)
 

@@ -1,6 +1,8 @@
 import threading
 import typing
 
+from PySide6.QtCore import QThread
+
 from controller.base import ControllerDeviceBase
 from controller.ch9329 import ControllerCh9329
 from controller.kvm_card_mini import ControllerKvmCardMini
@@ -33,8 +35,14 @@ class ControllerGeneralDevice(ControllerDeviceBase):
     def device_close(self) -> None:
         return self.controller.device_close()
 
-    def check_connection(self) -> bool:
-        return self.controller.check_connection()
+    def device_check_connection(self) -> bool:
+        return self.controller.device_check_connection()
+
+    @staticmethod
+    def device_sleep(interval: int = 1) -> None:
+        if interval > 0:
+            QThread.msleep(interval)
+        pass
 
     # 设备事件
     # 返回0为成功
@@ -50,9 +58,12 @@ class ControllerGeneralDevice(ControllerDeviceBase):
             status_code = self.generate_status_code(status)
         elif command == "device_close":
             self.device_close()
-        elif command == "check_connection":
-            status = self.check_connection()
+        elif command == "device_check_connection":
+            status = self.device_check_connection()
             status_code = self.generate_status_code(status)
+        elif command == "device_sleep":
+            self.device_sleep(int(buffer))
+            status_code = self.generate_status_code(True)
         else:
             command, status_code, reply = self.controller.device_event(
                 command, buffer

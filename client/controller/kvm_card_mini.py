@@ -264,7 +264,7 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         self.hid_device.close()
         self.is_open = False
 
-    def check_connection(self) -> bool:
+    def device_check_connection(self) -> bool:
         return self.is_open
 
     # 设备事件
@@ -353,7 +353,7 @@ class ControllerKvmCardMini(ControllerDeviceBase):
     def keyboard_receive_status(self) -> tuple[int, dict[str, bool]]:
         status: bool = False
         reply_dict: dict = dict()
-        if not self.check_connection():
+        if not self.device_check_connection():
             return status, reply_dict
 
         # [3,0] 是要求返回键盘状态数据
@@ -392,7 +392,7 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         return status_code, reply_dict
 
     def keyboard_send_event(self, buffer: KeyboardKeyBuffer):
-        if not self.check_connection():
+        if not self.device_check_connection():
             return
         keys = buffer.buffer()
         for key in keys:
@@ -410,13 +410,13 @@ class ControllerKvmCardMini(ControllerDeviceBase):
     def keyboard_recv_event(self, _command: str) -> tuple[int, dict]:
         status_code: int = 1
         reply: dict = dict()
-        if not self.check_connection():
+        if not self.device_check_connection():
             return status_code, reply
         status_code, reply = self.keyboard_receive_status()
         return status_code, reply
 
     def mouse_send_event(self, command: str, buffer: MouseStateBuffer):
-        if not self.check_connection():
+        if not self.device_check_connection():
             return
         if command == "mouse_absolute_write":
             if self.relative_click and not buffer.button.is_unknown():
@@ -432,7 +432,7 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         # self.hid_buffer.mouse_reset()
 
     def controller_release(self, release_type: str = "all"):
-        if not self.check_connection():
+        if not self.device_check_connection():
             return
         if release_type == "mouse":
             self.hid_buffer.mouse_reset()
@@ -450,7 +450,7 @@ class ControllerKvmCardMini(ControllerDeviceBase):
             logger.debug(f"unknown release type: {release_type}")
 
     def controller_reset(self):
-        if not self.check_connection():
+        if not self.device_check_connection():
             return
         status_code = self.write_hid_data([4, 0])
         if status_code != 0:
@@ -460,7 +460,7 @@ class ControllerKvmCardMini(ControllerDeviceBase):
             self.device_close()
 
     def update_board_indicator_light(self, r: int, g: int, b: int):
-        if not self.check_connection():
+        if not self.device_check_connection():
             return
         self.hid_buffer.update_ws2812b(r, g, b)
         self.write_hid_data(self.hid_buffer.ws2812b_buffer)
