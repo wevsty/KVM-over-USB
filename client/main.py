@@ -593,7 +593,6 @@ class AppMainWindow(MainWindow):
         )
 
         # self.mutex = QMutex()
-        # 初始化翻译器实例
         self.child_dialog: list[typing.Any] = []
         self.threads = QtThreadManager()
         self.timer = QtTimerManager()
@@ -634,7 +633,7 @@ class AppMainWindow(MainWindow):
         )
 
         # 刷新 ui 语言翻译
-        self.refresh_ui_translate()
+        self.refresh_translate()
 
         # 加载图标
         # 加载窗口图标
@@ -1031,7 +1030,7 @@ class AppMainWindow(MainWindow):
             ui_locale_name = "en_us"
         return ui_locale_name
 
-    def refresh_ui_translate(self):
+    def refresh_translate(self):
         qt_base_translator = self.QT_BASE_TRANSLATOR
         window_translator = self.WINDOW_TRANSLATOR
 
@@ -2302,7 +2301,7 @@ class AppMainWindow(MainWindow):
             # 尝试按照新配置启动
             # self.video_device_reset()
             # 刷新界面语言
-            self.refresh_ui_translate()
+            self.refresh_translate()
             pass
         pass
 
