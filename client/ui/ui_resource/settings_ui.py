@@ -121,6 +121,26 @@ class Ui_SettingsDialog(object):
         self.verticalLayout_2.addWidget(self.check_box_auto_connect)
 
         self.tabWidget.addTab(self.tab_connection, "")
+        self.tab_ui = QWidget()
+        self.tab_ui.setObjectName(u"tab_ui")
+        self.gridLayout_3 = QGridLayout(self.tab_ui)
+        self.gridLayout_3.setObjectName(u"gridLayout_3")
+        self.label_language = QLabel(self.tab_ui)
+        self.label_language.setObjectName(u"label_language")
+
+        self.gridLayout_3.addWidget(self.label_language, 0, 0, 1, 1)
+
+        self.combo_box_language = QComboBox(self.tab_ui)
+        self.combo_box_language.addItem("")
+        self.combo_box_language.addItem("")
+        self.combo_box_language.addItem("")
+        self.combo_box_language.addItem("")
+        self.combo_box_language.setObjectName(u"combo_box_language")
+        self.combo_box_language.setCurrentText(u"Auto")
+
+        self.gridLayout_3.addWidget(self.combo_box_language, 0, 1, 1, 1)
+
+        self.tabWidget.addTab(self.tab_ui, "")
 
         self.verticalLayout.addWidget(self.tabWidget)
 
@@ -159,5 +179,12 @@ class Ui_SettingsDialog(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_controller), QCoreApplication.translate("SettingsDialog", u"Controller", None))
         self.check_box_auto_connect.setText(QCoreApplication.translate("SettingsDialog", u"Auto Connect", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_connection), QCoreApplication.translate("SettingsDialog", u"Connection", None))
+        self.label_language.setText(QCoreApplication.translate("SettingsDialog", u"Language", None))
+        self.combo_box_language.setItemText(0, QCoreApplication.translate("SettingsDialog", u"Auto", None))
+        self.combo_box_language.setItemText(1, QCoreApplication.translate("SettingsDialog", u"English", None))
+        self.combo_box_language.setItemText(2, QCoreApplication.translate("SettingsDialog", u"Simplified Chinese \u7b80\u4f53\u4e2d\u6587", None))
+        self.combo_box_language.setItemText(3, QCoreApplication.translate("SettingsDialog", u"Traditional Chinese \u7e41\u9ad4\u4e2d\u6587", None))
+
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_ui), QCoreApplication.translate("SettingsDialog", u"UI", None))
     # retranslateUi
 

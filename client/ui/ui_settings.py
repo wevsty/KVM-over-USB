@@ -68,6 +68,7 @@ class SettingsDialog(QDialog, settings_ui.Ui_SettingsDialog):
         self.video_config: dict[str, typing.Any] = dict()
         self.controller_config: dict[str, typing.Any] = dict()
         self.connection_config: dict[str, typing.Any] = dict()
+        self.ui_config: dict[str, typing.Any] = dict()
         self.accept_settings: bool = False
 
         # self.adjustSize()
@@ -135,6 +136,17 @@ class SettingsDialog(QDialog, settings_ui.Ui_SettingsDialog):
     # 设置连接配置
     def set_connection_config(self, config: dict[str, typing.Any]) -> None:
         self.connection_config = config
+
+    # 获取连接配置
+    def get_ui_config(self) -> dict[str, typing.Any]:
+        uc: dict[str, typing.Any] = dict()
+        language_text = self.combo_box_language.currentText()
+        uc["language"] = language_text
+        return uc
+
+    # 设置连接配置
+    def set_ui_config(self, config: dict[str, typing.Any]) -> None:
+        self.ui_config = config
 
     # 刷新视频选择界面为运行时配置
     def refresh_video_devices_with_config(self) -> None:

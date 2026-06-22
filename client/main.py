@@ -24,6 +24,8 @@ from PySide6.QtCore import (
     QTranslator,
     QUrl,
     Signal,
+    QLocale,
+    QCoreApplication,
 )
 from PySide6.QtGui import (
     QCloseEvent,
@@ -555,13 +557,15 @@ class MainWindowStatusBarManager:
 class AppMainWindow(MainWindow):
     # 窗口标题
     WINDOW_TITLE: str = "USB KVM Client"
+    QT_BASE_TRANSLATOR: QTranslator = QTranslator()
+    WINDOW_TRANSLATOR: QTranslator = QTranslator()
 
     def __init__(self, parent: QWidget | None = None):
         # 初始化父类
         super().__init__(parent)
 
         # 初始化状态
-        self.status: StatusBuffer = StatusBuffer()
+        # self.status: StatusBuffer = StatusBuffer()
         self.status: StatusBuffer = StatusBuffer(
             {
                 "screen_height": 0,
@@ -589,7 +593,8 @@ class AppMainWindow(MainWindow):
         )
 
         # self.mutex = QMutex()
-        # self.mutex_locker = QMutexLocker(self.mutex)
+        # 初始化翻译器实例
+        self.child_dialog: list[typing.Any] = []
         self.threads = QtThreadManager()
         self.timer = QtTimerManager()
         self.source_directory: str = project_source_directory_path()
@@ -617,6 +622,19 @@ class AppMainWindow(MainWindow):
         self.indicator_lights_dialog = IndicatorLightsDialog()
         self.paste_board_dialog = PasteBoardDialog()
         self.settings_dialog = SettingsDialog()
+
+        self.child_dialog.extend(
+            [
+                self.about_dialog,
+                self.custom_key_dialog,
+                self.indicator_lights_dialog,
+                self.paste_board_dialog,
+                self.settings_dialog,
+            ]
+        )
+
+        # 刷新 ui 语言翻译
+        self.refresh_ui_translate()
 
         # 加载图标
         # 加载窗口图标
@@ -993,6 +1011,65 @@ class AppMainWindow(MainWindow):
             return self.tr("Enable")
         else:
             return self.tr("Disable")
+
+    def select_language(self) -> str:
+        config_language: str = self.config.ui["language"].lower()
+        # 获取系统当前区域设置
+        sys_locale = QLocale.system()
+        # 获取完整的语言环境名称
+        # 如 zh_cn en_us
+        sys_locale_name = sys_locale.name().lower()
+        if config_language == "auto":
+            ui_locale_name = sys_locale_name
+        elif config_language.startswith("english"):
+            ui_locale_name = "en_us"
+        elif config_language.startswith("simplified chinese"):
+            ui_locale_name = "zh_cn"
+        elif config_language.startswith("traditional chinese"):
+            ui_locale_name = "zh_tw"
+        else:
+            ui_locale_name = "en_us"
+        return ui_locale_name
+
+    def refresh_ui_translate(self):
+        qt_base_translator = self.QT_BASE_TRANSLATOR
+        window_translator = self.WINDOW_TRANSLATOR
+
+        selected_language: str = self.select_language()
+        translation_directory_path = project_source_directory_path(
+            "translations"
+        )
+        translation_files_path: list[typing.Tuple[str, QTranslator]] = [
+            (
+                os.path.join(
+                    translation_directory_path, f"qtbase_{selected_language}.qm"
+                ),
+                qt_base_translator,
+            ),
+            (
+                os.path.join(
+                    translation_directory_path, f"main_{selected_language}.qm"
+                ),
+                window_translator,
+            ),
+        ]
+
+        # 清空翻译
+        qt_base_translator.load("")
+        window_translator.load("")
+
+        # 载入翻译
+        for file_path, translator in translation_files_path:
+            if os.path.isfile(file_path):
+                translator.load(file_path)
+
+        # 更新UI
+        self.retranslateUi(self)
+        for child in self.child_dialog:
+            if hasattr(child, "retranslateUi"):
+                child.retranslateUi(child)
+            else:
+                logger.error("Unknown object type.")
 
     ######################################################################
     # 主窗口相关函数
@@ -2182,11 +2259,13 @@ class AppMainWindow(MainWindow):
         connection_config: dict[str, typing.Any] = copy.copy(
             self.config.connection
         )
+        ui_config: dict[str, typing.Any] = copy.copy(self.config.ui)
 
         # 传入配置文件的配置
         self.settings_dialog.set_video_config(video_config)
         self.settings_dialog.set_controller_config(controller_config)
         self.settings_dialog.set_connection_config(connection_config)
+        self.settings_dialog.set_ui_config(ui_config)
 
         # 根据配置文件选择合适的选项
         self.settings_dialog.refresh_with_config()
@@ -2201,6 +2280,7 @@ class AppMainWindow(MainWindow):
                 video_config = self.settings_dialog.get_video_config()
                 controller_config = self.settings_dialog.get_controller_config()
                 connection_config = self.settings_dialog.get_connection_config()
+                ui_config = self.settings_dialog.get_ui_config()
                 # 检查选项是否有效
                 if video_config["device"] == "":
                     raise ValueError("Invalid device")
@@ -2208,6 +2288,7 @@ class AppMainWindow(MainWindow):
                 self.config.video.update(video_config)
                 self.config.controller.update(controller_config)
                 self.config.connection.update(connection_config)
+                self.config.ui.update(ui_config)
                 # 保存配置
                 self.save_config()
             except ValueError:
@@ -2220,6 +2301,9 @@ class AppMainWindow(MainWindow):
                 )
             # 尝试按照新配置启动
             # self.video_device_reset()
+            # 刷新界面语言
+            self.refresh_ui_translate()
+            pass
         pass
 
     ######################################################################
@@ -2604,19 +2688,17 @@ def main():
     command_line_parser()
     argv = sys.argv
     app = QApplication(argv)
-    # locale = QLocale().system().name().lower()
-    translate_files: list[str] = []
-    translate_directory_path = project_source_directory_path("translate")
-    translate_directory_files: list[str] = os.listdir(translate_directory_path)
-    for file_name in translate_directory_files:
-        file_path = os.path.join(translate_directory_path, file_name)
-        file_ext = os.path.splitext(file_name)[-1]
-        if file_ext == ".qm":
-            translate_files.append(file_path)
-    for file_path in translate_files:
-        translator = QTranslator(app)
-        if translator.load(file_path):
-            app.installTranslator(translator)
+
+    # 创建翻译器
+    app_translator = QTranslator(app)
+    qt_base_translator = QTranslator(app)
+    # 覆盖窗口类默认的翻译器
+    AppMainWindow.QT_BASE_TRANSLATOR = qt_base_translator
+    AppMainWindow.WINDOW_TRANSLATOR = app_translator
+    # 安装翻译器
+    QCoreApplication.installTranslator(AppMainWindow.QT_BASE_TRANSLATOR)
+    QCoreApplication.installTranslator(AppMainWindow.WINDOW_TRANSLATOR)
+
     my_window = AppMainWindow()
     my_window.show()
     # QTimer.singleShot(100, my_window.shortcut_status)

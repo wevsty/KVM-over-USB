@@ -1,5 +1,5 @@
 MAIN_DEFAULT_CONFIG_DATA = """
-config_version: v6
+config_version: v7
 connection:
   auto_connect: false
 controller:
@@ -40,6 +40,7 @@ shortcut_keys:
   - win_left
   - r
 ui:
+  language: auto
   quick_paste: true
   tips_fullscreen: true
   tips_system_warning: true

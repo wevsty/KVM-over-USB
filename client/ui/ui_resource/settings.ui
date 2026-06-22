@@ -171,6 +171,47 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="tab_ui">
+      <attribute name="title">
+       <string>UI</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_language">
+         <property name="text">
+          <string>Language</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QComboBox" name="combo_box_language">
+         <property name="currentText">
+          <string notr="true">Auto</string>
+         </property>
+         <item>
+          <property name="text">
+           <string>Auto</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>English</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Simplified Chinese 简体中文</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Traditional Chinese 繁體中文</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
    <item>

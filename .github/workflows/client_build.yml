@@ -56,7 +56,7 @@ jobs:
           include-data-dir: |
             ./data=data
             ./icons=icons
-            ./translate=translate
+            ./translations=translations
           enable-plugins: pyside6
           include-qt-plugins: multimedia
           # file information
@@ -83,7 +83,7 @@ jobs:
           include-data-dir: |
             ./data=data
             ./icons=icons
-            ./translate=translate
+            ./translations=translations
           enable-plugins: pyside6
           include-qt-plugins: multimedia
           quiet: true
