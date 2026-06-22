@@ -1011,7 +1011,7 @@ class AppMainWindow(MainWindow):
         else:
             return self.tr("Disable")
 
-    def select_language(self) -> str:
+    def select_language_name(self) -> str:
         config_language: str = self.config.ui["language"].lower()
         # 获取系统当前区域设置
         sys_locale = QLocale.system()
@@ -1034,7 +1034,7 @@ class AppMainWindow(MainWindow):
         qt_base_translator = self.QT_BASE_TRANSLATOR
         window_translator = self.WINDOW_TRANSLATOR
 
-        selected_language: str = self.select_language()
+        selected_language: str = self.select_language_name()
         translation_directory_path = project_source_directory_path(
             "translations"
         )
