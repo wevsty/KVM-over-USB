@@ -47,26 +47,26 @@
 <context>
     <name>AppMainWindow</name>
     <message>
-        <location filename="../main.py" line="992"/>
+        <location filename="../main.py" line="994"/>
         <source>The configuration file does not match the program.
 </source>
         <translation>設定檔與程式不匹配。</translation>
     </message>
     <message>
-        <location filename="../main.py" line="995"/>
+        <location filename="../main.py" line="997"/>
         <source>Please delete the existing configuration file.
 </source>
         <translation>請刪除現有的設定檔。</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1001"/>
-        <location filename="../main.py" line="1473"/>
-        <location filename="../main.py" line="1542"/>
+        <location filename="../main.py" line="1003"/>
+        <location filename="../main.py" line="1475"/>
+        <location filename="../main.py" line="1545"/>
         <source>Error</source>
         <translation>錯誤</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1002"/>
+        <location filename="../main.py" line="1004"/>
         <source>Import config error:
 {}
 </source>
@@ -74,192 +74,197 @@
 {}</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1014"/>
+        <location filename="../main.py" line="1016"/>
         <source>Enable</source>
         <translation>啟用</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1016"/>
+        <location filename="../main.py" line="1018"/>
         <source>Disable</source>
         <translation>停用</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1110"/>
-        <location filename="../main.py" line="1578"/>
+        <location filename="../main.py" line="1112"/>
+        <location filename="../main.py" line="1581"/>
         <source>Tip</source>
         <translation>提示</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1111"/>
+        <location filename="../main.py" line="1113"/>
         <source>Press Ctrl+Alt+F11 to toggle fullscreen.
 </source>
         <translation>按 Ctrl+Alt+F11 切換全螢幕。</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1113"/>
+        <location filename="../main.py" line="1115"/>
         <source>Or stay cursor at left top corner to show menu bar.</source>
         <translation>或將游標停留在左上角以顯示選單列。</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1115"/>
-        <location filename="../main.py" line="1581"/>
+        <location filename="../main.py" line="1117"/>
+        <location filename="../main.py" line="1584"/>
         <source>Don&apos;t show again.</source>
         <translation>不再顯示。</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1175"/>
+        <location filename="../main.py" line="1177"/>
         <source>Window topmost: </source>
         <translation>視窗最上層：</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1194"/>
+        <location filename="../main.py" line="1196"/>
         <source>Keep aspect ratio: </source>
         <translation>保持長寬比：</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1203"/>
+        <location filename="../main.py" line="1205"/>
         <source>Image Save</source>
         <translation>圖片儲存</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1211"/>
+        <location filename="../main.py" line="1213"/>
         <source>Image saved to</source>
         <translation>圖片已儲存至</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1234"/>
+        <location filename="../main.py" line="1236"/>
         <source>Record video</source>
         <translation>錄製影片</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1237"/>
+        <location filename="../main.py" line="1239"/>
         <source>Video recording stopped</source>
         <translation>影片錄製已停止</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1242"/>
+        <location filename="../main.py" line="1244"/>
         <source>Video save</source>
         <translation>影片儲存</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1256"/>
+        <location filename="../main.py" line="1258"/>
         <source>Stop recording</source>
         <translation>停止錄製</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1259"/>
+        <location filename="../main.py" line="1261"/>
         <source>Video recording started</source>
         <translation>影片錄製已開始</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1426"/>
+        <location filename="../main.py" line="1428"/>
         <source>Quick paste: </source>
         <translation>快速貼上：</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1435"/>
+        <location filename="../main.py" line="1437"/>
         <source>Clipboard is empty</source>
         <translation>剪貼簿為空</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1438"/>
+        <location filename="../main.py" line="1440"/>
         <source>Quick pasting</source>
         <translation>快速貼上</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1438"/>
+        <location filename="../main.py" line="1440"/>
         <source>characters</source>
         <translation>字元</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1474"/>
+        <location filename="../main.py" line="1476"/>
         <source>System hook only support windows.</source>
         <translation>系統勾選僅支援 Windows。</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1484"/>
+        <location filename="../main.py" line="1486"/>
         <source>System hook: </source>
         <translation>系統勾選：</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1497"/>
+        <location filename="../main.py" line="1499"/>
         <source>Mouse capture on (Press Ctrl+Alt+F12 to release)</source>
         <translation>滑鼠捕捉中（按 Ctrl+Alt+F12 釋放）</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1510"/>
+        <location filename="../main.py" line="1505"/>
+        <source>Mouse released</source>
+        <translation>滑鼠已釋放</translation>
+    </message>
+    <message>
+        <location filename="../main.py" line="1513"/>
         <source>Relative mouse: </source>
         <translation>相對滑鼠：</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1519"/>
+        <location filename="../main.py" line="1522"/>
         <source>Hide cursor when capture mouse: </source>
         <translation>捕捉滑鼠時隱藏游標：</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1529"/>
+        <location filename="../main.py" line="1532"/>
         <source>Correction cursor: </source>
         <translation>校正游標：</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1543"/>
+        <location filename="../main.py" line="1546"/>
         <source>This tool only support windows</source>
         <translation>此工具僅支援 Windows</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1579"/>
+        <location filename="../main.py" line="1582"/>
         <source>The current operating system is not Windows.
 </source>
         <translation>目前作業系統不是 Windows。</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1580"/>
+        <location filename="../main.py" line="1583"/>
         <source>Some features will be unavailable.
 </source>
         <translation>某些功能將無法使用。</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1686"/>
+        <location filename="../main.py" line="1689"/>
         <source>Controller connected</source>
         <translation>控制器已連接</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1691"/>
+        <location filename="../main.py" line="1694"/>
         <source>Controller connect failure</source>
         <translation>控制器連接失敗</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1892"/>
+        <location filename="../main.py" line="1895"/>
         <source>Press Ctrl+Alt+F12 to release mouse</source>
         <translation>按 Ctrl+Alt+F12 釋放滑鼠</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2118"/>
+        <location filename="../main.py" line="2121"/>
         <source>Video Device Error</source>
         <translation>視訊裝置錯誤</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2146"/>
+        <location filename="../main.py" line="2149"/>
         <source>Video device start failed</source>
         <translation>視訊裝置啟動失敗</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2155"/>
+        <location filename="../main.py" line="2158"/>
         <source>Video initialization error</source>
         <translation>視訊初始化錯誤</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2300"/>
+        <location filename="../main.py" line="2303"/>
         <source>Video Error</source>
         <translation>視訊錯誤</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2301"/>
+        <location filename="../main.py" line="2304"/>
         <source>Invalid device selected</source>
         <translation>選擇的裝置無效</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2485"/>
+        <location filename="../main.py" line="2488"/>
         <source>Mouse capture off</source>
         <translation>滑鼠捕捉已關閉</translation>
     </message>

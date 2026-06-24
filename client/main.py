@@ -1502,6 +1502,7 @@ class AppMainWindow(MainWindow):
     # 释放鼠标功能
     def mouse_capture_release_triggered(self) -> None:
         self.status.set_bool("mouse_capture", False)
+        self.status_bar_manager.show_message(self.tr("Mouse released"))
 
     # 相对模式菜单触发
     def mouse_relative_mode_triggered(self):
@@ -2566,13 +2567,15 @@ class AppMainWindow(MainWindow):
             QEvent.Type.WindowDeactivate,
         ]
         if event.type() in window_activate_event:
-            if not self.isActiveWindow() and self.status.is_enabled(
-                "controller"
-            ):
+            is_active_window: bool = self.isActiveWindow()
+            if not is_active_window and self.status.is_enabled("relative_mode"):
+                # 如果窗口失焦自动释放鼠标捕捉
+                self.mouse_capture_release_triggered()
+            if not is_active_window and self.status.is_enabled("controller"):
                 # 窗口失去焦点时释放键盘和鼠标
                 # 防止卡键
                 self.reload_controller("all")
-                pass
+            pass
         logger.debug(f"window change event: {event}")
 
     # 关闭事件
