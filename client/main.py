@@ -757,6 +757,10 @@ class AppMainWindow(MainWindow):
         self.action_device_reset.setIcon(self.load_icon("reset.png"))
         self.action_settings.setIcon(self.load_icon("setting.png"))
         self.action_minimize.setIcon(self.load_icon("window-minimize.png"))
+        self.action_maximize.setIcon(self.load_icon("window-maximize.png"))
+        self.action_normal_size.setIcon(
+            self.load_icon("window-normal-size.png")
+        )
         self.action_exit.setIcon(self.load_icon("window-close.png"))
 
         # menu_video
@@ -866,6 +870,8 @@ class AppMainWindow(MainWindow):
         self.action_device_reset.triggered.connect(self.reset_devices)
         self.action_settings.triggered.connect(self.execute_settings_dialog)
         self.action_minimize.triggered.connect(self.showMinimized)
+        self.action_maximize.triggered.connect(self.showMaximized)
+        self.action_normal_size.triggered.connect(self.showNormal)
         self.action_exit.triggered.connect(self.close)
 
         # video 菜单

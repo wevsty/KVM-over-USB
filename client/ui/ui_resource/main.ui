@@ -39,6 +39,8 @@
     <addaction name="action_settings"/>
     <addaction name="separator"/>
     <addaction name="action_minimize"/>
+    <addaction name="action_maximize"/>
+    <addaction name="action_normal_size"/>
     <addaction name="action_exit"/>
    </widget>
    <widget class="QMenu" name="menu_keyboard">
@@ -395,6 +397,19 @@
    </property>
    <property name="text">
     <string>Debug mode</string>
+   </property>
+  </action>
+  <action name="action_maximize">
+   <property name="text">
+    <string>Maximize</string>
+   </property>
+   <property name="statusTip">
+    <string>Maximize Window</string>
+   </property>
+  </action>
+  <action name="action_normal_size">
+   <property name="text">
+    <string>Normal size</string>
    </property>
   </action>
  </widget>
