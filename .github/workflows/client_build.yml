@@ -18,10 +18,10 @@ jobs:
 
     steps:
       - name: Check-out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.14'
           architecture: 'x64'
@@ -35,7 +35,7 @@ jobs:
           if [ "$RUNNER_OS" == "Linux" ]; then
               pip install -r ./client/data/requirements_for_posix.txt
           elif [ "$RUNNER_OS" == "Windows" ]; then
-              pip install -r ./client/data/requirements.txt
+              pip install -r ./client/data/requirements_for_windows.txt
           else
               echo "$RUNNER_OS not supported"
               exit 1
@@ -89,7 +89,7 @@ jobs:
           quiet: true
           
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ runner.os }}_build
           path: |
