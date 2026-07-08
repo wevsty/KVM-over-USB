@@ -1,9 +1,13 @@
-﻿hidapi==0.15.0
+﻿colorama==0.4.6
+hidapi==0.15.0
 loguru==0.7.3
 pych9329==0.1.6
 pyserial==3.5
 pyside6==6.11.1
 pyside6-addons==6.11.1
 pyside6-essentials==6.11.1
+pywin32==312
+pywinhook==1.6.2
 pyyaml==6.0.3
 shiboken6==6.11.1
+win32-setctime==1.2.0
