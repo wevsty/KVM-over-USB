@@ -47,11 +47,17 @@ class AboutDialog(QDialog, about_ui.Ui_AboutDialog):
     def load_dependencies_info(self):
         sys_name = platform.system().lower()
         if sys_name == "windows":
-            data_path = project_source_directory_path("data", "requirements_for_windows.txt")
+            data_path = project_source_directory_path(
+                "data", "requirements_for_windows.txt"
+            )
         elif sys_name == "linux" or sys_name == "darwin":
-            data_path = project_source_directory_path("data", "requirements_for_posix.txt")
+            data_path = project_source_directory_path(
+                "data", "requirements_for_posix.txt"
+            )
         else:
-            data_path = project_source_directory_path("data", "requirements.txt")
+            data_path = project_source_directory_path(
+                "data", "requirements.txt"
+            )
         encoding, encoding_length = self.detect_file_bom(data_path)
         # requirements_data = ""
         with open(data_path, "r", encoding=encoding) as fp:
