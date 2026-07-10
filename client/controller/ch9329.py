@@ -75,8 +75,10 @@ class ControllerCh9329(ControllerDeviceBase):
 
     def device_close(self) -> None:
         self.ch9329_release("all")
-        SerialDevice.close_serial_connection(self.connection)
-        self.connection = None
+        if self._connection is not None:
+            SerialDevice.close_serial_connection(self._connection)
+            self._connection = None
+        pass
 
     def device_check_connection(self) -> bool:
         if isinstance(self._connection, Serial):

@@ -163,7 +163,9 @@ class ControllerEventExecutor(QObject):
             self.device_reply_signal.emit(command, status_code, reply)
         pass
 
-    def device_reply(self, command: str, status: int, data: typing.Any) -> None:
+    def device_reply(
+        self, command: str, status_code: int, data: typing.Any
+    ) -> None:
         pass
 
 
@@ -211,7 +213,7 @@ class ControllerEventProxy(QObject):
         self.device_event_executor.device_execute_signal.emit()
 
     def command_reply(
-        self, command: str, status: int, data: typing.Any
+        self, command: str, status_code: int, data: typing.Any
     ) -> None:
         pass
 
@@ -227,6 +229,12 @@ class QtThreadManager:
 
     def get(self, thread_name: str) -> QThread | None:
         thread_object = self.threads.get(thread_name, None)
+        return thread_object
+
+    def get_exists(self, thread_name: str) -> QThread:
+        thread_object = self.threads.get(thread_name, None)
+        if thread_object is None:
+            raise KeyError(f"thread {thread_name} not exists")
         return thread_object
 
     def delete(self, thread_name: str) -> None:
@@ -259,6 +267,12 @@ class QtTimerManager:
 
     def get(self, timer_name: str) -> QTimer | None:
         timer_object = self.timers.get(timer_name, None)
+        return timer_object
+
+    def get_exists(self, timer_name: str) -> QTimer:
+        timer_object = self.timers.get(timer_name, None)
+        if timer_object is None:
+            raise KeyError(f"timer {timer_name} not exists")
         return timer_object
 
     def delete(self, timer_name: str) -> None:
@@ -327,16 +341,18 @@ class VideoSession(QObject):
     def __init__(self, parent: QObject | None = None):
         super().__init__(parent)
         self.parent: QObject | None = parent
-        self.device: QCameraDevice | None = None
-        self.camera: QCamera | None = None
-        self.video_sink: QVideoSink | None = None
-        self.capture_session: QMediaCaptureSession | None = None
-        self.image_capture: QImageCapture | None = None
-        self.video_record: QMediaRecorder | None = None
+        self.device: QCameraDevice = QCameraDevice()
+        self.camera: QCamera = QCamera(self.device)
+        self.video_sink: QVideoSink = QVideoSink()
+        self.capture_session: QMediaCaptureSession = QMediaCaptureSession()
+        self.image_capture: QImageCapture = QImageCapture(self.camera)
+        self.video_record: QMediaRecorder = QMediaRecorder(self.camera)
 
     # 按照视频设备描述返回设备对象
     @staticmethod
-    def get_video_device(device_description: str) -> QCameraDevice | None:
+    def get_target_video_device(
+        device_description: str,
+    ) -> QCameraDevice | None:
         cameras: list[QCameraDevice] = QMediaDevices.videoInputs()
         video_device: QCameraDevice | None = None
         for camera in cameras:
@@ -372,9 +388,12 @@ class VideoSession(QObject):
         device_description = config["device"]
         if device_description == "":
             raise RuntimeError(self.tr("Target video device is empty."))
-        self.device = self.get_video_device(device_description)
-        if self.device is None:
+        target_device = self.get_target_video_device(device_description)
+        if target_device is None:
+            self.device = QCameraDevice()
             raise RuntimeError(self.tr("Target video device not found."))
+        else:
+            self.device: QCameraDevice = target_device
         # 设置摄像头配置
         self.camera = QCamera(self.device)
         status = self.set_camera_format_with_config(config)
@@ -653,7 +672,7 @@ class AppMainWindow(MainWindow):
         self.status_bar_manager = MainWindowStatusBarManager(self.statusbar)
 
         # 初始化 video widget
-        self.video_widget: QVideoWidget | None = None
+        self.video_widget: QVideoWidget = QVideoWidget()
         self.video_disconnect_label = QLabel()
         self.init_video_widget()
 
@@ -661,10 +680,11 @@ class AppMainWindow(MainWindow):
         self.video_session: VideoSession = VideoSession()
 
         # 初始化键盘以及鼠标数据的缓冲buffer
-        self.keyboard_key_buffer: KeyboardKeyBuffer | None = None
-        self.keyboard_indicator_buffer: KeyboardIndicatorBuffer | None = None
-        self.mouse_buffer: MouseStateBuffer | None = None
-        self.init_device_buffer()
+        self.keyboard_key_buffer: KeyboardKeyBuffer = KeyboardKeyBuffer()
+        self.keyboard_indicator_buffer: KeyboardIndicatorBuffer = (
+            KeyboardIndicatorBuffer()
+        )
+        self.mouse_buffer: MouseStateBuffer = MouseStateBuffer()
 
         # 鼠标设置
         self.mouse_last_pos: None | QPoint = None
@@ -1131,7 +1151,7 @@ class AppMainWindow(MainWindow):
             self.statusBar().hide()
             self.menuBar().hide()
         else:
-            event_timer = self.timer.get("FULLSCREEN_EVENT_TIMER")
+            event_timer = self.timer.get_exists("FULLSCREEN_EVENT_TIMER")
             event_timer.stop()
             self.showNormal()
             self.action_fullscreen.setChecked(False)
@@ -1141,7 +1161,7 @@ class AppMainWindow(MainWindow):
 
     # 执行全屏时事件命令
     def execute_fullscreen_event_command(self):
-        event_timer = self.timer.get("FULLSCREEN_EVENT_TIMER")
+        event_timer = self.timer.get_exists("FULLSCREEN_EVENT_TIMER")
         command = self.fullscreen_event_command
         if command == "show_menu_bar":
             if self.menuBar().isHidden():
@@ -1478,7 +1498,7 @@ class AppMainWindow(MainWindow):
                 QMessageBox.StandardButton.NoButton,
             )
             return
-        pythoncom_timer = self.timer.get("PYTHONCOM_TIMER")
+        pythoncom_timer = self.timer.get_exists("PYTHONCOM_TIMER")
         self.status.reverse_bool("hook_state")
         hook_state = self.status.get_bool("hook_state")
         self.action_system_hook.setChecked(hook_state)
@@ -1619,14 +1639,14 @@ class AppMainWindow(MainWindow):
         self.reload_controller("all")
         self.controller_command_send("keyboard_read", None)
         self.mouse_capture_triggered()
-        check_connection_timer = self.timer.get(
+        check_connection_timer = self.timer.get_exists(
             "CONTROLLER_CHECK_CONNECTION_TIMER"
         )
         check_connection_timer.start()
 
     # 断开控制器
     def disconnect_controller(self):
-        check_connection_timer = self.timer.get(
+        check_connection_timer = self.timer.get_exists(
             "CONTROLLER_CHECK_CONNECTION_TIMER"
         )
         check_connection_timer.stop()
@@ -1671,7 +1691,7 @@ class AppMainWindow(MainWindow):
 
     # 接收控制器回复
     def controller_command_reply(
-        self, command: str, status: int, data: typing.Any
+        self, command: str, status_code: int, data: typing.Any
     ):
         ignored_command = [
             "device_reload",
@@ -1682,7 +1702,7 @@ class AppMainWindow(MainWindow):
             "keyboard_write",
         ]
         if command == "device_open":
-            if status == 0:
+            if status_code == 0:
                 # open 成功
                 self.status.set_bool("controller", True)
                 self.status_bar_manager.show_message(
@@ -1696,12 +1716,12 @@ class AppMainWindow(MainWindow):
         elif command == "device_close":
             self.status.set_bool("controller", False)
         elif command == "device_check_connection":
-            if status != 0:
+            if status_code != 0:
                 # 检查连接返回失败
                 self.disconnect_controller()
                 self.connect_controller()
         elif command == "keyboard_read":
-            if status == 0:
+            if status_code == 0:
                 logger.debug("keyboard indicator read succeed")
                 self.keyboard_indicator_buffer.from_dict(data)
                 self.status_bar_manager.update_label_status(
@@ -1732,14 +1752,6 @@ class AppMainWindow(MainWindow):
             value, MouseButtonCodeEnum.UNKNOWN_BUTTON
         )
         return button_code
-
-    def init_device_buffer(self):
-        # 初始化键盘以及鼠标数据的缓冲buffer
-        self.keyboard_key_buffer: KeyboardKeyBuffer = KeyboardKeyBuffer()
-        self.keyboard_indicator_buffer: KeyboardIndicatorBuffer = (
-            KeyboardIndicatorBuffer()
-        )
-        self.mouse_buffer = MouseStateBuffer()
 
     # 发送键盘缓冲区到控制器
     def send_keyboard_buffer(self):
@@ -1925,6 +1937,7 @@ class AppMainWindow(MainWindow):
             )
         else:
             self.mouse_report_interval = 1000 / frame_rate
+        self.mouse_report_interval = int(self.mouse_report_interval)
         mouse_report_timer = self.timer.get("MOUSE_REPORT_TIMER")
         assert mouse_report_timer is not None
         if mouse_report_timer is not None:
@@ -2124,32 +2137,40 @@ class AppMainWindow(MainWindow):
             QMessageBox.StandardButton.NoButton,
         )
 
+    # 启动视频设备
+    def start_video_device(self) -> None:
+        # 使用配置初始化设备
+        self.video_session.init_video_device_with_config(self.config.video)
+        self.video_session.init_capture_session_with_config(
+            self.config.video_record
+        )
+
+        camera = self.video_session.camera
+        video_sink = self.video_session.video_sink
+        # 注册信号
+        video_sink.videoFrameChanged.connect(self.video_widget_frame_changed)
+        camera.errorOccurred.connect(self.video_device_error_occurred)
+        camera.start()
+
+        if not camera.isActive():
+            self.status.set_bool("camera", False)
+            raise RuntimeError(self.tr("Video device start failed"))
+        else:
+            self.status.set_bool("camera", True)
+        self.status.set_bool("video_recording", False)
+
     # 视频设备初始化
-    # noinspection PyUnresolvedReferences
     def init_video_device(self) -> bool:
         status: bool = False
         try:
-            # 使用配置初始化设备
-            self.video_session.init_video_device_with_config(self.config.video)
-            self.video_session.init_capture_session_with_config(
-                self.config.video_record
-            )
 
-            camera = self.video_session.camera
-            video_sink = self.video_session.video_sink
-            # 注册信号
-            video_sink.videoFrameChanged.connect(
-                self.video_widget_frame_changed
-            )
-            camera.errorOccurred.connect(self.video_device_error_occurred)
-            camera.start()
-
-            if not camera.isActive():
-                self.status.set_bool("camera", False)
-                raise RuntimeError(self.tr("Video device start failed"))
+            if self.config.video["device"] == "empty_device":
+                # 设置为 empty_device 时默认不启用摄像头
+                # 此值可作为无采集卡时仅作为输入设备使用
+                pass
             else:
-                self.status.set_bool("camera", True)
-            self.status.set_bool("video_recording", False)
+                # 使用配置初始化设备
+                self.start_video_device()
             status = True
         except RuntimeError as error:
             error_message = str(error)
@@ -2168,15 +2189,18 @@ class AppMainWindow(MainWindow):
             return
         if not self.status.is_enabled("fullscreen"):
             self.resize_window_with_video_resolution()
-        fps = self.video_session.camera.cameraFormat().maxFrameRate()
-        self.set_video_widget_enable(True)
-        self.setWindowTitle(
-            f"{self.WINDOW_TITLE}"
-            + " - "
-            + f"{self.config.video["resolution_x"]}x{self.config.video["resolution_y"]}"
-            + " @ "
-            + f"{fps:.1f}"
-        )
+        if self.status.get_bool("camera"):
+            fps = self.video_session.camera.cameraFormat().maxFrameRate()
+            self.set_video_widget_enable(True)
+            self.setWindowTitle(
+                f"{self.WINDOW_TITLE}"
+                + " - "
+                + f"{self.config.video["resolution_x"]}x{self.config.video["resolution_y"]}"
+                + " @ "
+                + f"{fps:.1f}"
+            )
+        else:
+            fps = 60
         self.update_mouse_report_frequency(int(fps))
 
     # 断开视频设备
@@ -2326,7 +2350,7 @@ class AppMainWindow(MainWindow):
 
         width = self.width()
         height = self.height()
-        event_timer = self.timer.get("FULLSCREEN_EVENT_TIMER")
+        event_timer = self.timer.get_exists("FULLSCREEN_EVENT_TIMER")
 
         current_command = self.fullscreen_event_command
         # next_command = current_command

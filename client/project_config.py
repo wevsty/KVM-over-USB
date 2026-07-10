@@ -1,4 +1,5 @@
 import os
+import typing
 
 import yaml
 from loguru import logger
@@ -41,28 +42,28 @@ class MainConfig(RequiredConfig):
         super().__init__(file_path, None)
         self.root: dict = self.data
 
-        self.connection: dict | None = None
-        self.controller: dict | None = None
-        self.mouse: dict | None = None
-        self.paste_board: dict | None = None
-        self.shortcut_keys: dict | None = None
-        self.ui: dict | None = None
-        self.video: dict | None = None
-        self.video_record: dict | None = None
+        self.connection: dict[str, typing.Any] = dict()
+        self.controller: dict[str, typing.Any] = dict()
+        self.mouse: dict[str, typing.Any] = dict()
+        self.paste_board: dict[str, typing.Any] = dict()
+        self.shortcut_keys: dict[str, typing.Any] = dict()
+        self.ui: dict[str, typing.Any] = dict()
+        self.video: dict[str, typing.Any] = dict()
+        self.video_record: dict[str, typing.Any] = dict()
         if file_path is not None:
             self.load_from_file()
 
     def split_data_node(self):
         self.root: dict = self.data
 
-        self.connection = self.root.get("connection", None)
-        self.controller = self.root.get("controller", None)
-        self.mouse = self.root.get("mouse", None)
-        self.paste_board = self.root.get("paste_board", None)
-        self.shortcut_keys = self.root.get("shortcut_keys", None)
-        self.ui = self.root.get("ui", None)
-        self.video = self.root.get("video", None)
-        self.video_record = self.root.get("video_record", None)
+        self.connection = self.root.get("connection", {})
+        self.controller = self.root.get("controller", {})
+        self.mouse = self.root.get("mouse", {})
+        self.paste_board = self.root.get("paste_board", {})
+        self.shortcut_keys = self.root.get("shortcut_keys", {})
+        self.ui = self.root.get("ui", {})
+        self.video = self.root.get("video", {})
+        self.video_record = self.root.get("video_record", {})
 
     def load_from_file(self) -> None:
         if not os.path.exists(self.file_path):

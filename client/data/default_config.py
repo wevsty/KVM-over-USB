@@ -47,7 +47,7 @@ ui:
   window_auto_maximized: false
   window_auto_to_center: true
 video:
-  device: Integrated Webcam
+  device: empty_device
   format: NV12
   keep_aspect_ratio: true
   resolution_x: 1280
