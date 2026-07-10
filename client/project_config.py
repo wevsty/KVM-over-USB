@@ -7,7 +7,9 @@ from data.default_config import MAIN_DEFAULT_CONFIG_DATA
 
 
 class RequiredConfig:
-    def __init__(self, file_path: str | None = None, data: dict | None = None):
+    def __init__(
+        self, file_path: str = "config.yaml", data: dict | None = None
+    ):
         if data is None:
             data = dict()
         self.file_path: str = file_path

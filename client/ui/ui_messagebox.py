@@ -2,8 +2,8 @@ import PySide6
 from PySide6.QtWidgets import QWidget, QCheckBox, QMessageBox
 
 
-class MessageBox(QMessageBox):
-    def __init__(self, parent: PySide6.QtWidgets.QWidget | None = ...) -> None:
+class OptionalMessageBox(QMessageBox):
+    def __init__(self, parent: PySide6.QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
     @staticmethod
@@ -16,7 +16,7 @@ class MessageBox(QMessageBox):
         buttons: QMessageBox.StandardButton = QMessageBox.StandardButton.Ok,
         default_button: QMessageBox.StandardButton = QMessageBox.StandardButton.NoButton,
     ) -> tuple[QMessageBox.StandardButton, bool]:
-        msg = MessageBox(parent)
+        msg = OptionalMessageBox(parent)
         msg.setIcon(QMessageBox.Icon.Information)
         msg.setWindowTitle(title)
         # msg.setWindowFlags(Qt.WindowStaysOnTopHint)
@@ -32,5 +32,5 @@ class MessageBox(QMessageBox):
 
 
 if __name__ == "__main__":
-    # MessageBox.optional_information(None,"1","2","3")
+    # OptionalMessageBox.optional_information(None,"1","2","3")
     pass

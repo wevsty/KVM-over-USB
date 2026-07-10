@@ -31,7 +31,6 @@ class ControllerCh9329(ControllerDeviceBase):
 
     def __init__(self):
         self.hid_code_to_key_name: dict[int, str] = HID_CODE_TO_KEY_NAME
-        self.connection: Serial | None = None
         self.port: str = "auto"
         self.baud_rate: int = 9600
         self.timeout: float = 1.0
@@ -40,6 +39,21 @@ class ControllerCh9329(ControllerDeviceBase):
         self.min_interval: float = 0.2
         self.max_interval: float = 0.5
         self.relative_click = False
+
+        self._connection: Serial | None = None
+
+    @property
+    def connection(self) -> Serial:
+        if self._connection is None:
+            raise RuntimeError("Connection is not initialized")
+        return self._connection
+
+    @connection.setter
+    def connection(self, value):
+        if isinstance(value, Serial):
+            self._connection = value
+        else:
+            self._connection = None
 
     def random_interval(self) -> float:
         return random.uniform(self.min_interval, self.max_interval)
@@ -53,11 +67,10 @@ class ControllerCh9329(ControllerDeviceBase):
         self.relative_click: bool = config["relative_click"]
 
     def device_open(self) -> bool:
-        status, self.connection = SerialDevice.create_serial_connection(
+        status, connection = SerialDevice.create_serial_connection(
             self.port, self.baud_rate, self.timeout
         )
-        if not status:
-            self.connection = None
+        self.connection = connection
         return status
 
     def device_close(self) -> None:
@@ -66,10 +79,10 @@ class ControllerCh9329(ControllerDeviceBase):
         self.connection = None
 
     def device_check_connection(self) -> bool:
-        result: bool = False
-        if self.connection is None:
-            return result
-        result = self.connection.is_open
+        if isinstance(self._connection, Serial):
+            result = self.connection.is_open
+        else:
+            result = False
         return result
 
     # 设备事件
@@ -228,7 +241,7 @@ class ControllerCh9329(ControllerDeviceBase):
         key_name: str | None = self.hid_code_to_key_name.get(code, None)
         if key_name is None:
             logger.error(f"Key name not found: {key_name}")
-            key_name = ""
+            key_name: str = ""
         return key_name
 
     def mouse_send_data(

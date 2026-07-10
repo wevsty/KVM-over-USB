@@ -4,7 +4,7 @@ import os
 def create_file_list(target_dir, output_lst):
     # 存储所有有效的源码文件和界面描述文件
     valid_files = []
-    absolute_target = os.path.abspath(target_dir)
+    absolute_target = str(os.path.abspath(target_dir))
 
     for root, _, files in os.walk(absolute_target):
         if any(

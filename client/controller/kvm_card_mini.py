@@ -325,7 +325,7 @@ class ControllerKvmCardMini(ControllerDeviceBase):
 
     def read_hid_data(self) -> tuple[int, list[int]]:
         status_code: int = 0
-        data: list[int] | None = list()
+        data: list[int] = list()
         time_start = time.perf_counter()
         while True:
             try:
@@ -339,7 +339,7 @@ class ControllerKvmCardMini(ControllerDeviceBase):
                 logger.error("Error reading data from device")
                 status_code = 2
                 break
-            if data is not None and len(data) != 0:
+            if isinstance(data, list) and len(data) != 0:
                 if project_var.debug_mode:
                     logger.debug(f"hid > {data}")
                 break
@@ -347,6 +347,8 @@ class ControllerKvmCardMini(ControllerDeviceBase):
                 logger.error("Device response timeout")
                 status_code = 3
                 break
+        if data is None:
+            data = list()
         return status_code, data
 
     # 获取键盘状态（指示灯状态）

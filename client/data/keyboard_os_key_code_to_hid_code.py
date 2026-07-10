@@ -1000,7 +1000,7 @@ def qt_key_code_to_hid_code(key_code: int) -> tuple[bool, int]:
     if hid_code is not None:
         status = True
     else:
-        hid_code = 0x00
+        hid_code: int = 0x00
     return status, hid_code
 
 
@@ -1009,6 +1009,8 @@ def qt_key_value_to_hid_code(key_code: int) -> tuple[bool, int]:
     hid_code: int | None = QT_KEY_VALUE_TO_HID_CODE.get(key_code, None)
     if hid_code is not None:
         status = True
+    else:
+        hid_code: int = 0x00
     return status, hid_code
 
 
@@ -1041,7 +1043,7 @@ def os_scancode_code_to_hid_code(key_code: int) -> tuple[bool, int]:
     if hid_code is not None:
         status = True
     else:
-        hid_code = 0x00
+        hid_code: int = 0x00
     return status, hid_code
 
 

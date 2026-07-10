@@ -25,17 +25,25 @@ class ControllerGeneralDevice(ControllerDeviceBase):
             self.config: dict[str, typing.Any] = buffer
             self.controller_type = self.config["controller_type"]
             self.controller = self.controller_dict[self.controller_type]()
+            if self.controller is None:
+                raise RuntimeError("Controller is not initialized")
             # 剩余参数传递给控制器实现
             status = self.controller.device_init(buffer)
         return status
 
     def device_open(self) -> bool:
+        if self.controller is None:
+            raise RuntimeError("Controller is not initialized")
         return self.controller.device_open()
 
     def device_close(self) -> None:
+        if self.controller is None:
+            raise RuntimeError("Controller is not initialized")
         return self.controller.device_close()
 
     def device_check_connection(self) -> bool:
+        if self.controller is None:
+            raise RuntimeError("Controller is not initialized")
         return self.controller.device_check_connection()
 
     @staticmethod
@@ -50,6 +58,9 @@ class ControllerGeneralDevice(ControllerDeviceBase):
     def device_event(
         self, command: str, buffer: typing.Any
     ) -> tuple[str, int, typing.Any]:
+        if self.controller is None:
+            raise RuntimeError("Controller is not initialized")
+
         status_code: int = self.generate_status_code(True)
         reply: typing.Any = None
 

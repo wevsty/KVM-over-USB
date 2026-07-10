@@ -94,7 +94,7 @@ from ui.ui_about import AboutDialog
 from ui.ui_custom_key import CustomKeyDialog
 from ui.ui_indicator_lights import IndicatorLightsDialog
 from ui.ui_main import MainWindow
-from ui.ui_messagebox import MessageBox
+from ui.ui_messagebox import OptionalMessageBox
 from ui.ui_paste_board import PasteBoardDialog
 from ui.ui_settings import SettingsDialog
 
@@ -1107,7 +1107,7 @@ class AppMainWindow(MainWindow):
         self.status.reverse_bool("fullscreen")
         if self.status.is_enabled("fullscreen"):
             if self.config.ui["tips_fullscreen"]:
-                _, close_next_tip = MessageBox.optional_information(
+                _, close_next_tip = OptionalMessageBox.optional_information(
                     self,
                     self.tr("Tip"),
                     self.tr("Press Ctrl+Alt+F11 to toggle fullscreen.\n")
@@ -1576,7 +1576,7 @@ class AppMainWindow(MainWindow):
             return
         if self.config.ui["tips_system_warning"] is False:
             return
-        _, close_next_tip = MessageBox.optional_information(
+        _, close_next_tip = OptionalMessageBox.optional_information(
             self,
             self.tr("Tip"),
             self.tr("The current operating system is not Windows.\n")
