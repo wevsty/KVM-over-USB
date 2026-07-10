@@ -89,6 +89,7 @@
     <message>
         <location filename="../main.py" line="1132"/>
         <location filename="../main.py" line="1601"/>
+        <location filename="../main.py" line="2325"/>
         <source>Tip</source>
         <translation>提示</translation>
     </message>
@@ -107,6 +108,7 @@
     <message>
         <location filename="../main.py" line="1137"/>
         <location filename="../main.py" line="1604"/>
+        <location filename="../main.py" line="2330"/>
         <source>Don&apos;t show again.</source>
         <translation>不要再显示。</translation>
     </message>
@@ -261,16 +263,30 @@
     </message>
     <message>
         <location filename="../main.py" line="2327"/>
+        <source>Select empty_device means that no video output will be used.
+</source>
+        <translation>选择 empty_device 意味着不使用视频输出。
+</translation>
+    </message>
+    <message>
+        <location filename="../main.py" line="2329"/>
+        <source>Used only for input operations.
+</source>
+        <translation>仅用于输入操作。
+</translation>
+    </message>
+    <message>
+        <location filename="../main.py" line="2353"/>
         <source>Video Error</source>
         <translation>视频错误</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2328"/>
+        <location filename="../main.py" line="2354"/>
         <source>Invalid device selected</source>
         <translation>选择的设备无效</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2512"/>
+        <location filename="../main.py" line="2538"/>
         <source>Mouse capture off</source>
         <translation>鼠标捕捉关闭</translation>
     </message>

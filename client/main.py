@@ -2317,6 +2317,29 @@ class AppMainWindow(MainWindow):
                 # 检查选项是否有效
                 if video_config["device"] == "":
                     raise ValueError("Invalid device")
+                if video_config["device"] == "empty_device":
+                    if self.config.ui["tips_empty_video_device"]:
+                        _, close_next_tip = (
+                            OptionalMessageBox.optional_information(
+                                self,
+                                self.tr("Tip"),
+                                self.tr(
+                                    "Select empty_device means that no video output will be used.\n"
+                                )
+                                + self.tr("Used only for input operations.\n"),
+                                self.tr("Don't show again."),
+                                False,
+                                QMessageBox.StandardButton.Ok,
+                                QMessageBox.StandardButton.NoButton,
+                            )
+                        )
+                        if (
+                            close_next_tip is True
+                            and self.config.ui["tips_empty_video_device"]
+                            is True
+                        ):
+                            self.config.ui["tips_empty_video_device"] = False
+                            self.save_config()
                 # 与配置文件合并
                 self.config.video.update(video_config)
                 self.config.controller.update(controller_config)
