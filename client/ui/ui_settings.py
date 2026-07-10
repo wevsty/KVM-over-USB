@@ -216,16 +216,43 @@ class SettingsDialog(QDialog, settings_ui.Ui_SettingsDialog):
         self.combo_box_device.clear()
         video_devices = self.list_video_devices_name()
         video_device_name = None
+        # 加入空摄像头选项
+        self.combo_box_device.addItem("empty_device")
+        # 插入正常的摄像头信息
         for device in video_devices:
             self.combo_box_device.addItem(device)
             video_device_name = device
         if video_device_name is not None:
             self.combo_box_device.setCurrentText(video_device_name)
             self.refresh_video_device_info(video_device_name)
+        else:
+            self.combo_box_device.setCurrentText("empty_device")
+            self.refresh_empty_video_device_info()
+
+    # 刷新空视频设备详细信息
+    def refresh_empty_video_device_info(self):
+        resolution_list = [
+            "800x600",
+            "1280x720",
+            "1920x1080",
+            "2560x1440",
+            "3840x2160",
+        ]
+        default_format = "NONE"
+        self.combo_box_resolution.clear()
+        self.combo_box_format.clear()
+        for resolution_text in resolution_list:
+            self.combo_box_resolution.addItem(resolution_text)
+        self.combo_box_resolution.setCurrentText("1280x720")
+        self.combo_box_format.addItem(default_format)
+        self.combo_box_format.setCurrentText(default_format)
 
     # 刷新视频设备详细信息
     def refresh_video_device_info(self, device_name: str):
         if device_name == "":
+            return
+        if device_name == "empty_device":
+            self.refresh_empty_video_device_info()
             return
         self.combo_box_resolution.clear()
         self.combo_box_format.clear()

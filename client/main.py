@@ -2291,6 +2291,9 @@ class AppMainWindow(MainWindow):
         )
         ui_config: dict[str, typing.Any] = copy.copy(self.config.ui)
 
+        # 刷新设备信息
+        self.settings_dialog.refresh_devices()
+
         # 传入配置文件的配置
         self.settings_dialog.set_video_config(video_config)
         self.settings_dialog.set_controller_config(controller_config)

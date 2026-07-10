@@ -48,7 +48,7 @@ ui:
   window_auto_to_center: true
 video:
   device: empty_device
-  format: NV12
+  format: NONE
   keep_aspect_ratio: true
   resolution_x: 1280
   resolution_y: 720
