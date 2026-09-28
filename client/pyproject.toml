@@ -10,7 +10,6 @@ dependencies = [
     "pyside6-addons<7.0.0,>=6.10.1",
     "pyside6-essentials<7.0.0,>=6.10.1",
     "pyside6<7.0.0,>=6.10.1",
-    "pywinhook<2.0.0,>=1.6.2; platform_system == \"Windows\"",
     "pyserial<4.0,>=3.5",
     "nuitka<5.0.0,>=4.1.2",
     "pych9329<1.0.0,>=0.1.6",
