@@ -1,3 +1,4 @@
+# ./script/create_requirements.ps1
 $requirements_raw = uv pip freeze
 $requirements_base_path = "./data/requirements.txt"
 $requirements_for_windows = "./data/requirements_for_windows.txt"
@@ -51,7 +52,6 @@ $dev_exclude_patterns = @(
 
 $posix_exclude_patterns = @(
     "pywin32",
-    "pyWinhook",
     "win32-setctime",
     "colorama"
 )

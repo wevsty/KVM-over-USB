@@ -3,10 +3,10 @@ hidapi==0.15.0
 loguru==0.7.3
 pych9329==0.1.6
 pyserial==3.5
-pyside6==6.11.1
-pyside6-addons==6.11.1
-pyside6-essentials==6.11.1
+pyside6==6.11.2
+pyside6-addons==6.11.2
+pyside6-essentials==6.11.2
 pywin32==312
 pyyaml==6.0.3
-shiboken6==6.11.1
+shiboken6==6.11.2
 win32-setctime==1.2.0
