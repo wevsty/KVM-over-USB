@@ -2529,20 +2529,20 @@ class AppMainWindow(MainWindow):
         ):
             return handle_status
 
-        # Ctrl+Alt+F11 退出全屏
-        _, f11 = self.keyboard_code_data.convert_key_name_to_hid_code("f11")
-        if self.status.is_enabled(
-            "fullscreen"
-        ) and self.keyboard_key_buffer.is_pressed(f11):
-            self.fullscreen_state_toggle()
-            handle_status = True
-
         # Ctrl+Alt+F10 关闭系统钩子(安全退出, 恢复本地键盘)
         _, f10 = self.keyboard_code_data.convert_key_name_to_hid_code("f10")
         if self.status.is_enabled(
             "hook_state"
         ) and self.keyboard_key_buffer.is_pressed(f10):
             self.system_hook_triggered()
+            handle_status = True
+
+        # Ctrl+Alt+F11 退出全屏
+        _, f11 = self.keyboard_code_data.convert_key_name_to_hid_code("f11")
+        if self.status.is_enabled(
+            "fullscreen"
+        ) and self.keyboard_key_buffer.is_pressed(f11):
+            self.fullscreen_state_toggle()
             handle_status = True
 
         # Ctrl+Alt+F12 关闭鼠标捕获
