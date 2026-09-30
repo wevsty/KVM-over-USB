@@ -1,4 +1,4 @@
-# 基于 ctypes 的全局键盘钩子(替代 pyWinhook)
+# 基于 ctypes 的全局键盘钩子
 # 仅支持 Windows 平台
 # 参考资料
 # https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-setwindowshookexw
@@ -7,6 +7,7 @@
 import ctypes
 import ctypes.wintypes
 import platform
+from typing import Callable, Any
 
 if platform.system() != "Windows":
     raise ImportError("keyboard_hook only support windows")
@@ -61,6 +62,7 @@ user32.SetWindowsHookExW.argtypes = (
     ctypes.c_void_p,
     ctypes.wintypes.DWORD,
 )
+user32.UnhookWindowsHookEx.restype = ctypes.wintypes.BOOL
 user32.UnhookWindowsHookEx.argtypes = (ctypes.c_void_p,)
 user32.CallNextHookEx.restype = LRESULT
 user32.CallNextHookEx.argtypes = (
@@ -92,41 +94,56 @@ class HookKeyboardEvent:
         flags: int,
         time: int,
     ):
-        self.Message = message
-        self.MessageName = (
-            "key down" if message in (WM_KEYDOWN, WM_SYSKEYDOWN) else "key up"
-        )
+        self.message = message
+        if message in (WM_KEYDOWN, WM_SYSKEYDOWN):
+            self.message_name = "key down"
+        elif message in (WM_KEYUP, WM_SYSKEYUP):
+            self.message_name = "key up"
+        else:
+            self.message_name = "unknown"
+        self.extended = bool(flags & LLKHF_EXTENDED)
+        self.injected = bool(flags & LLKHF_INJECTED)
         # 虚拟键码
-        self.KeyID = vk_code
-        # 扩展键(方向键/右侧修饰键等)补上 E0 前缀
-        # 与 WINDOWS_SCANCODE_TO_HID_CODE 表的键值保持一致
-        self.ScanCode = (
-            (scan_code | 0xE000) if flags & LLKHF_EXTENDED else scan_code
-        )
-        self.Extended = bool(flags & LLKHF_EXTENDED)
-        self.Injected = bool(flags & LLKHF_INJECTED)
-        self.Time = time
+        self.vk_code = vk_code
+        self.raw_scan_code = scan_code
+        self.time = time
+
+    @property
+    def scan_code(self) -> int:
+        if self.extended:
+            # 扩展键(方向键/右侧修饰键等)使用 E0 前缀
+            scan_code = (0xE0 << 8) | (self.raw_scan_code & 0xFF)
+        else:
+            scan_code = self.raw_scan_code
+        return scan_code
 
 
-class KeyboardHook:
-    # 全局键盘钩子
+# 全局键盘钩子
+class KeyboardHookManager:
+
     def __init__(self):
-        self.KeyDown = None
-        self.KeyUp = None
-        self._hook_id = None
+        self.handler_key_down: Callable[[HookKeyboardEvent], bool] | None = None
+        self.handler_key_up: Callable[[HookKeyboardEvent], bool] | None = None
+        self._hook_handle = None
         # 持有回调引用防止被垃圾回收
-        self._hook_proc_ref = HOOKPROC(self._hook_proc)
+        # noinspection bad-argument-type
+        self._hook_proc_ref: Any = HOOKPROC(self._hook_proc)
 
     # 钩子回调
     def _hook_proc(self, n_code: int, w_param: int, l_param: int) -> int:
+        # MSDN 规定：若 n_code < 0，必须直接传递给 CallNextHookEx
+        if n_code < 0:
+            return user32.CallNextHookEx(None, n_code, w_param, l_param)
+
         if n_code == HC_ACTION:
+            handler: Callable[[HookKeyboardEvent], bool] | None = None
             if w_param in (WM_KEYDOWN, WM_SYSKEYDOWN):
-                handler = self.KeyDown
+                handler = self.handler_key_down
             elif w_param in (WM_KEYUP, WM_SYSKEYUP):
-                handler = self.KeyUp
+                handler = self.handler_key_up
             else:
-                handler = None
-            if handler is not None:
+                pass
+            if handler:
                 keyboard_struct = ctypes.cast(
                     l_param, ctypes.POINTER(KBDLLHOOKSTRUCT)
                 ).contents
@@ -138,35 +155,42 @@ class KeyboardHook:
                     keyboard_struct.time,
                 )
                 # 处理函数返回 False 时拦截按键事件
-                if not handler(event):
+                # noinspection calling-non-callable
+                result: bool = handler(event)
+                if not result:
                     return 1
+
         return user32.CallNextHookEx(None, n_code, w_param, l_param)
 
     # 安装键盘钩子
-    def HookKeyboard(self) -> bool:
-        if self._hook_id is not None:
+    def hook_keyboard(self) -> bool:
+        if self._hook_handle is not None:
             return True
-        hook_id = user32.SetWindowsHookExW(
+        hook_handle = user32.SetWindowsHookExW(
             WH_KEYBOARD_LL,
             self._hook_proc_ref,
             kernel32.GetModuleHandleW(None),
             0,
         )
-        if not hook_id:
+        if not hook_handle:
             return False
-        self._hook_id = hook_id
+        self._hook_handle = hook_handle
         return True
 
     # 卸载键盘钩子
-    def UnhookKeyboard(self) -> None:
-        if self._hook_id is None:
+    def unhook_keyboard(self) -> None:
+        if self._hook_handle is None:
             return
-        user32.UnhookWindowsHookEx(self._hook_id)
-        self._hook_id = None
+        user32.UnhookWindowsHookEx(self._hook_handle)
+        self._hook_handle = None
 
     # 查询键盘钩子安装状态
     def is_hooked(self) -> bool:
-        return self._hook_id is not None
+        return self._hook_handle is not None
+
+    # 确保对象析构时键盘钩子一定会被删除
+    def __del__(self):
+        self.unhook_keyboard()
 
 
 # 处理等待中的窗口消息(低级钩子回调依赖消息循环分发)

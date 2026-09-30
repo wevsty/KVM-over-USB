@@ -873,9 +873,9 @@ class AppMainWindow(MainWindow):
             pass
         else:
             return
-        self.hook_manager = keyboard_hook.KeyboardHook()
-        self.hook_manager.KeyDown = self.hook_keyboard_down_event
-        self.hook_manager.KeyUp = self.hook_keyboard_up_event
+        self.hook_manager = keyboard_hook.KeyboardHookManager()
+        self.hook_manager.handler_key_down = self.hook_keyboard_down_event
+        self.hook_manager.handler_key_up = self.hook_keyboard_up_event
         hook_pump_timer = self.timer.create("HOOK_PUMP_TIMER")
         hook_pump_timer.timeout.connect(keyboard_hook.pump_waiting_messages)
         # 定时检查钩子安装状态与窗口激活状态是否一致
@@ -1516,16 +1516,17 @@ class AppMainWindow(MainWindow):
         if platform.system() != "Windows":
             return
         hook_pump_timer = self.timer.get_exists("HOOK_PUMP_TIMER")
-        expected_hook_state = (
-            self.status.get_bool("hook_state") and self.isActiveWindow()
-        )
+        expected_hook_state = self.status.get_bool("hook_state")
+        expected_hook_state = expected_hook_state and self.isActiveWindow()
         hooked = self.hook_manager.is_hooked()
         if expected_hook_state and not hooked:
-            hook_pump_timer.start(5)
-            self.hook_manager.HookKeyboard()
+            hook_pump_timer.start(10)
+            self.hook_manager.hook_keyboard()
         elif not expected_hook_state and hooked:
-            self.hook_manager.UnhookKeyboard()
             hook_pump_timer.stop()
+            self.hook_manager.unhook_keyboard()
+        else:
+            pass
 
     # 捕获鼠标功能
     def mouse_capture_triggered(self) -> None:
@@ -2231,14 +2232,20 @@ class AppMainWindow(MainWindow):
     # Hook
     ######################################################################
     # hook 键盘按键按下事件
-    def hook_keyboard_down_event(self, event) -> bool:
-        logger.debug(f"Hook: {hex(event.KeyID)} {hex(event.ScanCode)}")
-        scan_code = event.ScanCode
+    def hook_keyboard_down_event(
+        self, event: keyboard_hook.HookKeyboardEvent
+    ) -> bool:
+        logger.debug(
+            f"keyboard hook: vk({hex(event.vk_code)}) scan_code({hex(event.scan_code)})"
+        )
+        scan_code = event.scan_code
         status, hid_code = (
             self.keyboard_code_data.convert_scan_code_to_hid_code(scan_code)
         )
         if status:
             self.handle_key_press_with_hid_code(hid_code)
+        else:
+            logger.warning(f"unknown scan_code: {hex(event.scan_code)}")
         if scan_code not in self.hook_pressed_keys:
             self.hook_pressed_keys.append(scan_code)
         # 如果返回 True 则按键事件会继续传播
@@ -2247,19 +2254,23 @@ class AppMainWindow(MainWindow):
         return False
 
     # hook 键盘按键弹起事件
-    def hook_keyboard_up_event(self, event) -> bool:
-        scan_code = event.ScanCode
+    def hook_keyboard_up_event(
+        self, event: keyboard_hook.HookKeyboardEvent
+    ) -> bool:
+        scan_code = event.scan_code
         status, hid_code = (
             self.keyboard_code_data.convert_scan_code_to_hid_code(scan_code)
         )
         if status:
             self.handle_key_release_with_hid_code(hid_code)
+        else:
+            logger.warning(f"unknown scan_code: {hex(event.scan_code)}")
         try:
             self.hook_pressed_keys.remove(scan_code)
         except ValueError:
             pass
         # 如果返回 True 则按键事件会继续传播
-        # 如果返回 False 则按键事件会继续传播
+        # 如果返回 False 则按键事件不会继续传播
         # 因为不希望事件继续传递所以永远返回 False
         return False
 
@@ -2727,7 +2738,8 @@ def command_line_parser():
 
     args = parser.parse_args()
     # 根据 debug 参数设置 debug 模式
-    project_var.debug_mode = args.debug
+    if not project_var.debug_mode:
+        project_var.debug_mode = args.debug
     logger_init()
 
 
