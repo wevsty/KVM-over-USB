@@ -30,6 +30,18 @@ shortcut_keys:
   - ctrl_left
   - shift_left
   - esc
+  Ctrl+Shift+F10:
+  - ctrl_left
+  - shift_left
+  - f10
+  Ctrl+Shift+F11:
+  - ctrl_left
+  - shift_left
+  - f11
+  Ctrl+Shift+F12:
+  - ctrl_left
+  - shift_left
+  - f12
   Meta+D:
   - win_left
   - d
