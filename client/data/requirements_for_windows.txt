@@ -7,7 +7,6 @@ pyside6==6.11.1
 pyside6-addons==6.11.1
 pyside6-essentials==6.11.1
 pywin32==312
-pywinhook==1.6.2
 pyyaml==6.0.3
 shiboken6==6.11.1
 win32-setctime==1.2.0

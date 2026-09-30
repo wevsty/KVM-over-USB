@@ -100,8 +100,7 @@ from ui.ui_settings import SettingsDialog
 
 # 特定系统依赖
 if platform.system() == "Windows":
-    import pythoncom
-    import pyWinhook as pyHook
+    import keyboard_hook
 
 
 class ControllerEventExecutor(QObject):
@@ -874,11 +873,15 @@ class AppMainWindow(MainWindow):
             pass
         else:
             return
-        self.hook_manager = pyHook.HookManager()
+        self.hook_manager = keyboard_hook.KeyboardHook()
         self.hook_manager.KeyDown = self.hook_keyboard_down_event
         self.hook_manager.KeyUp = self.hook_keyboard_up_event
-        pythoncom_timer = self.timer.create("PYTHONCOM_TIMER")
-        pythoncom_timer.timeout.connect(lambda: pythoncom.PumpWaitingMessages())
+        hook_pump_timer = self.timer.create("HOOK_PUMP_TIMER")
+        hook_pump_timer.timeout.connect(keyboard_hook.pump_waiting_messages)
+        # 定时检查钩子安装状态与窗口激活状态是否一致
+        hook_state_timer = self.timer.create("HOOK_STATE_TIMER")
+        hook_state_timer.timeout.connect(self.sync_system_hook_state)
+        hook_state_timer.start(1000)
 
     # 初始化菜单信号
     # noinspection DuplicatedCode
@@ -1498,19 +1501,31 @@ class AppMainWindow(MainWindow):
                 QMessageBox.StandardButton.NoButton,
             )
             return
-        pythoncom_timer = self.timer.get_exists("PYTHONCOM_TIMER")
         self.status.reverse_bool("hook_state")
         hook_state = self.status.get_bool("hook_state")
         self.action_system_hook.setChecked(hook_state)
         self.status_bar_manager.show_message(
             self.tr("System hook: ") + self.to_enabled_string(hook_state)
         )
-        if hook_state:
-            pythoncom_timer.start(5)
+        self.sync_system_hook_state()
+
+    # 同步系统钩子状态
+    # 钩子安装状态需要与用户设置和窗口激活状态保持一致
+    # 窗口在后台时取消钩子, 窗口激活时打开钩子
+    def sync_system_hook_state(self) -> None:
+        if platform.system() != "Windows":
+            return
+        hook_pump_timer = self.timer.get_exists("HOOK_PUMP_TIMER")
+        expected_hook_state = (
+            self.status.get_bool("hook_state") and self.isActiveWindow()
+        )
+        hooked = self.hook_manager.is_hooked()
+        if expected_hook_state and not hooked:
+            hook_pump_timer.start(5)
             self.hook_manager.HookKeyboard()
-        else:
+        elif not expected_hook_state and hooked:
             self.hook_manager.UnhookKeyboard()
-            pythoncom_timer.stop()
+            hook_pump_timer.stop()
 
     # 捕获鼠标功能
     def mouse_capture_triggered(self) -> None:
@@ -2215,24 +2230,10 @@ class AppMainWindow(MainWindow):
     ######################################################################
     # Hook
     ######################################################################
-    # pyhook scan code 转换表
-    SCAN_CODE_REMAP = {
-        "Lcontrol": 0x001D,
-        "Rcontrol": 0xE01D,
-        # menu is alt
-        "Lmenu": 0x0038,
-        "Rmenu": 0xE038,
-        "Lwin": 0xE05B,
-        "Rwin": 0xE05C,
-    }
-
     # hook 键盘按键按下事件
     def hook_keyboard_down_event(self, event) -> bool:
-        logger.debug(f"Hook: {event.Key} {hex(event.ScanCode)}")
-        if event.Key in self.SCAN_CODE_REMAP:
-            scan_code = self.SCAN_CODE_REMAP[event.Key]
-        else:
-            scan_code = event.ScanCode
+        logger.debug(f"Hook: {hex(event.KeyID)} {hex(event.ScanCode)}")
+        scan_code = event.ScanCode
         status, hid_code = (
             self.keyboard_code_data.convert_scan_code_to_hid_code(scan_code)
         )
@@ -2241,16 +2242,13 @@ class AppMainWindow(MainWindow):
         if scan_code not in self.hook_pressed_keys:
             self.hook_pressed_keys.append(scan_code)
         # 如果返回 True 则按键事件会继续传播
-        # 如果返回 False 则按键事件会继续传播
+        # 如果返回 False 则按键事件不会继续传播
         # 因为不希望事件继续传递所以永远返回 False
         return False
 
     # hook 键盘按键弹起事件
     def hook_keyboard_up_event(self, event) -> bool:
-        if event.Key in self.SCAN_CODE_REMAP:
-            scan_code = self.SCAN_CODE_REMAP[event.Key]
-        else:
-            scan_code = event.ScanCode
+        scan_code = event.ScanCode
         status, hid_code = (
             self.keyboard_code_data.convert_scan_code_to_hid_code(scan_code)
         )
@@ -2528,6 +2526,14 @@ class AppMainWindow(MainWindow):
             self.fullscreen_state_toggle()
             handle_status = True
 
+        # Ctrl+Alt+F10 关闭系统钩子(安全退出, 恢复本地键盘)
+        _, f10 = self.keyboard_code_data.convert_key_name_to_hid_code("f10")
+        if self.status.is_enabled(
+            "hook_state"
+        ) and self.keyboard_key_buffer.is_pressed(f10):
+            self.system_hook_triggered()
+            handle_status = True
+
         # Ctrl+Alt+F12 关闭鼠标捕获
         _, f12 = self.keyboard_code_data.convert_key_name_to_hid_code("f12")
         if self.status.is_enabled(
@@ -2625,6 +2631,8 @@ class AppMainWindow(MainWindow):
                 # 窗口失去焦点时释放键盘和鼠标
                 # 防止卡键
                 self.reload_controller("all")
+            # 窗口激活状态变化时同步系统钩子状态
+            self.sync_system_hook_state()
             pass
         logger.debug(f"window change event: {event}")
 
