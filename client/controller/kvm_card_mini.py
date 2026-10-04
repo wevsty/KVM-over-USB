@@ -227,8 +227,8 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         self.hid_buffer: KvmCardMiniHidBuffer = KvmCardMiniHidBuffer()
         self.relative_click: bool = False
 
-    def device_init(self, config: dict[str, typing.Any]) -> None:
-        self.relative_click: bool = config["relative_click"]
+    def device_init(self, buffer: dict[str, typing.Any]) -> bool:
+        self.relative_click: bool = buffer["relative_click"]
         hid_enumerate: typing.List[typing.Dict[str, typing.Any]] = (
             hid.enumerate()
         )
@@ -243,6 +243,7 @@ class ControllerKvmCardMini(ControllerDeviceBase):
                 logger.info(f"Found target device: {self.hid_device_path}")
                 logger.info(f"Product: {product_string}")
                 break
+        return True
 
     def device_open(self) -> bool:
         status = False
@@ -330,6 +331,8 @@ class ControllerKvmCardMini(ControllerDeviceBase):
         while True:
             try:
                 data = self.hid_device.read(64)
+                if not isinstance(data, list):
+                    data = list()
             except ValueError:
                 logger.error("Device is not open")
                 status_code = 1
@@ -347,8 +350,6 @@ class ControllerKvmCardMini(ControllerDeviceBase):
                 logger.error("Device response timeout")
                 status_code = 3
                 break
-        if data is None:
-            data = list()
         return status_code, data
 
     # 获取键盘状态（指示灯状态）
