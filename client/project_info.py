@@ -1,4 +1,4 @@
-VERSION_STRING = "v2026.09.30"
+VERSION_STRING = "v2026.10.09"
 CONFIG_VERSION_STRING = "v8"
 
 if __name__ == "__main__":

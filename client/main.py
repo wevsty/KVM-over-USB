@@ -67,7 +67,7 @@ import keyboard_buffer
 import project_var
 from controller.general import ControllerGeneralDevice
 from data.keyboard_key_name_to_hid_code import KEY_NAME_TO_HID_CODE
-from data.keyboard_util import (
+from data.keyboard_code_converter import (
     qt_key_event_to_hid_code,
     os_scancode_code_to_hid_code,
 )

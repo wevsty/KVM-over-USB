@@ -1,7 +1,4 @@
-import platform
-
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QKeyEvent
 
 # 参考资料
 # https://github.com/nyanpasu64/qkeycode/tree/master

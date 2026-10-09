@@ -1,25 +1,28 @@
 import platform
 
-from .keyboard_text_to_hid_code import TEXT_TO_HID_CODE
-from .keyboard_os_key_code_to_hid_code import (
+from PySide6.QtGui import QKeyEvent
+
+from data.keyboard_os_key_code_to_hid_code import (
     WINDOWS_SCANCODE_TO_HID_CODE,
     XCB_KEY_CODE_TO_HID_CODE,
     MACOS_VIRTUAL_KEY_CODE_TO_HID_CODE,
     QT_KEY_VALUE_TO_HID_CODE,
 )
+from data.keyboard_text_to_hid_code import TEXT_TO_HID_CODE
+
 
 def qt_key_event_to_hid_code(event: QKeyEvent) -> tuple[bool, int]:
     status: bool = False
-    key_code: int = 0x00
     hid_code: int | None = None
     system_name: str = platform.system()
     if system_name == "Windows":
         vk_code = event.nativeVirtualKey()
-        if vk_code == 0xe7: # VK_PACKET
-            hid_code = TEXT_TO_HID_CODE.get(event.text(), 0x00)
+        key_code = event.nativeScanCode()
+        if vk_code == 0xe7:  # VK_PACKET
+            text_data = event.text()
+            hid_code = TEXT_TO_HID_CODE.get(text_data, None)
             status = True
         else:
-            key_code = event.nativeScanCode()
             if key_code != 0:
                 hid_code = WINDOWS_SCANCODE_TO_HID_CODE.get(key_code, None)
                 status = True
@@ -37,6 +40,10 @@ def qt_key_event_to_hid_code(event: QKeyEvent) -> tuple[bool, int]:
             status = True
     else:
         pass
+    if hid_code is not None:
+        status = True
+    else:
+        hid_code: int = 0x00
     return status, hid_code
 
 
