@@ -7,9 +7,9 @@ dependencies = [
     "pyyaml<7.0.0,>=6.0.3",
     "loguru<1.0.0,>=0.7.2",
     "pywin32>=311; platform_system == \"Windows\"",
-    "pyside6-addons<7.0.0,>=6.10.1",
-    "pyside6-essentials<7.0.0,>=6.10.1",
-    "pyside6<7.0.0,>=6.10.1",
+    "pyside6-addons<7.0.0,>=6.12.0",
+    "pyside6-essentials<7.0.0,>=6.12.0",
+    "pyside6<7.0.0,>=6.12.0",
     "pyserial<4.0,>=3.5",
     "nuitka<5.0.0,>=4.1.2",
     "pych9329<1.0.0,>=0.1.6",
@@ -22,7 +22,7 @@ description = "simple USB KVM client"
 [dependency-groups]
 dev = [
     "black<27.0,>=26.1.0",
-    "isort<9.0.0,>=8.0.1",
+    "isort<10.0.0,>=9.0.2",
     "flake8-bugbear<27.0.0,>=26.9.9",
 ]
 

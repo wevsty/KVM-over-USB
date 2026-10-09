@@ -2,8 +2,10 @@
 loguru==0.7.3
 pych9329==0.1.6
 pyserial==3.5
-pyside6==6.11.2
-pyside6-addons==6.11.2
-pyside6-essentials==6.11.2
+pyside6==6.12.0
+pyside6-addons==6.12.0
+pyside6-essentials==6.12.0
+pyside6-pdf==6.12.0.140
+pyside6-webengine==6.12.0.140
 pyyaml==6.0.3
-shiboken6==6.11.2
+shiboken6==6.12.0
