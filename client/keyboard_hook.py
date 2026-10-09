@@ -8,6 +8,8 @@ import ctypes
 import ctypes.wintypes
 import platform
 from typing import Callable, Any
+from data.keyboard_util import os_scancode_code_to_hid_code
+from data.keyboard_text_to_hid_code import TEXT_TO_HID_CODE
 
 if platform.system() != "Windows":
     raise ImportError("keyboard_hook only support windows")
@@ -29,6 +31,8 @@ LLKHF_INJECTED = 0x10
 WH_KEYBOARD_LL = 13
 HC_ACTION = 0
 PM_REMOVE = 0x0001
+
+VK_PACKET = 0xE7
 
 # Windows 指针宽度类型
 WPARAM = ctypes.c_size_t
@@ -91,6 +95,7 @@ class HookKeyboardEvent:
         message: int,
         vk_code: int,
         scan_code: int,
+        hid_code: int,
         flags: int,
         time: int,
     ):
@@ -147,10 +152,18 @@ class KeyboardHookManager:
                 keyboard_struct = ctypes.cast(
                     l_param, ctypes.POINTER(KBDLLHOOKSTRUCT)
                 ).contents
+                hid_code: int = 0
+                if keyboard_struct.vkCode == VK_PACKET:
+                    hid_code = TEXT_TO_HID_CODE.get(keyboard_struct.scanCode)
+                else:
+                    status, hid_code = os_scancode_code_to_hid_code(
+                        keyboard_struct.scanCode
+                    )
                 event = HookKeyboardEvent(
                     w_param,
                     keyboard_struct.vkCode,
                     keyboard_struct.scanCode,
+                    hid_code,
                     keyboard_struct.flags,
                     keyboard_struct.time,
                 )
