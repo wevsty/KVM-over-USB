@@ -1161,6 +1161,8 @@ class AppMainWindow(MainWindow):
             self.action_resize_window.setEnabled(True)
             self.statusBar().show()
             self.menuBar().show()
+        # 全屏状态变化后立刻重新同步系统钩子, 避免依赖定时器延迟
+        self.sync_system_hook_state()
 
     # 执行全屏时事件命令
     def execute_fullscreen_event_command(self):
@@ -1512,19 +1514,33 @@ class AppMainWindow(MainWindow):
     # 同步系统钩子状态
     # 钩子安装状态需要与用户设置和窗口激活状态保持一致
     # 窗口在后台时取消钩子, 窗口激活时打开钩子
+    def is_window_actually_active(self) -> bool:
+        # ApplicationInactive, 直接判定为非激活; 否则再由窗口级状态确认
+        app = QApplication.instance()
+        if app is not None:
+            try:
+                if app.applicationState() != Qt.ApplicationState.ApplicationActive:
+                    return False
+            except Exception:
+                pass
+        return self.isActiveWindow()
+
     def sync_system_hook_state(self) -> None:
         if platform.system() != "Windows":
             return
         hook_pump_timer = self.timer.get_exists("HOOK_PUMP_TIMER")
-        expected_hook_state = self.status.get_bool("hook_state")
-        expected_hook_state = expected_hook_state and self.isActiveWindow()
+        hook_state = self.status.get_bool("hook_state")
+        is_window_active = self.is_window_actually_active()
+        expected_hook_state = hook_state and is_window_active
         hooked = self.hook_manager.is_hooked()
         if expected_hook_state and not hooked:
             hook_pump_timer.start(10)
             self.hook_manager.hook_keyboard()
+            logger.debug(f"Hook enable: state {hook_state} active {is_window_active}")
         elif not expected_hook_state and hooked:
             hook_pump_timer.stop()
             self.hook_manager.unhook_keyboard()
+            logger.debug(f"Hook enable: state {hook_state} active {is_window_active}")
         else:
             pass
 
@@ -2632,9 +2648,11 @@ class AppMainWindow(MainWindow):
             QEvent.Type.ActivationChange,
             QEvent.Type.WindowActivate,
             QEvent.Type.WindowDeactivate,
+            QEvent.Type.WindowStateChange,
         ]
         if event.type() in window_activate_event:
-            is_active_window: bool = self.isActiveWindow()
+            # 全屏窗口始终处于前台焦点, 与 sync_system_hook_state 保持一致
+            is_active_window: bool = self.is_window_actually_active()
             if not is_active_window and self.status.is_enabled("relative_mode"):
                 # 如果窗口失焦自动释放鼠标捕捉
                 self.mouse_capture_release_triggered()
