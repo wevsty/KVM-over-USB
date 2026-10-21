@@ -873,6 +873,9 @@ class AppMainWindow(MainWindow):
         if self.config.ui["quick_paste"]:
             self.status.set_bool("quick_paste", True)
             self.action_quick_paste.setChecked(True)
+        if self.config.ui.get("floating_ball", True):
+            self.status.set_bool("floating_ball", True)
+            self.action_floating_ball.setChecked(True)
         self.action_debug_mode.setChecked(project_var.debug_mode)
 
     # 初始化系统hook
@@ -943,6 +946,7 @@ class AppMainWindow(MainWindow):
             self.keyboard_send_string
         )
         self.action_quick_paste.triggered.connect(self.quick_paste_toggle)
+        self.action_floating_ball.triggered.connect(self.floating_ball_toggle)
         self.action_indicator_light.triggered.connect(
             self.execute_indicator_lights_dialog
         )
@@ -1009,8 +1013,25 @@ class AppMainWindow(MainWindow):
         self.floating_ball.move_into_parent(
             QPoint(20, self.menuBar().height() + 20)
         )
-        self.floating_ball.show()
+        self.floating_ball.setFixedSize(32, 32)
         self.floating_ball.clicked.connect(self.show_floating_ball_menu)
+        # 根据配置决定是否显示悬浮球
+        self.floating_ball.set_enabled(self.status.is_enabled("floating_ball"))
+
+    # 悬浮球开关
+    def floating_ball_toggle(self) -> None:
+        self.status.reverse_bool("floating_ball")
+        floating_ball: bool = self.status.is_enabled("floating_ball")
+        self.action_floating_ball.setChecked(floating_ball)
+        # 显示或隐藏悬浮球
+        if self.floating_ball is not None:
+            self.floating_ball.set_enabled(floating_ball)
+        # 保存到配置文件
+        self.config.ui["floating_ball"] = floating_ball
+        self.save_config()
+        self.status_bar_manager.show_message(
+            self.tr("Floating ball: ") + self.to_enabled_string(floating_ball)
+        )
 
     # 显示悬浮球菜单
     def show_floating_ball_menu(self) -> None:

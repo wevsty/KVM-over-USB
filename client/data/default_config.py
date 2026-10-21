@@ -59,6 +59,7 @@ ui:
   tips_empty_video_device: true
   window_auto_maximized: false
   window_auto_to_center: true
+  floating_ball: true
 video:
   device: empty_device
   format: NONE

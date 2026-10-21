@@ -38,6 +38,8 @@ class FloatingBall(QWidget):
         self._grab_offset: QPoint = QPoint()
         # 相对父窗口客户区的位置
         self._relative_pos: QPoint = QPoint(0, 0)
+        # 悬浮球是否启用(关闭后即使父窗口显隐也不应重新显示)
+        self._enabled: bool = True
 
         self.setFixedSize(self.DEFAULT_DIAMETER, self.DEFAULT_DIAMETER)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
@@ -69,7 +71,16 @@ class FloatingBall(QWidget):
             flags &= ~Qt.WindowType.WindowStaysOnTopHint
         self.setWindowFlags(flags)
         # 重新设置窗口标志后窗口会被隐藏, 需要重新显示
-        self.show()
+        if self._enabled:
+            self.show()
+
+    # 设置是否启用悬浮球(关闭后跟随父窗口显隐时不再重新显示)
+    def set_enabled(self, enable: bool) -> None:
+        self._enabled = enable
+        if enable:
+            self.show()
+        else:
+            self.hide()
 
     # 图标绘制区域
     def icon_rect(self) -> QRect:
@@ -130,7 +141,8 @@ class FloatingBall(QWidget):
                     return super().eventFilter(watched, event)
                 self.follow_parent()
             elif event_type == QEvent.Type.Show:
-                self.show()
+                if self._enabled:
+                    self.show()
             elif event_type == QEvent.Type.Hide:
                 self.hide()
         return super().eventFilter(watched, event)

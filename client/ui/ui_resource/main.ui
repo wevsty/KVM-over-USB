@@ -98,6 +98,7 @@
     <addaction name="action_fullscreen"/>
     <addaction name="action_resize_window"/>
     <addaction name="action_topmost"/>
+    <addaction name="action_floating_ball"/>
     <addaction name="separator"/>
     <addaction name="action_keep_aspect_ratio"/>
     <addaction name="separator"/>
@@ -405,6 +406,17 @@
    </property>
    <property name="statusTip">
     <string>Maximize Window</string>
+   </property>
+  </action>
+  <action name="action_floating_ball">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Floating ball</string>
+   </property>
+   <property name="statusTip">
+    <string>Show or hide the floating ball</string>
    </property>
   </action>
   <action name="action_normal_size">
