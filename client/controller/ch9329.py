@@ -58,13 +58,15 @@ class ControllerCh9329(ControllerDeviceBase):
     def random_interval(self) -> float:
         return random.uniform(self.min_interval, self.max_interval)
 
-    def device_init(self, config: dict[str, typing.Any]) -> None:
+    def device_init(self, buffer: typing.Any) -> bool:
+        config: dict[str, typing.Any] = buffer
         self.port: str = config["port"]
         self.baud_rate: int = config["baud_rate"]
         self.timeout: int = config["timeout"]
         self.screen_x: int = config["resolution_x"]
         self.screen_y: int = config["resolution_y"]
         self.relative_click: bool = config["relative_click"]
+        return True
 
     def device_open(self) -> bool:
         status, connection = SerialDevice.create_serial_connection(
@@ -177,6 +179,10 @@ class ControllerCh9329(ControllerDeviceBase):
             button_name = "right"
         elif buffer.button.code == MouseButtonCodeEnum.MIDDLE_BUTTON:
             button_name = "center"
+        elif buffer.button.code == MouseButtonCodeEnum.XBUTTON1_BUTTON:
+            button_name = "xbutton1"
+        elif buffer.button.code == MouseButtonCodeEnum.XBUTTON2_BUTTON:
+            button_name = "xbutton2"
         elif buffer.button.code == MouseButtonCodeEnum.UNKNOWN_BUTTON:
             button_name = "null"
         else:
@@ -229,6 +235,10 @@ class ControllerCh9329(ControllerDeviceBase):
             button_name = "right"
         elif buffer.button.code == MouseButtonCodeEnum.MIDDLE_BUTTON:
             button_name = "center"
+        elif buffer.button.code == MouseButtonCodeEnum.XBUTTON1_BUTTON:
+            button_name = "xbutton1"
+        elif buffer.button.code == MouseButtonCodeEnum.XBUTTON2_BUTTON:
+            button_name = "xbutton2"
         elif buffer.button.code == MouseButtonCodeEnum.UNKNOWN_BUTTON:
             button_name = "null"
         else:
