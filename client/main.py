@@ -57,6 +57,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
     QLabel,
+    QMenu,
     QMessageBox,
     QStatusBar,
     QWidget,
@@ -92,6 +93,7 @@ from project_path import (
 from status_buffer import StatusBuffer
 from ui.ui_about import AboutDialog
 from ui.ui_custom_key import CustomKeyDialog
+from ui.ui_floating_ball import FloatingBall
 from ui.ui_indicator_lights import IndicatorLightsDialog
 from ui.ui_main import MainWindow
 from ui.ui_messagebox import OptionalMessageBox
@@ -670,6 +672,10 @@ class AppMainWindow(MainWindow):
         # 初始化状态栏
         self.status_bar_manager = MainWindowStatusBarManager(self.statusbar)
 
+        # 初始化悬浮球(浮动显示在 video widget 之上)
+        self.floating_ball: FloatingBall | None = None
+        self.floating_ball_menu: QMenu | None = None
+
         # 初始化 video widget
         self.video_widget: QVideoWidget = QVideoWidget()
         self.video_disconnect_label = QLabel()
@@ -723,6 +729,8 @@ class AppMainWindow(MainWindow):
         self.hook_pressed_keys = []
         if platform.system() == "Windows":
             self.init_system_hook()
+
+        self.init_floating_ball()
 
         # 绑定信号
         self.init_connect_signal()
@@ -990,6 +998,63 @@ class AppMainWindow(MainWindow):
         self.action_about_qt.triggered.connect(lambda: QApplication.aboutQt())
         self.action_debug_mode.triggered.connect(self.switch_debug_mode)
 
+    # 初始化悬浮球
+    def init_floating_ball(self) -> None:
+        self.floating_ball_menu = QMenu(self)
+        self.floating_ball = FloatingBall(self)
+        self.floating_ball.set_icon(self.load_icon("main.ico"))
+        self.floating_ball.setToolTip(
+            self.tr("Click to open the menu.") + "\n" + self.tr("Drag to move.")
+        )
+        self.floating_ball.move_into_parent(
+            QPoint(20, self.menuBar().height() + 20)
+        )
+        self.floating_ball.show()
+        self.floating_ball.clicked.connect(self.show_floating_ball_menu)
+
+    # 显示悬浮球菜单
+    def show_floating_ball_menu(self) -> None:
+        if self.floating_ball is None:
+            return
+        self.popup_menu(self.floating_ball.menu_popup_position())
+
+    # 根据指定位置弹出菜单
+    def popup_menu(self, pos: QPoint) -> None:
+        if self.floating_ball_menu is None:
+            return
+        self.build_floating_ball_menu()
+        self.floating_ball_menu.exec(pos)
+
+    # 构建悬浮球菜单, 内容包含主窗口所有菜单
+    def build_floating_ball_menu(self) -> None:
+        if self.floating_ball_menu is None:
+            return
+        floating_ball_menu = self.floating_ball_menu
+        floating_ball_menu.clear()
+        for menu_action in self.menuBar().actions():
+            source_menu = menu_action.menu()
+            if source_menu is None:
+                continue
+            sub_menu = floating_ball_menu.addMenu(
+                source_menu.icon(), source_menu.title()
+            )
+            self.copy_menu_items(source_menu, sub_menu)
+
+    # 复制菜单内的所有菜单项到目标菜单
+    @staticmethod
+    def copy_menu_items(source_menu: QMenu, target_menu: QMenu) -> None:
+        for action in source_menu.actions():
+            if action.isSeparator():
+                target_menu.addSeparator()
+            elif action.menu() is not None:
+                sub_menu = target_menu.addMenu(
+                    action.icon(), action.menu().title()
+                )
+                AppMainWindow.copy_menu_items(action.menu(), sub_menu)
+            else:
+                # 复用原有 QAction 以保持菜单功能与选中状态一致
+                target_menu.addAction(action)
+
     # 初始化信号槽连接
     def init_connect_signal(self) -> None:
         self.init_menu_connect_signal()
@@ -1203,6 +1268,11 @@ class AppMainWindow(MainWindow):
             + self.to_enabled_string(self.status.is_enabled("topmost_window"))
         )
         self.action_topmost.setChecked(self.status.is_enabled("topmost_window"))
+        # 悬浮球跟随主窗口的置顶状态, 避免主窗口置顶后悬浮球被遮挡
+        if self.floating_ball is not None:
+            self.floating_ball.set_topmost(
+                self.status.is_enabled("topmost_window")
+            )
 
     # 保持比例拉伸
     def keep_aspect_ratio_toggle(self):
