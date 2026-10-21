@@ -1,6 +1,7 @@
 import typing
 
 from loguru import logger
+from pych9329.mouse import MOUSE_BUTTON_NAME_MAP
 from pych9329 import chip_command, keyboard, mouse
 from serial import Serial
 import random
@@ -15,6 +16,10 @@ from mouse_buffer import (
     MouseWheelStateEnum,
 )
 
+
+# Monkey patch to add xbutton1 and xbutton2 support.
+MOUSE_BUTTON_NAME_MAP["xbutton1"] = b"\x08"
+MOUSE_BUTTON_NAME_MAP["xbutton2"] = b"\x10"
 
 class ControllerCh9329(ControllerDeviceBase):
     FUNCTION_KEYS = [
@@ -179,6 +184,10 @@ class ControllerCh9329(ControllerDeviceBase):
             button_name = "center"
         elif buffer.button.code == MouseButtonCodeEnum.UNKNOWN_BUTTON:
             button_name = "null"
+        elif buffer.button.code == MouseButtonCodeEnum.XBUTTON1_BUTTON:
+            button_name = "xbutton1"
+        elif buffer.button.code == MouseButtonCodeEnum.XBUTTON2_BUTTON:
+            button_name = "xbutton2"
         else:
             logger.debug(f"unknown mouse button {buffer.button.code}")
 
@@ -231,6 +240,10 @@ class ControllerCh9329(ControllerDeviceBase):
             button_name = "center"
         elif buffer.button.code == MouseButtonCodeEnum.UNKNOWN_BUTTON:
             button_name = "null"
+        elif buffer.button.code == MouseButtonCodeEnum.XBUTTON1_BUTTON:
+            button_name = "xbutton1"
+        elif buffer.button.code == MouseButtonCodeEnum.XBUTTON2_BUTTON:
+            button_name = "xbutton2"
         else:
             logger.debug(f"unknown mouse button {buffer.button.code}")
         self.mouse_send_data(button_name, x, y, wheel, True)
