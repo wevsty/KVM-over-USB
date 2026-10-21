@@ -9,11 +9,11 @@ isort==9.0.2
 loguru==0.7.3
 mccabe==0.7.0
 mypy-extensions==1.1.0
-nuitka==4.2.2
+nuitka==4.3.1
 packaging==26.3
 pathspec==1.1.1
 platformdirs==4.12.4
-pych9329==0.1.6
+pych9329==0.1.7
 pycodestyle==2.15.0
 pyflakes==4.0.3
 pyserial==3.5

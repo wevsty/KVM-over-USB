@@ -11,8 +11,8 @@ dependencies = [
     "pyside6-essentials<7.0.0,>=6.12.0",
     "pyside6<7.0.0,>=6.12.0",
     "pyserial<4.0,>=3.5",
-    "nuitka<5.0.0,>=4.1.2",
-    "pych9329<1.0.0,>=0.1.6",
+    "nuitka<5.0.0,>=4.3.1",
+    "pych9329<1.0.0,>=0.1.7",
     "hidapi<1.0.0,>=0.15.0",
 ]
 name = "usb_kvm_client"
