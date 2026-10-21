@@ -226,9 +226,9 @@ class ControllerCh9329(ControllerDeviceBase):
             # 滚轮不动
             wheel = 0
 
-        button_name = "null"
+        button_name = "none"
         if buffer.button.state == MouseButtonStateEnum.RELEASE:
-            button_name = "null"
+            button_name = "none"
         elif buffer.button.code == MouseButtonCodeEnum.LEFT_BUTTON:
             button_name = "left"
         elif buffer.button.code == MouseButtonCodeEnum.RIGHT_BUTTON:
@@ -240,7 +240,7 @@ class ControllerCh9329(ControllerDeviceBase):
         elif buffer.button.code == MouseButtonCodeEnum.XBUTTON2_BUTTON:
             button_name = "xbutton2"
         elif buffer.button.code == MouseButtonCodeEnum.UNKNOWN_BUTTON:
-            button_name = "null"
+            button_name = "none"
         else:
             logger.debug(f"unknown mouse button {buffer.button.code}")
         self.mouse_send_data(button_name, x, y, wheel, True)
