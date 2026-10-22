@@ -57,6 +57,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
     QLabel,
+    QMenu,
     QMessageBox,
     QStatusBar,
     QWidget,
@@ -666,6 +667,8 @@ class AppMainWindow(MainWindow):
 
         # 菜单初始状态设定
         self.init_menu_checked_state()
+        
+        self.init_popup_menu()
 
         # 初始化状态栏
         self.status_bar_manager = MainWindowStatusBarManager(self.statusbar)
@@ -990,6 +993,44 @@ class AppMainWindow(MainWindow):
         self.action_about_qt.triggered.connect(lambda: QApplication.aboutQt())
         self.action_debug_mode.triggered.connect(self.switch_debug_mode)
 
+    # 根据指定位置弹出菜单
+    def show_popup_menu(self, pos: QPoint | None = None) -> None:
+        if self.popup_menu is None:
+            return
+        # self.popup_menu()
+        if pos is None:
+            pos = QCursor.pos()
+        self.popup_menu.exec(pos)
+
+    # 构建弹出菜单, 内容包含主窗口所有菜单
+    def init_popup_menu(self) -> None:
+        self.popup_menu = QMenu(self)
+        popup_menu = self.popup_menu
+        popup_menu.clear()
+        for menu_action in self.menuBar().actions():
+            source_menu = menu_action.menu()
+            if source_menu is None:
+                continue
+            sub_menu = popup_menu.addMenu(
+                source_menu.icon(), source_menu.title()
+            )
+            self.copy_menu_items(source_menu, sub_menu)
+
+    # 复制菜单内的所有菜单项到目标菜单
+    @staticmethod
+    def copy_menu_items(source_menu: QMenu, target_menu: QMenu) -> None:
+        for action in source_menu.actions():
+            if action.isSeparator():
+                target_menu.addSeparator()
+            elif action.menu() is not None:
+                sub_menu = target_menu.addMenu(
+                    action.icon(), action.menu().title()
+                )
+                AppMainWindow.copy_menu_items(action.menu(), sub_menu)
+            else:
+                # 复用原有 QAction 以保持菜单功能与选中状态一致
+                target_menu.addAction(action)
+
     # 初始化信号槽连接
     def init_connect_signal(self) -> None:
         self.init_menu_connect_signal()
@@ -1169,6 +1210,8 @@ class AppMainWindow(MainWindow):
         if command == "show_menu_bar":
             if self.menuBar().isHidden():
                 self.menuBar().show()
+        elif command == "popup_menu_bar":
+            self.show_popup_menu()
         elif command == "show_status_bar":
             if self.statusBar().isHidden():
                 self.statusBar().show()
@@ -2391,7 +2434,7 @@ class AppMainWindow(MainWindow):
         # next_command = current_command
         if y < const_pixel and x < const_pixel:
             # 鼠标在左上角
-            next_command = "show_menu_bar"
+            next_command = "popup_menu_bar"
         elif x > width - const_pixel and y > height - const_pixel:
             # 鼠标在右下角
             next_command = "show_status_bar"
