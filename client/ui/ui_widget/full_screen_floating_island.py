@@ -6,7 +6,6 @@ from PySide6.QtGui import QIcon, QCursor, QCloseEvent
 from PySide6.QtWidgets import (
     QApplication,
     QWidget,
-    QPushButton,
     QHBoxLayout,
     QLabel,
     QToolButton,
