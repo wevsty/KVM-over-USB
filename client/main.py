@@ -2658,6 +2658,13 @@ class AppMainWindow(MainWindow):
         super().closeEvent(event)
         self.handle_close_event()
 
+    # 覆盖 showNormal 函数
+    def showNormal(self) -> None:
+        super().showNormal()
+        # 如果处于全屏状态强制关闭全屏状态
+        if self.status.is_enabled("fullscreen"):
+            self.fullscreen_state_toggle()
+
 
 def clear_splash():
     if "NUITKA_ONEFILE_PARENT" in os.environ:
