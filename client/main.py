@@ -66,11 +66,11 @@ from loguru import logger
 import keyboard_buffer
 import project_var
 from controller.general import ControllerGeneralDevice
-from data.keyboard_key_name_to_hid_code import KEY_NAME_TO_HID_CODE
 from data.keyboard_code_converter import (
     qt_key_event_to_hid_code,
     os_scancode_code_to_hid_code,
 )
+from data.keyboard_key_name_to_hid_code import KEY_NAME_TO_HID_CODE
 from data.keyboard_shift_symbol import SHIFT_SYMBOL
 from keyboard_buffer import (
     KeyboardIndicatorBuffer,
@@ -90,13 +90,14 @@ from project_path import (
     project_source_directory_path,
 )
 from status_buffer import StatusBuffer
+from ui.standard_widget.optional_message_box import OptionalMessageBox
 from ui.ui_about import AboutDialog
 from ui.ui_custom_key import CustomKeyDialog
 from ui.ui_indicator_lights import IndicatorLightsDialog
 from ui.ui_main import MainWindow
-from ui.ui_messagebox import OptionalMessageBox
 from ui.ui_paste_board import PasteBoardDialog
 from ui.ui_settings import SettingsDialog
+from ui.ui_widget.full_screen_floating_island import FullScreenFloatingIsland
 
 # 特定系统依赖
 if platform.system() == "Windows":
@@ -670,7 +671,7 @@ class AppMainWindow(MainWindow):
         # 初始化状态栏
         self.status_bar_manager = MainWindowStatusBarManager(self.statusbar)
 
-        # 初始化 video widget
+        # 初始化 video standard_widget
         self.video_widget: QVideoWidget = QVideoWidget()
         self.video_disconnect_label = QLabel()
         self.init_video_widget()
@@ -712,11 +713,9 @@ class AppMainWindow(MainWindow):
         # controller_check_connection_timer.start()
 
         # 全屏模式设置
-        self.fullscreen_event_command: str = "unknown"
-        fullscreen_event_timer = self.timer.create("FULLSCREEN_EVENT_TIMER")
-        fullscreen_event_timer.timeout.connect(
-            self.execute_fullscreen_event_command
-        )
+        self.fullscreen_island = FullScreenFloatingIsland(self)
+        self.init_floating_island()
+        self.fullscreen_island.hide()
 
         # 键盘钩子
         self.hook_manager = None
@@ -867,6 +866,12 @@ class AppMainWindow(MainWindow):
             self.action_quick_paste.setChecked(True)
         self.action_debug_mode.setChecked(project_var.debug_mode)
 
+    # 初始化全屏时浮岛窗口
+    def init_floating_island(self):
+        popup_menu = self.fullscreen_island.popup_menu
+        for action in self.menuBar().actions():
+            popup_menu.addAction(action)
+
     # 初始化系统hook
     def init_system_hook(self):
         if platform.system() == "Windows":
@@ -1003,6 +1008,9 @@ class AppMainWindow(MainWindow):
         self.controller_event.command_reply_signal.connect(
             self.controller_command_reply
         )
+
+        # island 信号
+        self.fullscreen_island.island_close_signal.connect(lambda: self.close())
         pass
 
     def load_config(self) -> None:
@@ -1135,7 +1143,7 @@ class AppMainWindow(MainWindow):
                     self.tr("Tip"),
                     self.tr("Press Ctrl+Alt+F11 to toggle fullscreen.\n")
                     + self.tr(
-                        "Or stay cursor at left top corner to show menu bar."
+                        "Or cursor over the top of the screen to pop up the floating island.\n"
                     ),
                     self.tr("Don't show again."),
                     False,
@@ -1153,33 +1161,14 @@ class AppMainWindow(MainWindow):
             self.action_resize_window.setEnabled(False)
             self.statusBar().hide()
             self.menuBar().hide()
+            self.fullscreen_island.show()
         else:
-            event_timer = self.timer.get_exists("FULLSCREEN_EVENT_TIMER")
-            event_timer.stop()
             self.showNormal()
             self.action_fullscreen.setChecked(False)
             self.action_resize_window.setEnabled(True)
             self.statusBar().show()
             self.menuBar().show()
-
-    # 执行全屏时事件命令
-    def execute_fullscreen_event_command(self):
-        event_timer = self.timer.get_exists("FULLSCREEN_EVENT_TIMER")
-        command = self.fullscreen_event_command
-        if command == "show_menu_bar":
-            if self.menuBar().isHidden():
-                self.menuBar().show()
-        elif command == "show_status_bar":
-            if self.statusBar().isHidden():
-                self.statusBar().show()
-        elif command == "hide_all":
-            if not self.menuBar().isHidden():
-                self.menuBar().hide()
-            if not self.statusBar().isHidden():
-                self.statusBar().hide()
-        else:
-            pass
-        event_timer.stop()
+            self.fullscreen_island.hide()
 
     # 切换保持窗口在最前
     def window_topmost_state_toggle(self):
@@ -1985,7 +1974,7 @@ class AppMainWindow(MainWindow):
     # video widget相关函数
     ######################################################################
 
-    # 初始化 video widget
+    # 初始化 video standard_widget
     def init_video_widget(self) -> None:
         self.video_widget = QVideoWidget()
         self.video_widget.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
@@ -2375,42 +2364,9 @@ class AppMainWindow(MainWindow):
     # 窗口事件处理
     ######################################################################
 
-    # 全屏状态下鼠标动作事件
-    def handle_mouse_on_fullscreen_event(self, x: int, y: int):
-        if not self.status.is_enabled("fullscreen"):
-            return
-        # 常量
-        const_pixel = 5
-        const_delay_ms = 1000 * 3
-
-        width = self.width()
-        height = self.height()
-        event_timer = self.timer.get_exists("FULLSCREEN_EVENT_TIMER")
-
-        current_command = self.fullscreen_event_command
-        # next_command = current_command
-        if y < const_pixel and x < const_pixel:
-            # 鼠标在左上角
-            next_command = "show_menu_bar"
-        elif x > width - const_pixel and y > height - const_pixel:
-            # 鼠标在右下角
-            next_command = "show_status_bar"
-        else:
-            # 鼠标在其他地方
-            next_command = "hide_all"
-        self.fullscreen_event_command = next_command
-        # 如果命令发生了变化，说明状态应该改变
-        if current_command != next_command:
-            event_timer.stop()
-            event_timer.start(const_delay_ms)
-        pass
-
     def handle_mouse_move_event(self, event: QMouseEvent) -> None:
         p = event.position().toPoint()
         x, y = p.x(), p.y()
-        # 全屏状态下检测鼠标位置
-        if self.status.is_enabled("fullscreen"):
-            self.handle_mouse_on_fullscreen_event(x, y)
         # 非鼠标捕获的情况下显示光标
         if not self.status.is_enabled("mouse_capture"):
             self.setCursor(Qt.CursorShape.ArrowCursor)
@@ -2649,7 +2605,12 @@ class AppMainWindow(MainWindow):
 
     # 关闭事件
     def handle_close_event(self) -> None:
+        # 关闭子窗口
+        self.fullscreen_island.island_close_signal.disconnect()
+        self.fullscreen_island.close()
+        # 断开控制器
         self.disconnect_controller()
+        # 停止计时器和线程
         self.timer.quit_all()
         self.threads.quit_all()
 
