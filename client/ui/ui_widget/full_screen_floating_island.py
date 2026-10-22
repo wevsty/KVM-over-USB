@@ -99,17 +99,17 @@ class FullScreenFloatingIsland(FloatingIsland):
 
     def toggle_pin(self, checked: bool) -> None:
         """切换 Pin 状态"""
-        pin_buttnon: QToolButton = typing.cast(
-            QToolButton, self.internal_widgets["pin_buttnon"]
+        pin_button: QToolButton = typing.cast(
+            QToolButton, self.internal_widgets["pin_button"]
         )
         self.is_pinned = checked
         if self.is_pinned:
             # self.pin_btn.setText("Pinned")
-            pin_buttnon.setIcon(self.icon_pin)
+            pin_button.setIcon(self.icon_pin)
             self.collapse_delay_timer.stop()
             self.expand_island()
         else:
-            pin_buttnon.setIcon(self.icon_pin_off)
+            pin_button.setIcon(self.icon_pin_off)
             pass
 
     # 重写关闭事件
