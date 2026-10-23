@@ -1,5 +1,5 @@
 MAIN_DEFAULT_CONFIG_DATA = """
-config_version: v8
+config_version: v9
 connection:
   auto_connect: false
 controller:
@@ -59,6 +59,7 @@ ui:
   tips_empty_video_device: true
   window_auto_maximized: false
   window_auto_to_center: true
+  floating_island_collapsed_height: 5
 video:
   device: empty_device
   format: NONE
