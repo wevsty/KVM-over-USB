@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.11.1
+## Created by: Qt User Interface Compiler version 6.12.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -60,8 +60,8 @@ class Ui_main_window(object):
         self.action_fullscreen = QAction(main_window)
         self.action_fullscreen.setObjectName(u"action_fullscreen")
         self.action_fullscreen.setCheckable(True)
-        self.action_resize_window = QAction(main_window)
-        self.action_resize_window.setObjectName(u"action_resize_window")
+        self.action_resize_window_to_video = QAction(main_window)
+        self.action_resize_window_to_video.setObjectName(u"action_resize_window_to_video")
         self.action_keep_aspect_ratio = QAction(main_window)
         self.action_keep_aspect_ratio.setObjectName(u"action_keep_aspect_ratio")
         self.action_keep_aspect_ratio.setCheckable(True)
@@ -140,6 +140,8 @@ class Ui_main_window(object):
         self.menu_video.setObjectName(u"menu_video")
         self.menu_about = QMenu(self.menubar)
         self.menu_about.setObjectName(u"menu_about")
+        self.menu_window = QMenu(self.menubar)
+        self.menu_window.setObjectName(u"menu_window")
         main_window.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(main_window)
         self.statusbar.setObjectName(u"statusbar")
@@ -147,6 +149,7 @@ class Ui_main_window(object):
         self.statusbar.setSizeGripEnabled(False)
         main_window.setStatusBar(self.statusbar)
 
+        self.menubar.addAction(self.menu_window.menuAction())
         self.menubar.addAction(self.menu_device_menu.menuAction())
         self.menubar.addAction(self.menu_video.menuAction())
         self.menubar.addAction(self.menu_keyboard.menuAction())
@@ -161,10 +164,6 @@ class Ui_main_window(object):
         self.menu_device_menu.addSeparator()
         self.menu_device_menu.addAction(self.action_settings)
         self.menu_device_menu.addSeparator()
-        self.menu_device_menu.addAction(self.action_minimize)
-        self.menu_device_menu.addAction(self.action_maximize)
-        self.menu_device_menu.addAction(self.action_normal_size)
-        self.menu_device_menu.addAction(self.action_exit)
         self.menu_keyboard.addAction(self.action_pause_keyboard)
         self.menu_keyboard.addAction(self.action_reload_keyboard)
         self.menu_keyboard.addSeparator()
@@ -193,10 +192,7 @@ class Ui_main_window(object):
         self.menu_tools.addAction(self.action_open_calculator)
         self.menu_tools.addAction(self.action_open_snipping_tool)
         self.menu_tools.addAction(self.action_open_notepad)
-        self.menu_video.addAction(self.action_fullscreen)
-        self.menu_video.addAction(self.action_resize_window)
-        self.menu_video.addAction(self.action_topmost)
-        self.menu_video.addSeparator()
+        self.menu_video.addAction(self.action_resize_window_to_video)
         self.menu_video.addAction(self.action_keep_aspect_ratio)
         self.menu_video.addSeparator()
         self.menu_video.addAction(self.action_capture_image)
@@ -206,6 +202,13 @@ class Ui_main_window(object):
         self.menu_about.addAction(self.action_about_qt)
         self.menu_about.addSeparator()
         self.menu_about.addAction(self.action_debug_mode)
+        self.menu_window.addAction(self.action_fullscreen)
+        self.menu_window.addAction(self.action_topmost)
+        self.menu_window.addSeparator()
+        self.menu_window.addAction(self.action_minimize)
+        self.menu_window.addAction(self.action_maximize)
+        self.menu_window.addAction(self.action_normal_size)
+        self.menu_window.addAction(self.action_exit)
 
         self.retranslateUi(main_window)
 
@@ -255,7 +258,7 @@ class Ui_main_window(object):
         self.action_open_notepad.setText(QCoreApplication.translate("main_window", u"Notepad", None))
         self.action_indicator_light.setText(QCoreApplication.translate("main_window", u"Indicator light", None))
         self.action_fullscreen.setText(QCoreApplication.translate("main_window", u"Fullscreen", None))
-        self.action_resize_window.setText(QCoreApplication.translate("main_window", u"Resize window", None))
+        self.action_resize_window_to_video.setText(QCoreApplication.translate("main_window", u"Resize window to video", None))
         self.action_keep_aspect_ratio.setText(QCoreApplication.translate("main_window", u"Keep aspect ratio", None))
         self.action_topmost.setText(QCoreApplication.translate("main_window", u"Topmost", None))
         self.action_paste_board.setText(QCoreApplication.translate("main_window", u"Pasteboard", None))
@@ -301,5 +304,6 @@ class Ui_main_window(object):
         self.menu_tools.setTitle(QCoreApplication.translate("main_window", u"Tools", None))
         self.menu_video.setTitle(QCoreApplication.translate("main_window", u"Video", None))
         self.menu_about.setTitle(QCoreApplication.translate("main_window", u"About", None))
+        self.menu_window.setTitle(QCoreApplication.translate("main_window", u"Window", None))
     # retranslateUi
 

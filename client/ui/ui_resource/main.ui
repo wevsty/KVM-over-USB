@@ -38,10 +38,6 @@
     <addaction name="separator"/>
     <addaction name="action_settings"/>
     <addaction name="separator"/>
-    <addaction name="action_minimize"/>
-    <addaction name="action_maximize"/>
-    <addaction name="action_normal_size"/>
-    <addaction name="action_exit"/>
    </widget>
    <widget class="QMenu" name="menu_keyboard">
     <property name="title">
@@ -95,10 +91,7 @@
     <property name="title">
      <string>Video</string>
     </property>
-    <addaction name="action_fullscreen"/>
-    <addaction name="action_resize_window"/>
-    <addaction name="action_topmost"/>
-    <addaction name="separator"/>
+    <addaction name="action_resize_window_to_video"/>
     <addaction name="action_keep_aspect_ratio"/>
     <addaction name="separator"/>
     <addaction name="action_capture_image"/>
@@ -114,6 +107,19 @@
     <addaction name="separator"/>
     <addaction name="action_debug_mode"/>
    </widget>
+   <widget class="QMenu" name="menu_window">
+    <property name="title">
+     <string>Window</string>
+    </property>
+    <addaction name="action_fullscreen"/>
+    <addaction name="action_topmost"/>
+    <addaction name="separator"/>
+    <addaction name="action_minimize"/>
+    <addaction name="action_maximize"/>
+    <addaction name="action_normal_size"/>
+    <addaction name="action_exit"/>
+   </widget>
+   <addaction name="menu_window"/>
    <addaction name="menu_device_menu"/>
    <addaction name="menu_video"/>
    <addaction name="menu_keyboard"/>
@@ -241,9 +247,9 @@
     <string>Fullscreen</string>
    </property>
   </action>
-  <action name="action_resize_window">
+  <action name="action_resize_window_to_video">
    <property name="text">
-    <string>Resize window</string>
+    <string>Resize window to video</string>
    </property>
   </action>
   <action name="action_keep_aspect_ratio">
