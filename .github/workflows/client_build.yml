@@ -80,6 +80,8 @@ jobs:
             ./translations=translations
           enable-plugins: pyside6
           include-qt-plugins: multimedia
+          product-name: usb kvm client
+          company-name: open source software
           quiet: true
 
       - name: Build with Nuitka (Windows App)
