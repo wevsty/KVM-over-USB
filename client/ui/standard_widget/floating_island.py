@@ -7,15 +7,15 @@ from PySide6.QtCore import (
     QRect,
     QPropertyAnimation,
     QTimer,
-    Property,
 )
-from PySide6.QtGui import QMouseEvent
+from PySide6.QtGui import QMouseEvent, QAction
 from PySide6.QtWidgets import (
     QApplication,
     QWidget,
     QPushButton,
     QHBoxLayout,
     QLabel,
+    QMenu,
 )
 
 
@@ -35,14 +35,16 @@ class FloatingIsland(QWidget):
 
         # 状态变量初始化
         self.is_pinned: bool = False
-        self.dragging: bool = False
+        self.is_dragging: bool = False
         self.is_expanded: bool = True
         self.drag_position: QPoint = QPoint()
 
         # 尺寸定义
         self.island_width: int = 240
         self.expanded_height: int = 40
-        self.collapsed_height: int = 0  # 0 表示完全隐藏
+        self.collapsed_height: int = (
+            0  # 0 表示完全隐藏，非 0（如 16）表示保留局部小岛
+        )
 
         # 获取屏幕几何尺寸
         self.screen_geometry = QApplication.primaryScreen().availableGeometry()
@@ -50,37 +52,31 @@ class FloatingIsland(QWidget):
             self.screen_geometry.x()
             + (self.screen_geometry.width() - self.island_width) // 2
         )
-
         self.current_x: int = start_x
 
-        # 顶层窗口始终保持固定最大高度
-        self.setGeometry(
-            self.current_x, 0, self.island_width, self.expanded_height
-        )
+        # 初始几何区域与矩形初始化
+        self.expanded_rect: QRect = QRect()
+        self.collapsed_rect: QRect = QRect()
+        self.update_rects()
+        self.setGeometry(self.expanded_rect)
 
-        # 外层主布局
+        # 外层主布局（承载内部容器）
         self.main_layout = QHBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
-        # 创建内层容器 Widget
+        # 内部容器 Widget（负责蓝色背景和圆角）
         self.container = QWidget(self)
         self.container.setObjectName("IslandContainer")
         self.main_layout.addWidget(self.container)
 
-        # 初始将 container 设为收起状态
-        self.container.setGeometry(
-            0, -self.expanded_height, self.island_width, self.expanded_height
-        )
-
         self.internal_widgets: dict[str, QWidget] = {}
         self.init_widgets()
 
-        # 动画对象驱动内层 container 的 geometry 属性
+        # 动画对象：直接对窗口 geometry 进行丝滑动画
         self.animation: QPropertyAnimation = QPropertyAnimation(
-            self, b"container_geometry"
+            self, b"geometry"
         )
         self.animation.setDuration(200)
-        # 绑定动画结束信号，用于精准控制收缩后的隐藏
         self.animation.finished.connect(self.on_animation_finished)
 
         # 定时监测鼠标位置
@@ -95,23 +91,21 @@ class FloatingIsland(QWidget):
         self.collapse_delay_timer.setInterval(1500)
         self.collapse_delay_timer.timeout.connect(self.perform_collapse)
 
-        # 初始直接展开
-        self.expand_island()
-
     def init_widgets(self) -> None:
         pass
 
-    # --- Property 属性包装器 ---
-    @Property(QRect)
-    def container_geometry(self) -> QRect:
-        if not hasattr(self, "container"):
-            return QRect()
-        return self.container.geometry()
-
-    @container_geometry.setter
-    def container_geometry(self, rect: QRect) -> None:
-        if hasattr(self, "container"):
-            self.container.setGeometry(rect)
+    def update_rects(self) -> None:
+        """更新展开与收缩的目标矩形"""
+        self.expanded_rect = QRect(
+            self.current_x, 0, self.island_width, self.expanded_height
+        )
+        if self.collapsed_height == 0:
+            # 完全隐藏模式下，收缩高度设为 1，动画结束后再隐藏窗口
+            self.collapsed_rect = QRect(self.current_x, 0, self.island_width, 1)
+        else:
+            self.collapsed_rect = QRect(
+                self.current_x, 0, self.island_width, self.collapsed_height
+            )
 
     def toggle_pin(self, checked: bool) -> None:
         self.is_pinned = checked
@@ -120,11 +114,12 @@ class FloatingIsland(QWidget):
             self.expand_island()
 
     def check_mouse_position(self) -> None:
-        # 只要有菜单正在弹出显示就放弃检查
-        if QApplication.activePopupWidget() is not None:
-            return
-        # 拖动状态或者钉住时放弃检查
-        if self.is_pinned or self.dragging:
+        # 有菜单弹出或处于钉住/拖动状态时，不进行收缩检测
+        if (
+            QApplication.activePopupWidget() is not None
+            or self.is_pinned
+            or self.is_dragging
+        ):
             return
 
         global_pos = self.cursor().pos()
@@ -138,7 +133,7 @@ class FloatingIsland(QWidget):
             should_expand = is_at_screen_top or is_hovering_island
         else:
             is_at_island_top: bool = (
-                global_pos.y() <= self.expanded_height
+                global_pos.y() <= self.collapsed_height
                 and self.current_x
                 <= global_pos.x()
                 <= self.current_x + self.island_width
@@ -157,7 +152,6 @@ class FloatingIsland(QWidget):
                 self.collapse_delay_timer.start()
 
     def perform_collapse(self) -> None:
-        # 只要有菜单正在弹出显示就放弃检查
         if QApplication.activePopupWidget() is not None:
             return
 
@@ -174,60 +168,52 @@ class FloatingIsland(QWidget):
             self.collapse_island()
 
     def expand_island(self) -> None:
+        if self.is_expanded and self.isVisible():
+            return
         self.is_expanded = True
-        if not self.isVisible():
-            # 展开前先将 container 放在隐藏位置，然后显示窗口
-            self.container.setGeometry(
-                0,
-                -self.expanded_height,
-                self.island_width,
-                self.expanded_height,
-            )
-            super().show()
-            self.show_internal_widgets()
+        self.update_rects()
 
-        target_rect = QRect(0, 0, self.island_width, self.expanded_height)
-        if self.container.geometry() != target_rect:
-            self.show_internal_widgets()
-            self.animation.stop()
-            self.animation.setStartValue(self.container.geometry())
-            self.animation.setEndValue(target_rect)
-            self.animation.start()
+        if not self.isVisible():
+            super().show()
+
+        # 展开前先显示内部控件，让布局管理器参与尺寸恢复
+        self.show_internal_widgets()
+        self.animation.stop()
+        self.animation.setStartValue(self.geometry())
+        self.animation.setEndValue(self.expanded_rect)
+        self.animation.start()
 
     def collapse_island(self) -> None:
+        if not self.is_expanded:
+            return
         self.is_expanded = False
+        self.update_rects()
 
         if (
             not self.geometry().contains(self.cursor().pos())
-            and not self.dragging
+            and not self.is_dragging
         ):
-            target_rect = QRect(
-                0,
-                -self.expanded_height,
-                self.island_width,
-                self.expanded_height,
-            )
-            if self.container.geometry() != target_rect:
-                self.animation.stop()
-                self.animation.setStartValue(self.container.geometry())
-                self.animation.setEndValue(target_rect)
-                self.animation.start()
+            # 收缩开始时立即隐藏内部控件，解除布局对最小高度的限制
+            self.hide_internal_widgets()
+
+            self.animation.stop()
+            self.animation.setStartValue(self.geometry())
+            self.animation.setEndValue(self.collapsed_rect)
+            self.animation.start()
 
     def on_animation_finished(self) -> None:
         """动画播放完毕后的精细化状态处理"""
         if not self.is_expanded:
-            # 如果是收缩动画结束，且为 0 高度模式，则立即无缝隐藏顶层窗口，彻底消除残影
             if self.collapsed_height == 0:
                 super().hide()
-            self.hide_internal_widgets()
 
     def hide_internal_widgets(self) -> None:
-        for _name, widget_object in self.internal_widgets.items():
-            widget_object.hide()
+        for w in self.internal_widgets.values():
+            w.hide()
 
     def show_internal_widgets(self) -> None:
-        for _name, widget_object in self.internal_widgets.items():
-            widget_object.show()
+        for w in self.internal_widgets.values():
+            w.show()
 
     def hide(self) -> None:
         self.is_expanded = False
@@ -238,21 +224,21 @@ class FloatingIsland(QWidget):
     def show(self) -> None:
         super().show()
         self.is_expanded = True
+        self.update_rects()
         if not self.is_pinned:
             self.check_timer.start()
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
-            self.dragging = True
+            self.is_dragging = True
             self.check_timer.stop()
             self.collapse_delay_timer.stop()
             self.expand_island()
-
             self.drag_position = event.globalPosition().toPoint() - self.pos()
             event.accept()
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        if self.dragging and event.buttons() & Qt.MouseButton.LeftButton:
+        if self.is_dragging and event.buttons() & Qt.MouseButton.LeftButton:
             new_top_left = event.globalPosition().toPoint() - self.drag_position
             target_x: int = new_top_left.x()
 
@@ -260,13 +246,15 @@ class FloatingIsland(QWidget):
             max_x: int = self.screen_geometry.right() - self.island_width
             self.current_x = max(min_x, min(target_x, max_x))
 
-            self.move(self.current_x, 0)
+            self.update_rects()
+            self.move(self.current_x, self.y())
             event.accept()
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
-            self.dragging = False
+            self.is_dragging = False
             self.current_x = self.x()
+            self.update_rects()
             if not self.is_pinned:
                 self.check_timer.start()
             event.accept()
@@ -274,7 +262,6 @@ class FloatingIsland(QWidget):
 
 class ExampleFloatingIsland(FloatingIsland):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
-        # UI 组件声明
         self.pin_btn: QPushButton
         self.label: QLabel
         self.action_btn: QPushButton
@@ -282,7 +269,7 @@ class ExampleFloatingIsland(FloatingIsland):
         super().__init__(parent)
 
     def init_widgets(self) -> None:
-        # 按钮和标签布局
+        # 使用布局管理内部控件
         layout = QHBoxLayout(self.container)
         layout.setContentsMargins(12, 4, 12, 4)
 
@@ -298,16 +285,18 @@ class ExampleFloatingIsland(FloatingIsland):
         self.label.setStyleSheet(
             "color: white; font-weight: bold; background: transparent;"
         )
-        # 设置上下左右完全居中
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.label)
         self.internal_widgets["label"] = self.label
 
-        # 示例操作按钮
-        self.action_btn = QPushButton("Action", self.container)
-        self.action_btn.clicked.connect(lambda: print("Action clicked!"))
+        # 示例操作按钮（带 QMenu 菜单测试）
+        self.action_btn = QPushButton("Menu", self.container)
+        menu = QMenu(self.action_btn)
+        menu.addAction(QAction("Option 1", menu))
+        menu.addAction(QAction("Option 2", menu))
+        self.action_btn.setMenu(menu)
         layout.addWidget(self.action_btn)
-        self.internal_widgets["action_btn"] = self.action_btn
+        self.internal_widgets["action_menu"] = self.action_btn
 
         # 统一圆角样式 (8px)
         self.setStyleSheet("""
@@ -332,14 +321,11 @@ class ExampleFloatingIsland(FloatingIsland):
         """)
 
     def toggle_pin(self, checked: bool) -> None:
-        """切换 Pin 状态"""
         self.is_pinned = checked
         if self.is_pinned:
-            # self.pin_btn.setText("Pinned")
             self.collapse_delay_timer.stop()
             self.expand_island()
         else:
-            # self.pin_btn.setText("Pin")
             pass
 
 
@@ -347,6 +333,8 @@ def example_main() -> None:
     app = QApplication(sys.argv)
 
     island = ExampleFloatingIsland()
+    # 测试非 0 的局部保留高度
+    # island.collapsed_height = 5
     island.show()
 
     sys.exit(app.exec())
