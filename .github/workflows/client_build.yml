@@ -56,7 +56,13 @@ jobs:
           echo "BUILD_DATE=$BUILD_DATE" >> $GITHUB_OUTPUT
           echo "Generated build version date: $BUILD_DATE"
         shell: bash
-        
+
+      - name: Replace Dynamic Version
+        run: |
+          # 使用 sed 将源码中的 DYNAMIC-VERSION 替换为动态生成的编译日期
+          sed -i 's/DYNAMIC-VERSION/${{ steps.build_version.outputs.BUILD_DATE }}/g' ./client/project_info.py
+        shell: bash
+
       - name: Build with Nuitka (Linux)
         if: matrix.target == 'linux_app'
         uses: Nuitka/Nuitka-Action@main
