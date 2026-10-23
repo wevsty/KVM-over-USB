@@ -1,27 +1,33 @@
 name: client_build
+
 "on":
-  # Sequence of patterns matched against refs/tags
+  # 匹配 v 开头的 Tag 推送触发
   push:
     tags:
-      # Push events to matching v*, i.e. v1.0, v20.15.10
       - v*
-  # Allows you to run this workflow manually from the Actions tab 
+  # 允许在 Actions 手动触发
   workflow_dispatch:
+
 jobs:
   build:
     strategy:
       matrix:
-        # os: [macos-latest, ubuntu-latest, windows-latest]
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            target: linux_app
+          - os: windows-latest
+            target: windows_app
+          - os: windows-latest
+            target: windows_standalone
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: Check-out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.14'
           architecture: 'x64'
@@ -41,9 +47,18 @@ jobs:
               exit 1
           fi
         shell: bash
+
+      - name: Generate Build Version
+        id: build_version
+        run: |
+          # 生成符合 Windows 规范的四段式编译日期版本号，格式例如: 2026.10.22.0
+          BUILD_DATE=$(date -u +'%Y.%m.%d.0')
+          echo "BUILD_DATE=$BUILD_DATE" >> $GITHUB_OUTPUT
+          echo "Generated build version date: $BUILD_DATE"
+        shell: bash
         
-      - name: Build with nuitka on windows
-        if: runner.os == 'Windows'
+      - name: Build with Nuitka (Linux)
+        if: matrix.target == 'linux_app'
         uses: Nuitka/Nuitka-Action@main
         with:
           nuitka-version: main
@@ -59,24 +74,41 @@ jobs:
             ./translations=translations
           enable-plugins: pyside6
           include-qt-plugins: multimedia
-          # file information
+          quiet: true
+
+      - name: Build with Nuitka (Windows App)
+        if: matrix.target == 'windows_app'
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          working-directory: ./client
+          script-name: usb_kvm_client.py
+          mode: app
+          python-flag: |
+            -u
+            -O
+          include-data-dir: |
+            ./data=data
+            ./icons=icons
+            ./translations=translations
+          enable-plugins: pyside6
+          include-qt-plugins: multimedia
           product-name: usb kvm client
-          product-version: 1.0.0.0
-          file-description: a open source usb kvm client
-          # windows flag
+          product-version: ${{ steps.build_version.outputs.BUILD_DATE }}
+          file-description: open source usb kvm client
           windows-console-mode: disable
           windows-icon-from-ico: ./icons/main.ico
           onefile-windows-splash-screen-image: ./icons/splash.png
           quiet: true
 
-      - name: Build with nuitka on linux
-        if: runner.os == 'Linux'
+      - name: Build with Nuitka (Windows Standalone)
+        if: matrix.target == 'windows_standalone'
         uses: Nuitka/Nuitka-Action@main
         with:
           nuitka-version: main
           working-directory: ./client
           script-name: usb_kvm_client.py
-          mode: app
+          mode: standalone
           python-flag: |
             -u
             -O
@@ -86,15 +118,22 @@ jobs:
             ./translations=translations
           enable-plugins: pyside6
           include-qt-plugins: multimedia
+          product-name: usb kvm client
+          product-version: ${{ steps.build_version.outputs.BUILD_DATE }}
+          file-description: open source usb kvm client
+          windows-console-mode: disable
+          windows-icon-from-ico: ./icons/main.ico
           quiet: true
           
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ runner.os }}_build
+          name: ${{ matrix.target }}_build
           path: |
             ./client/build/*.exe
             ./client/build/*.bin
+            ./client/build/**/*.app/**
+            ./client/build/**/*.dist/**
           include-hidden-files: true
 
   release:
@@ -102,24 +141,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: ./download-artifact
-        
+          
       - name: Display structure of downloaded files
         run: ls -R ./download-artifact
 
       - name: Compress to zip file
         run: |
-          zip ./download-artifact/usb_kvm_client_for_linux.zip ./download-artifact/Linux_build/*.bin -v -1 -j
-          zip ./download-artifact/usb_kvm_client_for_windows.zip ./download-artifact/Windows_build/*.exe -v -1 -j
+          # 压缩 Linux 产物
+          zip ./download-artifact/usb_kvm_client_for_linux.zip ./download-artifact/linux_app_build/*.bin -v -1 -j
+          
+          # 压缩 Windows 单文件产物
+          zip ./download-artifact/usb_kvm_client_for_windows_app.zip ./download-artifact/windows_app_build/*.exe -v -1 -j
+          
+          # 压缩 Windows 标准文件夹产物（保留目录结构）
+          cd ./download-artifact/windows_standalone_build/usb_kvm_client.dist
+          zip -r ../../../download-artifact/usb_kvm_client_for_windows_standalone.zip ./*
+          cd -
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             ./download-artifact/*.zip
           tag_name: ${{ github.ref_name }}
-          body: "Release of ${{ github.ref_name }}."
+          body: "Release of ${{ github.ref_name }} (Includes Linux, Windows Onefile, and Windows Standalone versions with build date versioning)."
         env:
           GITHUB_TOKEN: ${{ secrets.PROJECT_TOKEN }}
