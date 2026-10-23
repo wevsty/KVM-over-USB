@@ -768,12 +768,9 @@ class AppMainWindow(MainWindow):
 
     # 初始化菜单栏图标
     def init_menu_icon(self) -> None:
-        # menu_device_menu
-        self.action_device_connect.setIcon(self.load_icon("connect.png"))
-        self.action_device_disconnect.setIcon(self.load_icon("disconnect.png"))
-        self.action_device_reload.setIcon(self.load_icon("reload.png"))
-        self.action_device_reset.setIcon(self.load_icon("reset.png"))
-        self.action_settings.setIcon(self.load_icon("setting.png"))
+        # menu_window
+        self.action_fullscreen.setIcon(self.load_icon("fullscreen.png"))
+        self.action_topmost.setIcon(self.load_icon("topmost.png"))
         self.action_minimize.setIcon(self.load_icon("window-minimize.png"))
         self.action_maximize.setIcon(self.load_icon("window-maximize.png"))
         self.action_normal_size.setIcon(
@@ -781,10 +778,15 @@ class AppMainWindow(MainWindow):
         )
         self.action_exit.setIcon(self.load_icon("window-close.png"))
 
+        # menu_device
+        self.action_device_connect.setIcon(self.load_icon("connect.png"))
+        self.action_device_disconnect.setIcon(self.load_icon("disconnect.png"))
+        self.action_device_reload.setIcon(self.load_icon("reload.png"))
+        self.action_device_reset.setIcon(self.load_icon("reset.png"))
+        self.action_settings.setIcon(self.load_icon("setting.png"))
+
         # menu_video
-        self.action_fullscreen.setIcon(self.load_icon("fullscreen.png"))
-        self.action_resize_window.setIcon(self.load_icon("resize.png"))
-        self.action_topmost.setIcon(self.load_icon("topmost.png"))
+        self.action_resize_window_to_video.setIcon(self.load_icon("resize.png"))
         self.action_keep_aspect_ratio.setIcon(self.load_icon("ratio.png"))
         self.action_capture_image.setIcon(self.load_icon("capture.png"))
         self.action_record_video.setIcon(self.load_icon("record.png"))
@@ -868,6 +870,10 @@ class AppMainWindow(MainWindow):
 
     # 初始化全屏时浮岛窗口
     def init_floating_island(self):
+        # 设定伸缩时保留的高度
+        self.fullscreen_island.collapsed_height = self.config.ui[
+            "floating_island_collapsed_height"
+        ]
         popup_menu = self.fullscreen_island.popup_menu
         for action in self.menuBar().actions():
             popup_menu.addAction(action)
@@ -891,23 +897,26 @@ class AppMainWindow(MainWindow):
     # 初始化菜单信号
     # noinspection DuplicatedCode
     def init_menu_connect_signal(self):
+        # window 菜单
+        self.action_fullscreen.triggered.connect(self.fullscreen_state_toggle)
+        self.action_topmost.triggered.connect(self.window_topmost_state_toggle)
+        self.action_minimize.triggered.connect(self.showMinimized)
+        self.action_maximize.triggered.connect(self.showMaximized)
+        self.action_normal_size.triggered.connect(self.showNormal)
+        self.action_exit.triggered.connect(self.close)
+
         # device 菜单
         self.action_device_connect.triggered.connect(self.connect_devices)
         self.action_device_disconnect.triggered.connect(self.disconnect_devices)
         self.action_device_reload.triggered.connect(self.reload_devices)
         self.action_device_reset.triggered.connect(self.reset_devices)
         self.action_settings.triggered.connect(self.execute_settings_dialog)
-        self.action_minimize.triggered.connect(self.showMinimized)
-        self.action_maximize.triggered.connect(self.showMaximized)
-        self.action_normal_size.triggered.connect(self.showNormal)
-        self.action_exit.triggered.connect(self.close)
 
         # video 菜单
-        self.action_fullscreen.triggered.connect(self.fullscreen_state_toggle)
-        self.action_resize_window.triggered.connect(
-            self.resize_window_with_video_resolution
+        self.action_resize_window_to_video.triggered.connect(
+            self.resize_window_to_video_resolution
         )
-        self.action_topmost.triggered.connect(self.window_topmost_state_toggle)
+
         self.action_keep_aspect_ratio.triggered.connect(
             self.keep_aspect_ratio_toggle
         )
@@ -1021,18 +1030,18 @@ class AppMainWindow(MainWindow):
             config_version = self.config.root["config_version"]
             if config_version != CONFIG_VERSION_STRING:
                 raise ValueError(
-                    self.tr(
-                        "The configuration file does not match the program.\n"
-                    )
-                    + self.tr(
-                        "Please delete the existing configuration file.\n"
-                    )
+                    "The configuration file version does not match expected."
                 )
-        except Exception as err:
+        except ValueError:
+            error_message = self.tr(
+                "Import config error:\n"
+                "The configuration file version does not match expected.\n"
+                "Please delete the existing configuration file.\n"
+            )
             QMessageBox.critical(
                 self,
                 self.tr("Error"),
-                self.tr("Import config error:\n{}\n").format(err),
+                error_message,
                 QMessageBox.StandardButton.Ok,
                 QMessageBox.StandardButton.NoButton,
             )
@@ -1158,14 +1167,14 @@ class AppMainWindow(MainWindow):
                     self.save_config()
             self.showFullScreen()
             self.action_fullscreen.setChecked(True)
-            self.action_resize_window.setEnabled(False)
+            self.action_resize_window_to_video.setEnabled(False)
             self.statusBar().hide()
             self.menuBar().hide()
             self.fullscreen_island.show()
         else:
             self.showNormal()
             self.action_fullscreen.setChecked(False)
-            self.action_resize_window.setEnabled(True)
+            self.action_resize_window_to_video.setEnabled(True)
             self.statusBar().show()
             self.menuBar().show()
             self.fullscreen_island.hide()
@@ -2055,7 +2064,7 @@ class AppMainWindow(MainWindow):
         self.move(point)
 
     # 通过视频设备分辨率调整窗口大小
-    def resize_window_with_video_resolution(self) -> None:
+    def resize_window_to_video_resolution(self) -> None:
         if self.status.is_enabled("fullscreen"):
             return
         menu_bar_height = self.menubar.height()
@@ -2193,7 +2202,7 @@ class AppMainWindow(MainWindow):
         if not self.init_video_device():
             return
         if not self.status.is_enabled("fullscreen"):
-            self.resize_window_with_video_resolution()
+            self.resize_window_to_video_resolution()
         if self.status.get_bool("camera"):
             fps = self.video_session.camera.cameraFormat().maxFrameRate()
             self.set_video_widget_enable(True)
@@ -2661,6 +2670,13 @@ class AppMainWindow(MainWindow):
     # 覆盖 showNormal 函数
     def showNormal(self) -> None:
         super().showNormal()
+        # 如果处于全屏状态强制关闭全屏状态
+        if self.status.is_enabled("fullscreen"):
+            self.fullscreen_state_toggle()
+
+    # 覆盖 showMaximized 函数
+    def showMaximized(self) -> None:
+        super().showMaximized()
         # 如果处于全屏状态强制关闭全屏状态
         if self.status.is_enabled("fullscreen"):
             self.fullscreen_state_toggle()
