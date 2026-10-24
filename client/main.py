@@ -713,7 +713,7 @@ class AppMainWindow(MainWindow):
         # controller_check_connection_timer.start()
 
         # 全屏模式设置
-        self.fullscreen_island = FullScreenFloatingIsland(self)
+        self.fullscreen_island = FullScreenFloatingIsland()
         self.init_floating_island()
         self.fullscreen_island.hide()
 
@@ -871,8 +871,8 @@ class AppMainWindow(MainWindow):
     # 初始化全屏时浮岛窗口
     def init_floating_island(self):
         # 设定伸缩时保留的高度
-        self.fullscreen_island.collapsed_height = self.config.ui[
-            "floating_island_collapsed_height"
+        self.fullscreen_island.COLLAPSED_STRIP = self.config.ui[
+            "island_collapsed_strip"
         ]
         popup_menu = self.fullscreen_island.popup_menu
         for action in self.menuBar().actions():
@@ -1019,7 +1019,7 @@ class AppMainWindow(MainWindow):
         )
 
         # island 信号
-        self.fullscreen_island.island_close_signal.connect(lambda: self.close())
+        self.fullscreen_island.close_requested.connect(lambda: self.close())
         pass
 
     def load_config(self) -> None:
@@ -2615,7 +2615,8 @@ class AppMainWindow(MainWindow):
     # 关闭事件
     def handle_close_event(self) -> None:
         # 关闭子窗口
-        self.fullscreen_island.island_close_signal.disconnect()
+        self.fullscreen_island.close_requested.disconnect()
+        self.fullscreen_island.shutdown()
         self.fullscreen_island.close()
         # 断开控制器
         self.disconnect_controller()

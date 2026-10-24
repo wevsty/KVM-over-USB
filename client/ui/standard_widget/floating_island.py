@@ -1,340 +1,738 @@
+# -*- coding: utf-8 -*-
+"""
+支持屏幕四边停靠与自动伸缩的浮岛控件
+"""
+
+import enum
 import sys
-from typing import Optional
+from typing import Optional, cast
 
 from PySide6.QtCore import (
-    Qt,
+    QEvent,
+    QObject,
     QPoint,
     QRect,
     QPropertyAnimation,
     QTimer,
+    Qt,
+    Signal,
 )
-from PySide6.QtGui import QMouseEvent, QAction
+from PySide6.QtGui import (
+    QCloseEvent,
+    QContextMenuEvent,
+    QCursor,
+    QMouseEvent,
+    QAction,
+)
 from PySide6.QtWidgets import (
+    QAbstractButton,
     QApplication,
-    QWidget,
-    QPushButton,
     QHBoxLayout,
     QLabel,
+    QLayout,
     QMenu,
+    QPushButton,
+    QWidget,
 )
+
+# 静态样式表: 直角矩形, 无属性选择器, 不做字符串拼接
+# IslandPanel 限定只作用于顶层窗口, 不会污染子控件
+ISLAND_STYLE = """
+QWidget#IslandPanel {
+    background-color: #1e88e5;
+}
+/* 静止态完全融入背景: 无底色、无边框, 只剩文字 */
+QPushButton, QToolButton {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 3px 6px;
+}
+QPushButton:hover, QToolButton:hover {
+    background-color: rgba(255, 255, 255, 35);
+}
+QPushButton:pressed, QToolButton:pressed {
+    background-color: rgba(255, 255, 255, 55);
+}
+QPushButton:checked, QToolButton:checked, QToolButton:open {
+    background-color: #0d47a1;
+}
+QPushButton::menu-indicator, QToolButton::menu-indicator {
+    subcontrol-origin: padding;
+    subcontrol-position: right center;
+    width: 8px;
+}
+"""
+
+
+class IslandEdge(enum.Enum):
+    TOP = "top"
+    BOTTOM = "bottom"
+    LEFT = "left"
+    RIGHT = "right"
+
+    @property
+    def horizontal(self) -> bool:
+        # True: 沿 x 轴滑动(上/下边);
+        # False: 沿 y 轴滑动(左/右边)
+        return self in (IslandEdge.TOP, IslandEdge.BOTTOM)
 
 
 class FloatingIsland(QWidget):
-    TRIGGER_TOP_MARGIN: int = 5
+    """独立顶层浮岛"""
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    # 关闭浮岛请求
+    close_requested = Signal()
+
+    # ---------- 可覆盖配置(类属性) ----------
+    # 滑动轴长度 / 垂直厚度: 上/下边为 长x厚, 左/右边仍按 长x厚 摆放, 只换贴边方向
+    ISLAND_LENGTH: int = 240
+    PANEL_THICKNESS: int = 40
+    # 0: 收缩后撤下窗口(仍响应贴边); 非 0: 保留一条该厚度的贴边细条
+    COLLAPSED_STRIP: int = 5
+    # 鼠标距停靠边多少像素内自动展开
+    TRIGGER_MARGIN: int = 5
+    # 撤下窗口时 True: 整条边任意位置可唤出; False: 仅浮岛长度范围内
+    TRIGGER_WHOLE_EDGE: bool = True
+    # 轮询周期(ms)
+    POLL_INTERVAL: int = 100
+    # 连续多少个轮询周期未悬停后收起(20 * 100ms = 2s)
+    COLLAPSE_TICKS: int = 20
+    # 伸缩动画时长(ms)
+    ANIM_DURATION: int = 200
+    # 超过该位移才认定为拖拽, 保证子控件点击不被吞掉
+    DRAG_THRESHOLD: int = 4
+    # 换边: 目标边间隙不得超过该值, 且要比当前边近 EDGE_STICK 以上(滞回)
+    CROSSOVER_ZONE: int = 24
+    EDGE_STICK: int = 10
+    # False 表示永远锁在当前边
+    ALLOW_EDGE_SWITCH: bool = True
+    DEFAULT_STYLE: str = ISLAND_STYLE
+
+    def __init__(
+        self,
+        parent: Optional[QWidget] = None,
+        edge: IslandEdge = IslandEdge.TOP,
+    ) -> None:
         super().__init__(parent)
 
-        # 窗口标志
         self.setWindowFlags(
             Qt.WindowType.Tool
             | Qt.WindowType.FramelessWindowHint
             | Qt.WindowType.WindowStaysOnTopHint
         )
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.setObjectName("IslandPanel")
+        # 顶层窗口必须开这个属性, 否则样式表背景不会被绘制
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
-        # 状态变量初始化
-        self.is_pinned: bool = False
-        self.is_dragging: bool = False
-        self.is_expanded: bool = True
-        self.drag_position: QPoint = QPoint()
+        # ---- 运行状态 ----
+        self.edge: IslandEdge = edge
+        self.is_pinned = False
+        self.is_expanded = False
+        self.is_dragging = False
+        # 宿主席位: 任何自动逻辑都不得让浮岛出现
+        self.is_hidden = False
+        # 宿主已授权关闭: 放行 QCloseEvent 且不再上报
+        self.is_closing = False
+        self.drag_offset = QPoint()
+        self.press_global = QPoint()
+        self.pressed_child: Optional[QWidget] = None
+        # 按下瞬间的厚度, 作换边吸附带(不随 self.edge 变化)
+        self.press_thickness = 0
+        self.idle_ticks = 0
 
-        # 尺寸定义
-        self.island_width: int = 240
-        self.expanded_height: int = 40
-        self.collapsed_height: int = (
-            0  # 0 表示完全隐藏，非 0（如 16）表示保留局部小岛
+        # ---- 几何 ----
+        self.screen_geometry = QRect()
+        # 滑动轴上的起点: 上/下边为 x, 左/右边为 y
+        self.slide_pos = 0
+        self.expanded_rect = QRect()
+        self.collapsed_rect = QRect()
+
+        # ---- 面板布局 ----
+        self.panel_layout = QHBoxLayout(self)
+        self.panel_layout.setContentsMargins(12, 4, 12, 4)
+        # 允许窗口收缩到比内容最小尺寸更小, 否则永远收不到细条
+        self.panel_layout.setSizeConstraint(
+            QLayout.SizeConstraint.SetNoConstraint
         )
+        self.setMinimumSize(0, 0)
 
-        # 获取屏幕几何尺寸
-        self.screen_geometry = QApplication.primaryScreen().availableGeometry()
-        start_x: int = (
-            self.screen_geometry.x()
-            + (self.screen_geometry.width() - self.island_width) // 2
-        )
-        self.current_x: int = start_x
+        # 容器必须在 init_widgets() 之前就绪: 子类登记控件时会用到
+        self.internal_widgets: dict[str, QWidget] = {}
+        self._drag_targets: set[QWidget] = set()
+        self.init_widgets()
+        # len(self.internal_widgets.values()) 和 len(self._drag_targets) 应该相等。
+        # 如果不等说明添加 init_widgets 的实现存在问题。
+        assert len(self.internal_widgets.values()) == len(self._drag_targets)
 
-        # 初始几何区域与矩形初始化
-        self.expanded_rect: QRect = QRect()
-        self.collapsed_rect: QRect = QRect()
+        self.setStyleSheet(self.DEFAULT_STYLE)
+
+        # ---- 伸缩动画 ----
+        self.animation = QPropertyAnimation(self, b"geometry")
+        self.animation.setDuration(self.ANIM_DURATION)
+        self.animation.finished.connect(self.on_animation_finished)
+
+        # ---- 唯一轮询定时器: 唤出 / 延时收起 / 丢失 release 兜底 ----
+        self.check_timer = QTimer(self)
+        self.check_timer.setInterval(self.POLL_INTERVAL)
+        self.check_timer.timeout.connect(self.check_mouse_position)
+
+        # ---- 初始定位: 贴边且沿边居中 ----
+        self.refresh_screen_geometry()
+        self.recenter()
         self.update_rects()
         self.setGeometry(self.expanded_rect)
 
-        # 外层主布局（承载内部容器）
-        self.main_layout = QHBoxLayout(self)
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
-
-        # 内部容器 Widget（负责蓝色背景和圆角）
-        self.container = QWidget(self)
-        self.container.setObjectName("IslandContainer")
-        self.main_layout.addWidget(self.container)
-
-        self.internal_widgets: dict[str, QWidget] = {}
-        self.init_widgets()
-
-        # 动画对象：直接对窗口 geometry 进行丝滑动画
-        self.animation: QPropertyAnimation = QPropertyAnimation(
-            self, b"geometry"
-        )
-        self.animation.setDuration(200)
-        self.animation.finished.connect(self.on_animation_finished)
-
-        # 定时监测鼠标位置
-        self.check_timer: QTimer = QTimer(self)
-        self.check_timer.setInterval(100)
-        self.check_timer.timeout.connect(self.check_mouse_position)
-        self.check_timer.start()
-
-        # 延迟缩回定时器 (1.5 秒)
-        self.collapse_delay_timer: QTimer = QTimer(self)
-        self.collapse_delay_timer.setSingleShot(True)
-        self.collapse_delay_timer.setInterval(1500)
-        self.collapse_delay_timer.timeout.connect(self.perform_collapse)
-
+    # ------------------------------------------------------------------
+    # 子类钩子
+    # ------------------------------------------------------------------
     def init_widgets(self) -> None:
         pass
 
-    def update_rects(self) -> None:
-        """更新展开与收缩的目标矩形"""
-        self.expanded_rect = QRect(
-            self.current_x, 0, self.island_width, self.expanded_height
+    def add_internal_widget(self, name: str, widget: QWidget) -> None:
+        """登记内部控件, 同时挂上事件过滤器以支持拖拽"""
+        self.internal_widgets[name] = widget
+        widget.installEventFilter(self)
+        self._drag_targets.add(widget)
+
+    def del_internal_widget(self, name: str) -> None:
+        """移除登记内部控件"""
+        widget = self.internal_widgets.pop(name, None)
+        if widget is not None:
+            widget.removeEventFilter(self)
+            self._drag_targets.discard(widget)
+
+    # ------------------------------------------------------------------
+    # 几何计算
+    # ------------------------------------------------------------------
+    def along_length(self) -> int:
+        # 滑动轴长度: 上/下边取长, 左/右边取厚
+        return (
+            self.ISLAND_LENGTH if self.edge.horizontal else self.PANEL_THICKNESS
         )
-        if self.collapsed_height == 0:
-            # 完全隐藏模式下，收缩高度设为 1，动画结束后再隐藏窗口
-            self.collapsed_rect = QRect(self.current_x, 0, self.island_width, 1)
+
+    def thickness(self) -> int:
+        # 垂直于停靠边的厚度: 上/下边取厚, 左/右边取长
+        return (
+            self.PANEL_THICKNESS if self.edge.horizontal else self.ISLAND_LENGTH
+        )
+
+    def refresh_screen_geometry(self) -> None:
+        """刷新所在屏幕几何(多显示器跟随当前屏)。"""
+        screen = QApplication.screenAt(self.geometry().center())
+        if screen is None:
+            screen = QApplication.primaryScreen()
+
+        # availableGeometry 避开任务栏
+        geo = screen.availableGeometry()
+        if geo != self.screen_geometry:
+            self.screen_geometry = geo
+            self.update_rects()
+
+    def recenter(self) -> None:
+        """沿停靠边居中。"""
+        geo = self.screen_geometry
+        along = self.along_length()
+        if self.edge.horizontal:
+            self.slide_pos = geo.x() + (geo.width() - along) // 2
         else:
-            self.collapsed_rect = QRect(
-                self.current_x, 0, self.island_width, self.collapsed_height
+            self.slide_pos = geo.y() + (geo.height() - along) // 2
+
+    def edge_coord(self) -> int:
+        """停靠边在法向上的坐标(下/右边取屏幕内侧的边界线)。"""
+        geo = self.screen_geometry
+        if self.edge is IslandEdge.TOP:
+            return geo.top()
+        if self.edge is IslandEdge.BOTTOM:
+            return geo.bottom()
+        if self.edge is IslandEdge.LEFT:
+            return geo.left()
+        return geo.right()
+
+    def perpendicular_start(self, extent: int) -> int:
+        """法向上贴合停靠边的起始坐标。"""
+        # 下/右边的外沿在边界线 +1 处, 需反向退掉一个 extent
+        if self.edge in (IslandEdge.BOTTOM, IslandEdge.RIGHT):
+            return self.edge_coord() + 1 - extent
+        return self.edge_coord()
+
+    def update_rects(self) -> None:
+        """按当前停靠边重算展开/收缩矩形(绝对坐标), 并钳位滑动轴。"""
+        geo = self.screen_geometry
+        along = self.along_length()
+        perp = self.thickness()
+        # 收缩态至少 1px, 避免零尺寸窗口
+        strip = max(1, self.COLLAPSED_STRIP)
+
+        if self.edge.horizontal:
+            low, high = geo.left(), geo.right() + 1 - along
+        else:
+            low, high = geo.top(), geo.bottom() + 1 - along
+        self.slide_pos = max(low, min(self.slide_pos, max(low, high)))
+
+        if self.edge.horizontal:
+            self.expanded_rect = QRect(
+                self.slide_pos, self.perpendicular_start(perp), along, perp
             )
+            self.collapsed_rect = QRect(
+                self.slide_pos, self.perpendicular_start(strip), along, strip
+            )
+        else:
+            self.expanded_rect = QRect(
+                self.perpendicular_start(perp), self.slide_pos, perp, along
+            )
+            self.collapsed_rect = QRect(
+                self.perpendicular_start(strip), self.slide_pos, strip, along
+            )
+
+    def is_in_slide_range(self, point: QPoint) -> bool:
+        """鼠标是否落在滑动轴方向的长度区间内。"""
+        axis = point.x() if self.edge.horizontal else point.y()
+        return self.slide_pos <= axis < self.slide_pos + self.along_length()
+
+    def distance_to_edge(self, point: QPoint) -> int:
+        """鼠标到当前停靠边的带方向距离(移出屏幕外为负)。"""
+        axis = point.y() if self.edge.horizontal else point.x()
+        delta = axis - self.edge_coord()
+        # 上/左边向外为正, 下/右边向外为负
+        return (
+            delta if self.edge in (IslandEdge.TOP, IslandEdge.LEFT) else -delta
+        )
+
+    def is_in_trigger_zone(self, point: QPoint) -> bool:
+        """是否处于贴边触发区。"""
+        near_edge = self.distance_to_edge(point) < self.TRIGGER_MARGIN
+
+        # 已撤下窗口时, 整条边都能唤出, 不要求落在长度区间内
+        if self.COLLAPSED_STRIP == 0 and self.TRIGGER_WHOLE_EDGE:
+            return near_edge
+
+        return near_edge and self.is_in_slide_range(point)
+
+    def gaps_to_edges(self, rect: QRect) -> dict[IslandEdge, int]:
+        """矩形到四条边的间隙。"""
+        geo = self.screen_geometry
+        return {
+            IslandEdge.TOP: rect.top() - geo.top(),
+            IslandEdge.BOTTOM: geo.bottom() - rect.bottom(),
+            IslandEdge.LEFT: rect.left() - geo.left(),
+            IslandEdge.RIGHT: geo.right() - rect.right(),
+        }
+
+    def detect_edge(self, rect: QRect) -> IslandEdge:
+        """换边判定: 先脱离按下时那条边的吸附带, 再贴到目标边。"""
+        if not self.ALLOW_EDGE_SWITCH:
+            return self.edge
+
+        gaps = self.gaps_to_edges(rect)
+        # 用按下时的厚度快照, 否则换到左/右边后带变成 240, 永远换不回来
+        if gaps[self.edge] <= self.press_thickness:
+            return self.edge
+
+        nearest = min(gaps, key=gaps.__getitem__)
+        if nearest is self.edge or gaps[nearest] > self.CROSSOVER_ZONE:
+            return self.edge
+
+        # 滞回: 目标边要明显更近才切换, 防止边界处抖动
+        return (
+            nearest
+            if gaps[nearest] + self.EDGE_STICK < gaps[self.edge]
+            else self.edge
+        )
+
+    # ------------------------------------------------------------------
+    # 展开 / 收缩(仅供内部自动逻辑调用)
+    # ------------------------------------------------------------------
+    def expand_island(self, animate: bool = True) -> None:
+        # 隐藏与关闭状态优先
+        if self.is_closing or self.is_hidden:
+            return
+
+        self.update_rects()
+        target = self.expanded_rect
+        self.is_expanded = True
+
+        # 走 QWidget 层唤回撤下的窗口, 不碰宿主语义的 show()
+        if not self.isVisible():
+            super().show()
+        self.set_internal_visible(True)
+
+        if self.geometry() == target:
+            return
+
+        self.animation.stop()
+        if animate:
+            self.animation.setStartValue(self.geometry())
+            self.animation.setEndValue(target)
+            self.animation.start()
+        else:
+            self.setGeometry(target)
+
+    def collapse_island(self) -> None:
+        # 固定/拖拽中/已隐藏/已关闭/有弹窗/鼠标仍在窗口上, 都不收起
+        if (
+            not self.is_expanded
+            or self.is_pinned
+            or self.is_dragging
+            or self.is_hidden
+            or self.is_closing
+            or QApplication.activePopupWidget() is not None
+            or self.geometry().contains(QCursor.pos())
+        ):
+            return
+
+        self.is_expanded = False
+        self.idle_ticks = 0
+        self.update_rects()
+        # 先藏控件, 细条里只剩纯色底, 不会被按钮撑出裁切痕迹
+        self.set_internal_visible(False)
+
+        self.animation.stop()
+        self.animation.setStartValue(self.geometry())
+        self.animation.setEndValue(self.collapsed_rect)
+        self.animation.start()
+
+    def on_animation_finished(self) -> None:
+        # 收缩到位且不留细条时整体撤下窗口
+        # 用 setVisible(False) 而非 hide(): 后者会停掉 check_timer, 贴边就唤不回来了
+        if self.COLLAPSED_STRIP == 0 and not (
+            self.is_expanded or self.is_dragging or self.is_hidden
+        ):
+            self.setVisible(False)
+
+    def set_internal_visible(self, visible: bool) -> None:
+        for widget in self.internal_widgets.values():
+            widget.setVisible(visible)
+
+    # ------------------------------------------------------------------
+    # 鼠标监测(唯一轮询入口)
+    # ------------------------------------------------------------------
+    def check_mouse_position(self) -> None:
+        # 拖拽中只做兜底: 左键已松开却仍在拖拽, 说明 release 事件丢了
+        if self.is_dragging:
+            if not (QApplication.mouseButtons() & Qt.MouseButton.LeftButton):
+                self._end_drag()
+            return
+
+        if self.is_pinned or QApplication.activePopupWidget() is not None:
+            return
+
+        point = QCursor.pos()
+        hovering = self.isVisible() and self.geometry().contains(point)
+        if self.is_in_trigger_zone(point) or hovering:
+            self.idle_ticks = 0
+            self.expand_island()
+            return
+
+        if not (self.isVisible() and self.is_expanded):
+            return
+
+        self.idle_ticks += 1
+        if self.idle_ticks >= self.COLLAPSE_TICKS:
+            self.collapse_island()
+
+    # ------------------------------------------------------------------
+    # 拖拽支持
+    # ------------------------------------------------------------------
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
+        """把子控件上的鼠标事件转成浮岛拖拽, 同时保留正常点击。"""
+        # QMouseEvent 覆盖 press/move/release/dblclick, wheel/hover 不会误入
+        if obj not in self._drag_targets or not isinstance(event, QMouseEvent):
+            return super().eventFilter(obj, event)
+
+        event_type = event.type()
+        is_left = event.button() == Qt.MouseButton.LeftButton
+
+        if event_type == QEvent.Type.MouseButtonPress and is_left:
+            self.pressed_child = cast(QWidget, obj)
+            self._handle_press(event.globalPosition().toPoint())
+            # 放行, 让按钮维持自身的按下/悬停状态
+            return False
+
+        if event_type == QEvent.Type.MouseMove:
+            self._handle_move(event.globalPosition().toPoint(), event.buttons())
+            return False
+
+        if event_type == QEvent.Type.MouseButtonRelease and is_left:
+            # 拖拽过就吞掉本次释放, 纯点击原样放行给按钮
+            return self._end_drag()
+
+        if event_type == QEvent.Type.MouseButtonDblClick and is_left:
+            return self.is_dragging
+
+        return super().eventFilter(obj, event)
+
+    def _handle_press(self, global_pos: QPoint) -> None:
+        """按下: 先展开面板再算抓取点, 四边坐标系才一致。"""
+        self.press_global = global_pos
+        self.press_thickness = self.thickness()
+        self.idle_ticks = 0
+
+        self.expand_island(animate=False)
+        self.drag_offset = global_pos - self.pos()
+        if not self.is_closing:
+            self.check_timer.start()
+
+    def _handle_move(self, global_pos: QPoint, buttons: Qt.MouseButton) -> None:
+        """移动: 未过阈值视为点击, 过阈值才升级为拖拽。"""
+        if not (buttons & Qt.MouseButton.LeftButton):
+            if self.is_dragging:
+                self._end_drag()
+            return
+
+        if not self.is_dragging:
+            delta = global_pos - self.press_global
+            if max(abs(delta.x()), abs(delta.y())) < self.DRAG_THRESHOLD:
+                return
+            self._begin_drag()
+
+        self.refresh_screen_geometry()
+        top_left = global_pos - self.drag_offset
+        # 拖拽期间宽高恒定, 用配置尺寸构造虚拟矩形即可
+        free = QRect(
+            top_left.x(), top_left.y(), self.ISLAND_LENGTH, self.PANEL_THICKNESS
+        )
+
+        candidate = self.detect_edge(free)
+        if candidate is not self.edge:
+            self.edge = candidate
+            # 换边重置抓取点: 主轴保持连续, 法向交给贴边逻辑
+            half_perp = self.thickness() // 2
+            if candidate.horizontal:
+                self.drag_offset = QPoint(self.drag_offset.x(), half_perp)
+            else:
+                self.drag_offset = QPoint(half_perp, self.drag_offset.y())
+
+        # 只改滑动轴坐标, 宽高恒定 -> 控件位置与比例不受影响
+        self.slide_pos = free.x() if self.edge.horizontal else free.y()
+        self.update_rects()
+
+        self.animation.stop()
+        self.setGeometry(self.expanded_rect)
+
+    def _begin_drag(self) -> None:
+        self.is_dragging = True
+
+        child = self.pressed_child
+        if isinstance(child, QAbstractButton):
+            # 释放事件会被吞掉, 手动清按下态, 否则按钮卡在按下外观
+            child.setDown(False)
+
+        # 从菜单按钮起拖时, 顺手关掉已弹出的菜单
+        popup = QApplication.activePopupWidget()
+        if popup is not None:
+            popup.hide()
+
+    def _end_drag(self) -> bool:
+        """结束拖拽: 幂等, 可从过滤器/窗口事件/轮询兜底任意路径调用。"""
+        was_dragging = self.is_dragging
+        self.is_dragging = False
+        self.pressed_child = None
+
+        if was_dragging:
+            self.refresh_screen_geometry()
+            self.update_rects()
+            self.setGeometry(self.expanded_rect)
+
+        # 不补 singleShot: 常驻 check_timer 最多一个周期后自然发现鼠标已离开
+        if not (self.is_pinned or self.is_hidden or self.is_closing):
+            self.idle_ticks = 0
+            self.check_timer.start()
+
+        return was_dragging
+
+    # ------------------------------------------------------------------
+    # 运行时收尾
+    # ------------------------------------------------------------------
+    def _teardown_runtime(self) -> None:
+        """停掉所有运行时活动(动画/轮询/拖拽态), 幂等。"""
+        self.animation.stop()
+        self.check_timer.stop()
+        self.is_dragging = False
+        self.pressed_child = None
+        self.idle_ticks = 0
+
+    # ------------------------------------------------------------------
+    # 对外 API
+    # ------------------------------------------------------------------
+    def dock_to(self, edge: IslandEdge, animate: bool = True) -> None:
+        """主动停靠到指定边(右键菜单调用, 比拖拽换边更确定)。"""
+        if self.is_closing:
+            return
+
+        axis_changed = self.edge.horizontal != edge.horizontal
+        self.edge = edge
+        # 先刷新屏幕几何, 否则 recenter() 会按过期范围居中
+        self.refresh_screen_geometry()
+        if axis_changed:
+            self.recenter()
+
+        self.update_rects()
+        self.animation.stop()
+        # 宿主收着时只更新几何与停靠边, 不擅自把窗口亮出来
+        self.expand_island(animate=animate)
 
     def toggle_pin(self, checked: bool) -> None:
         self.is_pinned = checked
         if self.is_pinned:
-            self.collapse_delay_timer.stop()
+            self.idle_ticks = 0
             self.expand_island()
-
-    def check_mouse_position(self) -> None:
-        # 有菜单弹出或处于钉住/拖动状态时，不进行收缩检测
-        if (
-            QApplication.activePopupWidget() is not None
-            or self.is_pinned
-            or self.is_dragging
-        ):
             return
 
-        global_pos = self.cursor().pos()
-        is_hovering_island: bool = (
-            self.isVisible() and self.geometry().contains(global_pos)
-        )
+        # 取消固定必须把轮询接回来, 否则自动收起与拖拽兜底都失效
+        if not self.is_hidden and not self.is_closing:
+            self.idle_ticks = 0
+            self.check_timer.start()
 
-        should_expand: bool
-        if self.collapsed_height == 0:
-            is_at_screen_top: bool = global_pos.y() < self.TRIGGER_TOP_MARGIN
-            should_expand = is_at_screen_top or is_hovering_island
-        else:
-            is_at_island_top: bool = (
-                global_pos.y() <= self.collapsed_height
-                and self.current_x
-                <= global_pos.x()
-                <= self.current_x + self.island_width
-            )
-            should_expand = is_at_island_top or is_hovering_island
+    def shutdown(self) -> None:
+        """
+        已决定退出时调用。
+        调用后窗口停止全部自动交互，保持静默状态。
+        如果需要关闭窗口请手动调用 close()
+        """
+        if self.is_closing:
+            return
+        self._teardown_runtime()
+        self.is_closing = True
 
-        if should_expand:
-            self.collapse_delay_timer.stop()
-            self.expand_island()
-        else:
-            if (
-                self.isVisible()
-                and self.is_expanded
-                and not self.collapse_delay_timer.isActive()
-            ):
-                self.collapse_delay_timer.start()
-
-    def perform_collapse(self) -> None:
-        if QApplication.activePopupWidget() is not None:
+    # ------------------------------------------------------------------
+    # 事件
+    # ------------------------------------------------------------------
+    def closeEvent(self, event: QCloseEvent) -> None:
+        if self.is_closing:
+            super().closeEvent(event)
             return
 
-        global_pos = self.cursor().pos()
-        if not self.is_pinned and not self.geometry().contains(global_pos):
-            if (
-                self.collapsed_height == 0
-                and global_pos.y() < self.TRIGGER_TOP_MARGIN
-                and self.current_x
-                <= global_pos.x()
-                <= self.current_x + self.island_width
-            ):
-                return
-            self.collapse_island()
-
-    def expand_island(self) -> None:
-        if self.is_expanded and self.isVisible():
-            return
-        self.is_expanded = True
-        self.update_rects()
-
-        if not self.isVisible():
-            super().show()
-
-        # 展开前先显示内部控件，让布局管理器参与尺寸恢复
-        self.show_internal_widgets()
-        self.animation.stop()
-        self.animation.setStartValue(self.geometry())
-        self.animation.setEndValue(self.expanded_rect)
-        self.animation.start()
-
-    def collapse_island(self) -> None:
-        if not self.is_expanded:
-            return
-        self.is_expanded = False
-        self.update_rects()
-
-        if (
-            not self.geometry().contains(self.cursor().pos())
-            and not self.is_dragging
-        ):
-            # 收缩开始时立即隐藏内部控件，解除布局对最小高度的限制
-            self.hide_internal_widgets()
-
-            self.animation.stop()
-            self.animation.setStartValue(self.geometry())
-            self.animation.setEndValue(self.collapsed_rect)
-            self.animation.start()
-
-    def on_animation_finished(self) -> None:
-        """动画播放完毕后的精细化状态处理"""
-        if not self.is_expanded:
-            if self.collapsed_height == 0:
-                super().hide()
-
-    def hide_internal_widgets(self) -> None:
-        for w in self.internal_widgets.values():
-            w.hide()
-
-    def show_internal_widgets(self) -> None:
-        for w in self.internal_widgets.values():
-            w.show()
+        event.ignore()
+        self.close_requested.emit()
 
     def hide(self) -> None:
+        self.is_hidden = True
         self.is_expanded = False
-        self.check_timer.stop()
-        self.collapse_delay_timer.stop()
+        # 动画不停的话 finished 回调会在隐藏期间继续搬动窗口
+        self._teardown_runtime()
         super().hide()
 
     def show(self) -> None:
+        if self.is_closing:
+            return
+
+        self.is_hidden = False
+        self.refresh_screen_geometry()
+        # 只钳位不重新居中, 否则 hide/show 往返会抹掉用户拖好的位置
+        self.update_rects()
         super().show()
         self.is_expanded = True
-        self.update_rects()
+        self.setGeometry(self.expanded_rect)
+        self.set_internal_visible(True)
+        self.press_thickness = self.thickness()
+        self.idle_ticks = 0
         if not self.is_pinned:
             self.check_timer.start()
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.is_dragging = True
-            self.check_timer.stop()
-            self.collapse_delay_timer.stop()
-            self.expand_island()
-            self.drag_position = event.globalPosition().toPoint() - self.pos()
-            event.accept()
+        if event.button() != Qt.MouseButton.LeftButton:
+            super().mousePressEvent(event)
+            return
+        self.pressed_child = None
+        self._handle_press(event.globalPosition().toPoint())
+        event.accept()
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        if self.is_dragging and event.buttons() & Qt.MouseButton.LeftButton:
-            new_top_left = event.globalPosition().toPoint() - self.drag_position
-            target_x: int = new_top_left.x()
-
-            min_x: int = self.screen_geometry.left()
-            max_x: int = self.screen_geometry.right() - self.island_width
-            self.current_x = max(min_x, min(target_x, max_x))
-
-            self.update_rects()
-            self.move(self.current_x, self.y())
-            event.accept()
+        self._handle_move(event.globalPosition().toPoint(), event.buttons())
+        event.accept()
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.is_dragging = False
-            self.current_x = self.x()
-            self.update_rects()
-            if not self.is_pinned:
-                self.check_timer.start()
-            event.accept()
+        if event.button() != Qt.MouseButton.LeftButton:
+            super().mouseReleaseEvent(event)
+            return
+        # 与过滤器共用收尾, _end_drag 幂等
+        self._end_drag()
+        event.accept()
+
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:
+        # 每次右键重建菜单: 切换语言后无需额外处理
+        menu = QMenu(self)
+        dock_menu = menu.addMenu(self.tr("Dock To"))
+
+        for edge, title in (
+            (IslandEdge.TOP, self.tr("Top")),
+            (IslandEdge.BOTTOM, self.tr("Bottom")),
+            (IslandEdge.LEFT, self.tr("Left")),
+            (IslandEdge.RIGHT, self.tr("Right")),
+        ):
+            action: QAction = dock_menu.addAction(title)
+            action.setCheckable(True)
+            action.setChecked(edge is self.edge)
+            action.triggered.connect(
+                lambda checked=False, target=edge: self.dock_to(target)
+            )
+
+        menu.addSeparator()
+        pin_action: QAction = menu.addAction(self.tr("Pin"))
+        pin_action.setCheckable(True)
+        pin_action.setChecked(self.is_pinned)
+        pin_action.toggled.connect(self.toggle_pin)
+
+        menu.addSeparator()
+        quit_action: QAction = menu.addAction(self.tr("Quit"))
+        quit_action.triggered.connect(self.close)
+
+        menu.exec(event.globalPos())
+        # 菜单每次新建, 用完立即回收, 否则反复右键会不断堆积子对象
+        menu.deleteLater()
 
 
 class ExampleFloatingIsland(FloatingIsland):
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(
+        self,
+        parent: Optional[QWidget] = None,
+        edge: IslandEdge = IslandEdge.TOP,
+    ) -> None:
+        # 类型声明: 实例在 init_widgets() 中创建
         self.pin_btn: QPushButton
-        self.label: QLabel
-        self.action_btn: QPushButton
-
-        super().__init__(parent)
+        super().__init__(parent, edge)
 
     def init_widgets(self) -> None:
-        # 使用布局管理内部控件
-        layout = QHBoxLayout(self.container)
-        layout.setContentsMargins(12, 4, 12, 4)
-
-        # Pin 固定按钮
-        self.pin_btn = QPushButton("Pin", self.container)
+        # 布局方向与停靠边无关, 换边不重排
+        self.pin_btn = QPushButton(self.tr("Pin"), self)
         self.pin_btn.setCheckable(True)
         self.pin_btn.clicked.connect(self.toggle_pin)
-        layout.addWidget(self.pin_btn)
-        self.internal_widgets["pin_btn"] = self.pin_btn
+        self.panel_layout.addWidget(self.pin_btn)
+        self.add_internal_widget("pin_btn", self.pin_btn)
 
-        # 状态提示标签
-        self.label = QLabel("Island", self.container)
-        self.label.setStyleSheet(
+        label = QLabel(self.tr("Island"), self)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label.setStyleSheet(
             "color: white; font-weight: bold; background: transparent;"
         )
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.label)
-        self.internal_widgets["label"] = self.label
+        self.panel_layout.addWidget(label)
+        self.add_internal_widget("label", label)
 
-        # 示例操作按钮（带 QMenu 菜单测试）
-        self.action_btn = QPushButton("Menu", self.container)
-        menu = QMenu(self.action_btn)
-        menu.addAction(QAction("Option 1", menu))
-        menu.addAction(QAction("Option 2", menu))
-        self.action_btn.setMenu(menu)
-        layout.addWidget(self.action_btn)
-        self.internal_widgets["action_menu"] = self.action_btn
-
-        # 统一圆角样式 (8px)
-        self.setStyleSheet("""
-            QWidget#IslandContainer {
-                background-color: #1e88e5;
-                border-bottom-left-radius: 8px;
-                border-bottom-right-radius: 8px;
-            }
-            QPushButton {
-                background-color: rgba(255, 255, 255, 40);
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 3px 6px;
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 80);
-            }
-            QPushButton:checked {
-                background-color: #0d47a1;
-            }
-        """)
+        action_btn = QPushButton(self.tr("Menu"), self)
+        menu = QMenu(action_btn)
+        menu.addAction(self.tr("Option 1"))
+        menu.addAction(self.tr("Option 2"))
+        action_btn.setMenu(menu)
+        self.panel_layout.addWidget(action_btn)
+        self.add_internal_widget("action_menu", action_btn)
 
     def toggle_pin(self, checked: bool) -> None:
-        self.is_pinned = checked
-        if self.is_pinned:
-            self.collapse_delay_timer.stop()
-            self.expand_island()
-        else:
-            pass
+        # 菜单与按钮共用同一状态: 任一入口都要把按钮外观同步过来
+        super().toggle_pin(checked)
+        self.pin_btn.setChecked(checked)
 
 
 def example_main() -> None:
     app = QApplication(sys.argv)
 
-    island = ExampleFloatingIsland()
-    # 测试非 0 的局部保留高度
-    # island.collapsed_height = 5
+    # 不传 parent: 浮岛必须是独立顶层窗口
+    # COLLAPSED_STRIP 沿用默认值 5: 收起后留一条贴边细条
+    # 若要彻底撤下窗口, 在实例上设 island.COLLAPSED_STRIP = 0
+    island = ExampleFloatingIsland(edge=IslandEdge.TOP)
+    # island.COLLAPSED_STRIP = 0
+    # 独立运行没有宿主, 把关闭请求直接接到事件循环退出上
+    island.close_requested.connect(app.quit)
     island.show()
 
     sys.exit(app.exec())

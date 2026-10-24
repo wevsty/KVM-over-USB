@@ -59,7 +59,7 @@ ui:
   tips_empty_video_device: true
   window_auto_maximized: false
   window_auto_to_center: true
-  floating_island_collapsed_height: 5
+  island_collapsed_strip: 5
 video:
   device: empty_device
   format: NONE
