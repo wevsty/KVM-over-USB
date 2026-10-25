@@ -31,8 +31,9 @@ class FullScreenFloatingIsland(FloatingIsland):
         )
         super().__init__(parent)
         self.popup_menu = QMenu(self)
+        self.retranslate()
 
-    def init_widgets(self) -> None:
+    def init_user_widgets(self) -> None:
         # Pin 固定按钮
         pin_button = QToolButton(self)
         pin_button.setIcon(self.icon_pin_off)
@@ -41,17 +42,17 @@ class FullScreenFloatingIsland(FloatingIsland):
         pin_button.setCheckable(True)
         pin_button.clicked.connect(self.toggle_pin)
         self.panel_layout.addWidget(pin_button, 1)
-        self.add_internal_widget("pin_button", pin_button)
+        self.register_user_widget("pin_button", pin_button)
 
         # 状态提示标签
-        label = QLabel(self.tr("Console"), self)
+        label = QLabel("Console", self)
         label.setStyleSheet(
             "color: white; font-weight: bold; background: transparent;"
         )
         # 设置上下左右完全居中
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.panel_layout.addWidget(label, 2)
-        self.add_internal_widget("label", label)
+        self.register_user_widget("label", label)
 
         # 示例操作按钮
         menu_button = QToolButton(self)
@@ -65,19 +66,24 @@ class FullScreenFloatingIsland(FloatingIsland):
             lambda: self.popup_menu.exec(QCursor().pos())
         )
         self.panel_layout.addWidget(menu_button, 1)
-        self.add_internal_widget("menu_button", menu_button)
+        self.register_user_widget("menu_button", menu_button)
 
     def toggle_pin(self, checked: bool) -> None:
         """切换 Pin 状态"""
         super().toggle_pin(checked)
         pin_button: QToolButton = typing.cast(
-            QToolButton, self.internal_widgets["pin_button"]
+            QToolButton, self.user_widgets["pin_button"]
         )
         if self.is_pinned:
             pin_button.setIcon(self.icon_pin)
         else:
             pin_button.setIcon(self.icon_pin_off)
         pass
+
+    def retranslate(self) -> None:
+        super().retranslate()
+        label = typing.cast(QLabel, self.user_widgets["label"])
+        label.setText(self.tr("Console"))
 
 
 def example_main() -> None:

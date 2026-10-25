@@ -47,14 +47,14 @@
 <context>
     <name>AppMainWindow</name>
     <message>
-        <location filename="../main.py" line="1043"/>
-        <location filename="../main.py" line="1496"/>
-        <location filename="../main.py" line="1579"/>
+        <location filename="../main.py" line="1044"/>
+        <location filename="../main.py" line="1501"/>
+        <location filename="../main.py" line="1584"/>
         <source>Error</source>
         <translation>錯誤</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1037"/>
+        <location filename="../main.py" line="1038"/>
         <source>Import config error:
 The configuration file version does not match expected.
 Please delete the existing configuration file.
@@ -65,218 +65,218 @@ Please delete the existing configuration file.
 </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1056"/>
+        <location filename="../main.py" line="1057"/>
         <source>Enable</source>
         <translation>啟用</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1058"/>
+        <location filename="../main.py" line="1059"/>
         <source>Disable</source>
         <translation>停用</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1152"/>
-        <location filename="../main.py" line="1615"/>
-        <location filename="../main.py" line="2332"/>
+        <location filename="../main.py" line="1157"/>
+        <location filename="../main.py" line="1620"/>
+        <location filename="../main.py" line="2337"/>
         <source>Tip</source>
         <translation>提示</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1153"/>
+        <location filename="../main.py" line="1158"/>
         <source>Press Ctrl+Alt+F11 to toggle fullscreen.
 </source>
         <translation>按 Ctrl+Alt+F11 切換全螢幕。
 </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1155"/>
+        <location filename="../main.py" line="1160"/>
         <source>Or cursor over the top of the screen to pop up the floating island.
 </source>
         <translation>或將遊標移至螢幕頂部以彈出​​懸浮島。
 </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1157"/>
-        <location filename="../main.py" line="1618"/>
-        <location filename="../main.py" line="2337"/>
+        <location filename="../main.py" line="1162"/>
+        <location filename="../main.py" line="1623"/>
+        <location filename="../main.py" line="2342"/>
         <source>Don&apos;t show again.</source>
         <translation>不再顯示。</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1198"/>
+        <location filename="../main.py" line="1203"/>
         <source>Window topmost: </source>
         <translation>視窗最上層： </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1217"/>
+        <location filename="../main.py" line="1222"/>
         <source>Keep aspect ratio: </source>
         <translation>保持長寬比： </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1226"/>
+        <location filename="../main.py" line="1231"/>
         <source>Image Save</source>
         <translation>圖片儲存</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1234"/>
+        <location filename="../main.py" line="1239"/>
         <source>Image saved to</source>
         <translation>圖片已儲存至</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1257"/>
+        <location filename="../main.py" line="1262"/>
         <source>Record video</source>
         <translation>錄製影片</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1260"/>
+        <location filename="../main.py" line="1265"/>
         <source>Video recording stopped</source>
         <translation>影片錄製已停止</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1265"/>
+        <location filename="../main.py" line="1270"/>
         <source>Video save</source>
         <translation>影片儲存</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1279"/>
+        <location filename="../main.py" line="1284"/>
         <source>Stop recording</source>
         <translation>停止錄製</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1282"/>
+        <location filename="../main.py" line="1287"/>
         <source>Video recording started</source>
         <translation>影片錄製已開始</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1449"/>
+        <location filename="../main.py" line="1454"/>
         <source>Quick paste: </source>
         <translation>快速貼上： </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1458"/>
+        <location filename="../main.py" line="1463"/>
         <source>Clipboard is empty</source>
         <translation>剪貼簿為空</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1461"/>
+        <location filename="../main.py" line="1466"/>
         <source>Quick pasting</source>
         <translation>快速貼上</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1461"/>
+        <location filename="../main.py" line="1466"/>
         <source>characters</source>
         <translation>字元</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1497"/>
+        <location filename="../main.py" line="1502"/>
         <source>System hook only support windows.</source>
         <translation>系統勾選僅支援 Windows。</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1506"/>
+        <location filename="../main.py" line="1511"/>
         <source>System hook: </source>
         <translation>系統勾選： </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1533"/>
+        <location filename="../main.py" line="1538"/>
         <source>Mouse capture on (Press Ctrl+Alt+F12 to release)</source>
         <translation>滑鼠捕捉中（按 Ctrl+Alt+F12 釋放）</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1539"/>
+        <location filename="../main.py" line="1544"/>
         <source>Mouse released</source>
         <translation>滑鼠已釋放</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1547"/>
+        <location filename="../main.py" line="1552"/>
         <source>Relative mouse: </source>
         <translation>相對滑鼠： </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1556"/>
+        <location filename="../main.py" line="1561"/>
         <source>Hide cursor when capture mouse: </source>
         <translation>捕捉滑鼠時隱藏游標： </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1566"/>
+        <location filename="../main.py" line="1571"/>
         <source>Correction cursor: </source>
         <translation>校正游標： </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1580"/>
+        <location filename="../main.py" line="1585"/>
         <source>This tool only support windows</source>
         <translation>此工具僅支援 Windows</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1616"/>
+        <location filename="../main.py" line="1621"/>
         <source>The current operating system is not Windows.
 </source>
         <translation>目前作業系統不是 Windows。
 </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1617"/>
+        <location filename="../main.py" line="1622"/>
         <source>Some features will be unavailable.
 </source>
         <translation>某些功能將無法使用。
 </translation>
     </message>
     <message>
-        <location filename="../main.py" line="1723"/>
+        <location filename="../main.py" line="1728"/>
         <source>Controller connected</source>
         <translation>控制器已連接</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1728"/>
+        <location filename="../main.py" line="1733"/>
         <source>Controller connect failure</source>
         <translation>控制器連接失敗</translation>
     </message>
     <message>
-        <location filename="../main.py" line="1921"/>
+        <location filename="../main.py" line="1926"/>
         <source>Press Ctrl+Alt+F12 to release mouse</source>
         <translation>按 Ctrl+Alt+F12 釋放滑鼠</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2148"/>
+        <location filename="../main.py" line="2153"/>
         <source>Video Device Error</source>
         <translation>視訊裝置錯誤</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2171"/>
+        <location filename="../main.py" line="2176"/>
         <source>Video device start failed</source>
         <translation>視訊裝置啟動失敗</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2193"/>
+        <location filename="../main.py" line="2198"/>
         <source>Video initialization error</source>
         <translation>視訊初始化錯誤</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2334"/>
+        <location filename="../main.py" line="2339"/>
         <source>Select empty_device means that no video output will be used.
 </source>
         <translation>選擇 empty_device 表示不使用任何視訊輸出。
 </translation>
     </message>
     <message>
-        <location filename="../main.py" line="2336"/>
+        <location filename="../main.py" line="2341"/>
         <source>Used only for input operations.
 </source>
         <translation>僅用於輸入操作。
 </translation>
     </message>
     <message>
-        <location filename="../main.py" line="2360"/>
+        <location filename="../main.py" line="2365"/>
         <source>Video Error</source>
         <translation>視訊錯誤</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2361"/>
+        <location filename="../main.py" line="2366"/>
         <source>Invalid device selected</source>
         <translation>選擇的裝置無效</translation>
     </message>
     <message>
-        <location filename="../main.py" line="2520"/>
+        <location filename="../main.py" line="2525"/>
         <source>Mouse capture off</source>
         <translation>滑鼠捕捉已關閉</translation>
     </message>
@@ -350,9 +350,47 @@ Please delete the existing configuration file.
     </message>
 </context>
 <context>
+    <name>FloatingIsland</name>
+    <message>
+        <location filename="../ui/standard_widget/floating_island.py" line="719"/>
+        <source>Dock to</source>
+        <translation>停靠至</translation>
+    </message>
+    <message>
+        <location filename="../ui/standard_widget/floating_island.py" line="721"/>
+        <source>Top</source>
+        <translation>頂部</translation>
+    </message>
+    <message>
+        <location filename="../ui/standard_widget/floating_island.py" line="722"/>
+        <source>Bottom</source>
+        <translation>底部</translation>
+    </message>
+    <message>
+        <location filename="../ui/standard_widget/floating_island.py" line="723"/>
+        <source>Left</source>
+        <translation>左邊</translation>
+    </message>
+    <message>
+        <location filename="../ui/standard_widget/floating_island.py" line="724"/>
+        <source>Right</source>
+        <translation>右邊</translation>
+    </message>
+    <message>
+        <location filename="../ui/standard_widget/floating_island.py" line="728"/>
+        <source>Pin</source>
+        <translation>釘住</translation>
+    </message>
+    <message>
+        <location filename="../ui/standard_widget/floating_island.py" line="729"/>
+        <source>Quit</source>
+        <translation>退出</translation>
+    </message>
+</context>
+<context>
     <name>FullScreenFloatingIsland</name>
     <message>
-        <location filename="../ui/ui_widget/full_screen_floating_island.py" line="54"/>
+        <location filename="../ui/ui_widget/full_screen_floating_island.py" line="85"/>
         <source>Console</source>
         <translation>控制台</translation>
     </message>

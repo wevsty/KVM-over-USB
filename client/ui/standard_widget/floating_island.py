@@ -16,6 +16,7 @@ from PySide6.QtCore import (
     QTimer,
     Qt,
     Signal,
+    QSignalBlocker,
 )
 from PySide6.QtGui import (
     QCloseEvent,
@@ -109,11 +110,19 @@ class FloatingIsland(QWidget):
     ALLOW_EDGE_SWITCH: bool = True
     DEFAULT_STYLE: str = ISLAND_STYLE
 
+    EDGE_ACTION_IDS: dict[IslandEdge, str] = {
+        IslandEdge.TOP: "action_dock_top",
+        IslandEdge.BOTTOM: "action_dock_bottom",
+        IslandEdge.LEFT: "action_dock_left",
+        IslandEdge.RIGHT: "action_dock_right",
+    }
+
     def __init__(
         self,
         parent: Optional[QWidget] = None,
         edge: IslandEdge = IslandEdge.TOP,
     ) -> None:
+        self._initialized = False
         super().__init__(parent)
 
         self.setWindowFlags(
@@ -151,20 +160,24 @@ class FloatingIsland(QWidget):
         # ---- 面板布局 ----
         self.panel_layout = QHBoxLayout(self)
         self.panel_layout.setContentsMargins(12, 4, 12, 4)
-        # 允许窗口收缩到比内容最小尺寸更小, 否则永远收不到细条
+        # 允许窗口收缩到比内容最小尺寸更小
+        # 否则永远收不到细条
         self.panel_layout.setSizeConstraint(
             QLayout.SizeConstraint.SetNoConstraint
         )
         self.setMinimumSize(0, 0)
 
-        # 容器必须在 init_widgets() 之前就绪: 子类登记控件时会用到
-        self.internal_widgets: dict[str, QWidget] = {}
+        # 登记控件
+        self.user_widgets: dict[str, QWidget] = {}
         self._drag_targets: set[QWidget] = set()
-        self.init_widgets()
-        # len(self.internal_widgets.values()) 和 len(self._drag_targets) 应该相等。
-        # 如果不等说明添加 init_widgets 的实现存在问题。
-        assert len(self.internal_widgets.values()) == len(self._drag_targets)
-
+        self.init_user_widgets()
+        # len(self.user_widgets.values()) 和 len(self._drag_targets) 应该相等。
+        # 如果不等说明添加 init_user_widgets 的实现存在问题。
+        assert len(self.user_widgets.values()) == len(self._drag_targets)
+        self.context_menu: QMenu
+        self.context_menu_dicts: dict[str, QMenu] = {}
+        self.context_menu_actions: dict[str, QAction] = {}
+        self.init_context_menu()
         self.setStyleSheet(self.DEFAULT_STYLE)
 
         # ---- 伸缩动画 ----
@@ -182,22 +195,66 @@ class FloatingIsland(QWidget):
         self.recenter()
         self.update_rects()
         self.setGeometry(self.expanded_rect)
+        self._initialized = True
 
     # ------------------------------------------------------------------
-    # 子类钩子
+    # 子类初始化函数
     # ------------------------------------------------------------------
-    def init_widgets(self) -> None:
+    def init_user_widgets(self) -> None:
         pass
 
-    def add_internal_widget(self, name: str, widget: QWidget) -> None:
-        """登记内部控件, 同时挂上事件过滤器以支持拖拽"""
-        self.internal_widgets[name] = widget
+    def init_context_menu(self) -> None:
+        self.context_menu = QMenu(self)
+        dock_menu = self.context_menu.addMenu("Dock to")
+        self.context_menu_dicts["dock_menu"] = dock_menu
+
+        for edge_enum, action_id in self.EDGE_ACTION_IDS.items():
+            action_text = edge_enum.value.capitalize()
+            action: QAction = dock_menu.addAction(action_text)
+            action.setCheckable(True)
+            action.setChecked(edge_enum is self.edge)
+            action.triggered.connect(
+                lambda checked=False, target=edge_enum: self.dock_to(target)
+            )
+            self.context_menu_actions[action_id] = action
+
+        self.context_menu.addSeparator()
+        pin_action: QAction = self.context_menu.addAction("Pin")
+        pin_action.setCheckable(True)
+        pin_action.setChecked(self.is_pinned)
+        pin_action.toggled.connect(self.toggle_pin)
+        self.context_menu_actions["pin_action"] = pin_action
+
+        self.context_menu.addSeparator()
+        quit_action: QAction = self.context_menu.addAction("Quit")
+        quit_action.triggered.connect(self.close)
+        self.context_menu_actions["quit_action"] = quit_action
+
+        # 每次弹出前同步勾选态
+        self.context_menu.aboutToShow.connect(self.sync_context_menu_state)
+
+    def sync_context_menu_state(self) -> None:
+        """把菜单勾选态对齐到当前状态"""
+        pin_action = self.context_menu_actions["pin_action"]
+        with QSignalBlocker(pin_action):
+            pin_action.setChecked(self.is_pinned)
+
+        for edge_enum, action_id in self.EDGE_ACTION_IDS.items():
+            action = self.context_menu_actions[action_id]
+            action.setChecked(edge_enum is self.edge)
+
+    # ------------------------------------------------------------------
+    # 注册用户控件
+    # ------------------------------------------------------------------
+    def register_user_widget(self, name: str, widget: QWidget) -> None:
+        """注册控件挂上事件过滤器以支持拖拽"""
+        self.user_widgets[name] = widget
         widget.installEventFilter(self)
         self._drag_targets.add(widget)
 
-    def del_internal_widget(self, name: str) -> None:
-        """移除登记内部控件"""
-        widget = self.internal_widgets.pop(name, None)
+    def unregister_user_widget(self, name: str) -> None:
+        """移除注册控件"""
+        widget = self.user_widgets.pop(name, None)
         if widget is not None:
             widget.removeEventFilter(self)
             self._drag_targets.discard(widget)
@@ -355,7 +412,7 @@ class FloatingIsland(QWidget):
         # 走 QWidget 层唤回撤下的窗口, 不碰宿主语义的 show()
         if not self.isVisible():
             super().show()
-        self.set_internal_visible(True)
+        self.set_user_widgets_visible(True)
 
         if self.geometry() == target:
             return
@@ -385,7 +442,7 @@ class FloatingIsland(QWidget):
         self.idle_ticks = 0
         self.update_rects()
         # 先藏控件, 细条里只剩纯色底, 不会被按钮撑出裁切痕迹
-        self.set_internal_visible(False)
+        self.set_user_widgets_visible(False)
 
         self.animation.stop()
         self.animation.setStartValue(self.geometry())
@@ -400,8 +457,8 @@ class FloatingIsland(QWidget):
         ):
             self.setVisible(False)
 
-    def set_internal_visible(self, visible: bool) -> None:
-        for widget in self.internal_widgets.values():
+    def set_user_widgets_visible(self, visible: bool) -> None:
+        for widget in self.user_widgets.values():
             widget.setVisible(visible)
 
     # ------------------------------------------------------------------
@@ -624,7 +681,7 @@ class FloatingIsland(QWidget):
         super().show()
         self.is_expanded = True
         self.setGeometry(self.expanded_rect)
-        self.set_internal_visible(True)
+        self.set_user_widgets_visible(True)
         self.press_thickness = self.thickness()
         self.idle_ticks = 0
         if not self.is_pinned:
@@ -651,36 +708,25 @@ class FloatingIsland(QWidget):
         event.accept()
 
     def contextMenuEvent(self, event: QContextMenuEvent) -> None:
-        # 每次右键重建菜单: 切换语言后无需额外处理
-        menu = QMenu(self)
-        dock_menu = menu.addMenu(self.tr("Dock To"))
+        self.context_menu.exec(event.globalPos())
 
-        for edge, title in (
-            (IslandEdge.TOP, self.tr("Top")),
-            (IslandEdge.BOTTOM, self.tr("Bottom")),
-            (IslandEdge.LEFT, self.tr("Left")),
-            (IslandEdge.RIGHT, self.tr("Right")),
-        ):
-            action: QAction = dock_menu.addAction(title)
-            action.setCheckable(True)
-            action.setChecked(edge is self.edge)
-            action.triggered.connect(
-                lambda checked=False, target=edge: self.dock_to(target)
-            )
+    def changeEvent(self, event: QEvent) -> None:
+        if event.type() == QEvent.Type.LanguageChange and self._initialized:
+            QTimer.singleShot(0, self, self.retranslate)
+        super().changeEvent(event)
 
-        menu.addSeparator()
-        pin_action: QAction = menu.addAction(self.tr("Pin"))
-        pin_action.setCheckable(True)
-        pin_action.setChecked(self.is_pinned)
-        pin_action.toggled.connect(self.toggle_pin)
-
-        menu.addSeparator()
-        quit_action: QAction = menu.addAction(self.tr("Quit"))
-        quit_action.triggered.connect(self.close)
-
-        menu.exec(event.globalPos())
-        # 菜单每次新建, 用完立即回收, 否则反复右键会不断堆积子对象
-        menu.deleteLater()
+    def retranslate(self) -> None:
+        self.context_menu_dicts["dock_menu"].setTitle(self.tr("Dock to"))
+        edge_actions_text: dict[str, str] = {
+            self.EDGE_ACTION_IDS[IslandEdge.TOP]: self.tr("Top"),
+            self.EDGE_ACTION_IDS[IslandEdge.BOTTOM]: self.tr("Bottom"),
+            self.EDGE_ACTION_IDS[IslandEdge.LEFT]: self.tr("Left"),
+            self.EDGE_ACTION_IDS[IslandEdge.RIGHT]: self.tr("Right"),
+        }
+        for action_id, text in edge_actions_text.items():
+            self.context_menu_actions[action_id].setText(text)
+        self.context_menu_actions["pin_action"].setText(self.tr("Pin"))
+        self.context_menu_actions["quit_action"].setText(self.tr("Quit"))
 
 
 class ExampleFloatingIsland(FloatingIsland):
@@ -689,33 +735,33 @@ class ExampleFloatingIsland(FloatingIsland):
         parent: Optional[QWidget] = None,
         edge: IslandEdge = IslandEdge.TOP,
     ) -> None:
-        # 类型声明: 实例在 init_widgets() 中创建
+        # 类型声明: 实例在 init_user_widgets() 中创建
         self.pin_btn: QPushButton
         super().__init__(parent, edge)
 
-    def init_widgets(self) -> None:
+    def init_user_widgets(self) -> None:
         # 布局方向与停靠边无关, 换边不重排
-        self.pin_btn = QPushButton(self.tr("Pin"), self)
+        self.pin_btn = QPushButton("Pin", self)
         self.pin_btn.setCheckable(True)
         self.pin_btn.clicked.connect(self.toggle_pin)
         self.panel_layout.addWidget(self.pin_btn)
-        self.add_internal_widget("pin_btn", self.pin_btn)
+        self.register_user_widget("pin_btn", self.pin_btn)
 
-        label = QLabel(self.tr("Island"), self)
+        label = QLabel("Island", self)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setStyleSheet(
             "color: white; font-weight: bold; background: transparent;"
         )
         self.panel_layout.addWidget(label)
-        self.add_internal_widget("label", label)
+        self.register_user_widget("label", label)
 
-        action_btn = QPushButton(self.tr("Menu"), self)
+        action_btn = QPushButton("Menu", self)
         menu = QMenu(action_btn)
-        menu.addAction(self.tr("Option 1"))
-        menu.addAction(self.tr("Option 2"))
+        menu.addAction("Example option 1")
+        menu.addAction("Example option 2")
         action_btn.setMenu(menu)
         self.panel_layout.addWidget(action_btn)
-        self.add_internal_widget("action_menu", action_btn)
+        self.register_user_widget("action_menu", action_btn)
 
     def toggle_pin(self, checked: bool) -> None:
         # 菜单与按钮共用同一状态: 任一入口都要把按钮外观同步过来

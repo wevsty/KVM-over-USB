@@ -612,7 +612,7 @@ class AppMainWindow(MainWindow):
         )
 
         # self.mutex = QMutex()
-        self.child_dialog: list[typing.Any] = []
+        self.available_retranslate: list[typing.Any] = []
         self.threads = QtThreadManager()
         self.timer = QtTimerManager()
         self.source_directory: str = project_source_directory_path()
@@ -641,7 +641,7 @@ class AppMainWindow(MainWindow):
         self.paste_board_dialog = PasteBoardDialog()
         self.settings_dialog = SettingsDialog()
 
-        self.child_dialog.extend(
+        self.available_retranslate.extend(
             [
                 self.about_dialog,
                 self.custom_key_dialog,
@@ -716,6 +716,7 @@ class AppMainWindow(MainWindow):
         self.fullscreen_island = FullScreenFloatingIsland()
         self.init_floating_island()
         self.fullscreen_island.hide()
+        # self.available_retranslate.append(self.fullscreen_island)
 
         # 键盘钩子
         self.hook_manager = None
@@ -1110,9 +1111,13 @@ class AppMainWindow(MainWindow):
 
         # 更新UI
         self.retranslateUi(self)
-        for child in self.child_dialog:
+        for child in self.available_retranslate:
             if hasattr(child, "retranslateUi"):
                 child.retranslateUi(child)
+            elif hasattr(child, "retranslate_ui"):
+                child.retranslateUi(child)
+            elif hasattr(child, "retranslate"):
+                child.retranslate(child)
             else:
                 logger.error("Unknown object type.")
 
