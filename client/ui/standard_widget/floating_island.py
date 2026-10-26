@@ -321,8 +321,8 @@ class FloatingIsland(QWidget):
         若浮岛只在宿主全屏时出现, 应覆写为 screen.geometry(),
         让浮岛贴物理屏幕边缘而不是任务栏边缘。
         """
-        # _anchor 仅为防止 IDE 警告
-        _anchor = self.parentWidget()
+        # _ 仅为防止 IDE 警告
+        _ = self
         return screen.availableGeometry()
 
     def refresh_screen_geometry(
