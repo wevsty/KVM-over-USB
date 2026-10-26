@@ -151,6 +151,9 @@ class FloatingIsland(QWidget):
         self.idle_ticks = 0
 
         # ---- 几何 ----
+        # 锚定窗口: 浮岛应跟随其所在屏幕(默认跟随父窗口, 多显示器场景
+        # 下保证浮岛出现在主窗口所在的显示器上)
+        self.anchor: Optional[QWidget] = parent
         self.screen_geometry = QRect()
         # 滑动轴上的起点: 上/下边为 x, 左/右边为 y
         self.slide_pos = 0
@@ -274,9 +277,21 @@ class FloatingIsland(QWidget):
             self.PANEL_THICKNESS if self.edge.horizontal else self.ISLAND_LENGTH
         )
 
-    def refresh_screen_geometry(self) -> None:
-        """刷新所在屏幕几何(多显示器跟随当前屏)。"""
-        screen = QApplication.screenAt(self.geometry().center())
+    def refresh_screen_geometry(
+        self, ref_point: Optional[QPoint] = None
+    ) -> None:
+        """刷新所在屏幕几何(多显示器跟随当前屏)。
+
+        ref_point 为空时优先用锚定窗口(父窗口)的几何中心定位屏幕,
+        否则回退到浮岛自身几何中心, 保证浮岛出现在主窗口所在显示器。
+        """
+        if ref_point is None:
+            if self.anchor is not None:
+                ref_point = self.anchor.geometry().center()
+            else:
+                ref_point = self.geometry().center()
+
+        screen = QApplication.screenAt(ref_point)
         if screen is None:
             screen = QApplication.primaryScreen()
 
@@ -543,7 +558,7 @@ class FloatingIsland(QWidget):
                 return
             self._begin_drag()
 
-        self.refresh_screen_geometry()
+        self.refresh_screen_geometry(QCursor.pos())
         top_left = global_pos - self.drag_offset
         # 拖拽期间宽高恒定, 用配置尺寸构造虚拟矩形即可
         free = QRect(
@@ -587,7 +602,7 @@ class FloatingIsland(QWidget):
         self.pressed_child = None
 
         if was_dragging:
-            self.refresh_screen_geometry()
+            self.refresh_screen_geometry(QCursor.pos())
             self.update_rects()
             self.setGeometry(self.expanded_rect)
 
