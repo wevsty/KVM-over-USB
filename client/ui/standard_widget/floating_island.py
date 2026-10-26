@@ -309,20 +309,20 @@ class FloatingIsland(QWidget):
         )
 
     def reference_center_point(self) -> typing.Optional[QPoint]:
-        """首次定位的参考点: 优先宿主窗口所在屏幕, 否则返回 None 走默认路径"""
+        """定位参考点: 优先宿主窗口所在屏幕, 否则返回 None"""
         anchor = self.parentWidget()
         # 未显示的窗口几何不可信, 此时宁可退回浮岛自身中心
         if anchor is None or not anchor.isVisible():
             return None
-        anchor.geometry()
-        return anchor.frameGeometry().center()
+        return anchor.geometry().center()
 
-    @staticmethod
-    def screen_bounds(screen: QScreen) -> QRect:
+    def screen_bounds(self, screen: QScreen) -> QRect:
         """停靠基准区域: 默认避开任务栏。
         若浮岛只在宿主全屏时出现, 应覆写为 screen.geometry(),
         让浮岛贴物理屏幕边缘而不是任务栏边缘。
         """
+        # _anchor 仅为防止 IDE 警告
+        _anchor = self.parentWidget()
         return screen.availableGeometry()
 
     def refresh_screen_geometry(

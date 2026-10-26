@@ -33,8 +33,7 @@ class FullScreenFloatingIsland(FloatingIsland):
         self.popup_menu = QMenu(self)
         self.retranslate()
 
-    @staticmethod
-    def screen_bounds(screen: QScreen) -> QRect:
+    def screen_bounds(self, screen: QScreen) -> QRect:
         return screen.geometry()
 
     def init_user_widgets(self) -> None:
