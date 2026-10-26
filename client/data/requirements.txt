@@ -13,7 +13,7 @@ nuitka==4.3.1
 packaging==26.3
 pathspec==1.1.1
 platformdirs==4.12.4
-pych9329==0.1.7
+pych9329==0.1.8
 pycodestyle==2.15.0
 pyflakes==4.0.3
 pyserial==3.5
