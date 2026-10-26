@@ -7,7 +7,9 @@ def is_debugging() -> bool:
         "DEBUGPY_RUNNING",
         "PYTEST_CURRENT_TEST",
         "PYDEVD_USE_FRAME_EVAL",
+        "PYDEVD_LOAD_VALUES_ASYNC",
         "VSCODE_DEBUGGER",
+        "PYCHARM_HOSTED",
     ]
     for flag in debugger_flags:
         if flag in os.environ:
