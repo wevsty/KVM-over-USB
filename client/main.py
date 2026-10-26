@@ -147,7 +147,11 @@ class ControllerEventExecutor(QObject):
                 # 如果下一条命令和上一条命令一样切都为 mouse_absolute_write 则可以安全的跳过指令
                 if command == "mouse_absolute_write":
                     next_command, next_buffer = self.deque.popleft()
-                    if next_command == command:
+                    if (
+                        next_command == command
+                        and next_buffer.button == buffer.button
+                        and next_buffer.wheel == buffer.wheel
+                    ):
                         command = next_command
                         buffer = next_buffer
                         continue
@@ -2445,6 +2449,8 @@ class AppMainWindow(MainWindow):
         self.mouse_buffer.set_button(button_code, button_state)
         if self.status.is_enabled("relative_mode"):
             self.mouse_buffer.clear_point()
+        if project_var.debug_mode:
+            logger.debug(f"mouse send: {str(self.mouse_buffer)}")
         self.controller_command_send(command, self.mouse_buffer.dup())
         self.mouse_buffer.clear_button()
 
