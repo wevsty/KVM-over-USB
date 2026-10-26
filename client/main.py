@@ -72,6 +72,7 @@ from data.keyboard_code_converter import (
 )
 from data.keyboard_key_name_to_hid_code import KEY_NAME_TO_HID_CODE
 from data.keyboard_shift_symbol import SHIFT_SYMBOL
+from data.keyboard_text_to_hid_code import TEXT_TO_HID_CODE
 from keyboard_buffer import (
     KeyboardIndicatorBuffer,
     KeyboardKeyBuffer,
@@ -144,11 +145,11 @@ class ControllerEventExecutor(QObject):
             except IndexError:
                 return
             while len(self.deque) > 0:
-                # 如果下一条命令和上一条命令一样切都为 mouse_absolute_write 则可以安全的跳过指令
+                # 仅当命令相同且缓冲内容完全一致(按键/坐标/滚轮均相同)时才可跳过
+                # 否则会把"按下"与"松开"合并成只剩"松开"，导致点击丢失
                 if command == "mouse_absolute_write":
                     next_command, next_buffer = self.deque.popleft()
-                    if next_command == command:
-                        command = next_command
+                    if next_command == command and buffer == next_buffer:
                         buffer = next_buffer
                         continue
                     else:
@@ -307,6 +308,13 @@ class KeyboardCodeData:
     @staticmethod
     def convert_scan_code_to_hid_code(scancode: int) -> tuple[bool, int]:
         status, hid_code = os_scancode_code_to_hid_code(scancode)
+        if not status and (scancode & 0xFF00) == 0:
+            # 部分注入/远程事件未设置扩展标志(LLKHF_EXTENDED)，
+            # 扫描码缺少 E0 前缀，对单字节扫描码补前缀再查一次
+            # 例如 Win 键 0x5b -> 0xE05b -> HID 0xE3(Left GUI)
+            status, hid_code = os_scancode_code_to_hid_code(
+                (0xE0 << 8) | (scancode & 0xFF)
+            )
         if not status:
             logger.warning(f"Unknown keyboard scancode: {scancode}")
         return status, hid_code
@@ -2241,6 +2249,15 @@ class AppMainWindow(MainWindow):
         logger.debug(
             f"keyboard hook: vk({hex(event.vk_code)}) scan_code({hex(event.scan_code)})"
         )
+        # 远程控制软件(如 rustdesk)通过 KEYEVENTF_UNICODE 注入的字符
+        # 会以 VK_PACKET 形式出现，真正的 Unicode 码元由 scan_code 或
+        # dwExtraInfo 携带。仅当字符能映射到 HID 键码时才转发，
+        # 其余 Unicode 字符直接忽略(本次需求不处理 Unicode)。
+        if event.is_packet:
+            char = event.unicode_char
+            if char is not None:
+                self.handle_vk_packet_char(char, True)
+            return False
         scan_code = event.scan_code
         status, hid_code = (
             self.keyboard_code_data.convert_scan_code_to_hid_code(scan_code)
@@ -2260,6 +2277,12 @@ class AppMainWindow(MainWindow):
     def hook_keyboard_up_event(
         self, event: keyboard_hook.HookKeyboardEvent
     ) -> bool:
+        # 与按下事件对称处理 VK_PACKET
+        if event.is_packet:
+            char = event.unicode_char
+            if char is not None:
+                self.handle_vk_packet_char(char, False)
+            return False
         scan_code = event.scan_code
         status, hid_code = (
             self.keyboard_code_data.convert_scan_code_to_hid_code(scan_code)
@@ -2276,6 +2299,29 @@ class AppMainWindow(MainWindow):
         # 如果返回 False 则按键事件不会继续传播
         # 因为不希望事件继续传递所以永远返回 False
         return False
+
+    # 将 VK_PACKET 中的单个字符以 HID 键码形式转发(支持大小写/符号的 shift)
+    def handle_vk_packet_char(self, char: str, is_down: bool) -> None:
+        if char not in TEXT_TO_HID_CODE:
+            return
+        _, shift_hid = self.keyboard_code_data.convert_key_name_to_hid_code(
+            "shift"
+        )
+        hid_code = TEXT_TO_HID_CODE[char]
+        need_shift = char.isupper() or char in SHIFT_SYMBOL
+        state = KeyStateEnum.PRESS if is_down else KeyStateEnum.RELEASE
+        if need_shift and is_down:
+            self.update_keyboard_buffer_with_hid_code(
+                shift_hid, KeyStateEnum.PRESS
+            )
+            self.send_keyboard_buffer()
+        self.update_keyboard_buffer_with_hid_code(hid_code, state)
+        self.send_keyboard_buffer()
+        if need_shift and not is_down:
+            self.update_keyboard_buffer_with_hid_code(
+                shift_hid, KeyStateEnum.RELEASE
+            )
+            self.send_keyboard_buffer()
 
     ######################################################################
     # 子窗口执行
@@ -2575,6 +2621,12 @@ class AppMainWindow(MainWindow):
         status: bool = False
         if event.isAutoRepeat():
             return status
+        # VK_PACKET(Unicode 注入)与 hook 路径共用同一套字符处理逻辑
+        if event.nativeVirtualKey() == keyboard_hook.VK_PACKET:
+            text = event.text()
+            if text:
+                self.handle_vk_packet_char(text[0], True)
+            return True
         status, hid_code = (
             self.keyboard_code_data.convert_qt_key_event_to_hid_code(event)
         )
@@ -2587,6 +2639,11 @@ class AppMainWindow(MainWindow):
         status: bool = False
         if event.isAutoRepeat():
             return status
+        if event.nativeVirtualKey() == keyboard_hook.VK_PACKET:
+            text = event.text()
+            if text:
+                self.handle_vk_packet_char(text[0], False)
+            return True
         status, hid_code = (
             self.keyboard_code_data.convert_qt_key_event_to_hid_code(event)
         )
