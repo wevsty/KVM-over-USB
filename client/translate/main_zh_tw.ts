@@ -352,37 +352,37 @@ Please delete the existing configuration file.
 <context>
     <name>FloatingIsland</name>
     <message>
-        <location filename="../ui/standard_widget/floating_island.py" line="719"/>
+        <location filename="../ui/standard_widget/floating_island.py" line="749"/>
         <source>Dock to</source>
         <translation>停靠至</translation>
     </message>
     <message>
-        <location filename="../ui/standard_widget/floating_island.py" line="721"/>
+        <location filename="../ui/standard_widget/floating_island.py" line="751"/>
         <source>Top</source>
         <translation>頂部</translation>
     </message>
     <message>
-        <location filename="../ui/standard_widget/floating_island.py" line="722"/>
+        <location filename="../ui/standard_widget/floating_island.py" line="752"/>
         <source>Bottom</source>
         <translation>底部</translation>
     </message>
     <message>
-        <location filename="../ui/standard_widget/floating_island.py" line="723"/>
+        <location filename="../ui/standard_widget/floating_island.py" line="753"/>
         <source>Left</source>
         <translation>左邊</translation>
     </message>
     <message>
-        <location filename="../ui/standard_widget/floating_island.py" line="724"/>
+        <location filename="../ui/standard_widget/floating_island.py" line="754"/>
         <source>Right</source>
         <translation>右邊</translation>
     </message>
     <message>
-        <location filename="../ui/standard_widget/floating_island.py" line="728"/>
+        <location filename="../ui/standard_widget/floating_island.py" line="758"/>
         <source>Pin</source>
         <translation>釘住</translation>
     </message>
     <message>
-        <location filename="../ui/standard_widget/floating_island.py" line="729"/>
+        <location filename="../ui/standard_widget/floating_island.py" line="759"/>
         <source>Quit</source>
         <translation>退出</translation>
     </message>
@@ -390,7 +390,7 @@ Please delete the existing configuration file.
 <context>
     <name>FullScreenFloatingIsland</name>
     <message>
-        <location filename="../ui/ui_widget/full_screen_floating_island.py" line="85"/>
+        <location filename="../ui/ui_widget/full_screen_floating_island.py" line="86"/>
         <source>Console</source>
         <translation>控制台</translation>
     </message>
