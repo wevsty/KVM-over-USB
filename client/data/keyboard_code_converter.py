@@ -21,7 +21,7 @@ def qt_key_event_to_hid_code(event: QKeyEvent) -> tuple[bool, int]:
         if vk_code == 0xe7:  # VK_PACKET
             text_data = event.text()
             hid_code = TEXT_TO_HID_CODE.get(text_data, None)
-            status = True
+            status = hid_code is not None
         else:
             if key_code != 0:
                 hid_code = WINDOWS_SCANCODE_TO_HID_CODE.get(key_code, None)

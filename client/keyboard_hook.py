@@ -21,6 +21,11 @@ WM_KEYUP = 0x0101
 WM_SYSKEYDOWN = 0x0104
 WM_SYSKEYUP = 0x0105
 
+# 虚拟键码
+# KEYEVENTF_UNICODE 注入的字符会以 vkCode = VK_PACKET 的形式出现
+# 真正的 Unicode 码元由 scanCode 或 dwExtraInfo 携带
+VK_PACKET = 0xE7
+
 # KBDLLHOOKSTRUCT.flags
 LLKHF_EXTENDED = 0x01
 LLKHF_INJECTED = 0x10
@@ -93,6 +98,7 @@ class HookKeyboardEvent:
         scan_code: int,
         flags: int,
         time: int,
+        dw_extra_info: int = 0,
     ):
         self.message = message
         if message in (WM_KEYDOWN, WM_SYSKEYDOWN):
@@ -107,6 +113,8 @@ class HookKeyboardEvent:
         self.vk_code = vk_code
         self.raw_scan_code = scan_code
         self.time = time
+        # KEYEVENTF_UNICODE 注入时，Unicode 码元可能存放在此处
+        self.dw_extra_info = dw_extra_info
 
     @property
     def scan_code(self) -> int:
@@ -116,6 +124,23 @@ class HookKeyboardEvent:
         else:
             scan_code = self.raw_scan_code
         return scan_code
+
+    @property
+    def is_packet(self) -> bool:
+        # KEYEVENTF_UNICODE 注入的字符会以 vkCode = VK_PACKET 的形式出现
+        return self.vk_code == VK_PACKET
+
+    @property
+    def unicode_char(self) -> str | None:
+        # 解析 VK_PACKET 事件携带的 Unicode 字符(单个 UTF-16 码元)
+        # 字符可能位于 raw_scan_code 或 dw_extra_info 的低 16 位
+        if not self.is_packet:
+            return None
+        for raw in (self.raw_scan_code, self.dw_extra_info):
+            code = raw & 0xFFFF
+            if 0 < code < 0x10000:
+                return chr(code)
+        return None
 
 
 # 全局键盘钩子
@@ -153,6 +178,7 @@ class KeyboardHookManager:
                     keyboard_struct.scanCode,
                     keyboard_struct.flags,
                     keyboard_struct.time,
+                    keyboard_struct.dwExtraInfo,
                 )
                 # 处理函数返回 False 时拦截按键事件
                 # noinspection calling-non-callable
