@@ -25,6 +25,7 @@ from PySide6.QtGui import (
     QCursor,
     QMouseEvent,
     QAction,
+    QScreen,
 )
 from PySide6.QtWidgets import (
     QAbstractButton,
@@ -81,33 +82,33 @@ class IslandEdge(enum.Enum):
 
 
 # Key Type
-KT = typing.TypeVar("KT")
+_KT = typing.TypeVar("_KT")
 # Value Type
-VT = typing.TypeVar("VT")
+_VT = typing.TypeVar("_VT")
 
 
-class QObjectStoreDict(UserDict[KT, VT]):
+class QObjectStoreDict(UserDict[_KT, _VT]):
 
-    def get_action(self, key: KT) -> QAction:
+    def get_action(self, key: _KT) -> QAction:
         value = self.data[key]
         if isinstance(value, QAction):
             return value
         else:
-            raise KeyError("Value type does not match the expected")
+            raise TypeError("Value type does not match the expected")
 
-    def get_menu(self, key: KT) -> QMenu:
+    def get_menu(self, key: _KT) -> QMenu:
         value = self.data[key]
         if isinstance(value, QMenu):
             return value
         else:
-            raise KeyError("Value type does not match the expected")
+            raise TypeError("Value type does not match the expected")
 
-    def get_widget(self, key: KT) -> QWidget:
+    def get_widget(self, key: _KT) -> QWidget:
         value = self.data[key]
         if isinstance(value, QWidget):
             return value
         else:
-            raise KeyError("Value type does not match the expected")
+            raise TypeError("Value type does not match the expected")
 
 
 class FloatingIsland(QWidget):
@@ -182,7 +183,7 @@ class FloatingIsland(QWidget):
         self.idle_ticks = 0
 
         # ---- 几何 ----
-        self.screen_geometry = QRect()
+        self.dock_bounds = QRect()
         # 滑动轴上的起点: 上/下边为 x, 左/右边为 y
         self.slide_pos = 0
         self.expanded_rect = QRect()
@@ -205,7 +206,7 @@ class FloatingIsland(QWidget):
         # len(self.user_widgets.values()) 和 len(self._drag_targets) 应该相等。
         # 如果不等说明添加 init_user_widgets 的实现存在问题。
         assert len(self.user_widgets.values()) == len(self._drag_targets)
-        self.user_context_menu: QMenu = QMenu(self)
+        self.context_menu: QMenu = QMenu(self)
         self.user_context_menu_container: QObjectStoreDict[str, QObject] = (
             QObjectStoreDict()
         )
@@ -223,7 +224,7 @@ class FloatingIsland(QWidget):
         self.check_timer.timeout.connect(self.check_mouse_position)
 
         # ---- 初始定位: 贴边且沿边居中 ----
-        self.refresh_screen_geometry()
+        self.refresh_screen_geometry(self.reference_center_point())
         self.recenter()
         self.update_rects()
         self.setGeometry(self.expanded_rect)
@@ -236,8 +237,9 @@ class FloatingIsland(QWidget):
         pass
 
     def init_user_context_menu(self) -> None:
-        self.user_context_menu.clear()
-        dock_menu = self.user_context_menu.addMenu("Dock to")
+        # self.context_menu.clear()
+        # self.user_context_menu_container.clear()
+        dock_menu = self.context_menu.addMenu("Dock to")
         self.user_context_menu_container["dock_menu"] = dock_menu
 
         for edge_enum, action_id in self.EDGE_ACTION_IDS.items():
@@ -250,20 +252,20 @@ class FloatingIsland(QWidget):
             )
             self.user_context_menu_container[action_id] = action
 
-        self.user_context_menu.addSeparator()
-        pin_action: QAction = self.user_context_menu.addAction("Pin")
+        self.context_menu.addSeparator()
+        pin_action: QAction = self.context_menu.addAction("Pin")
         pin_action.setCheckable(True)
         pin_action.setChecked(self.is_pinned)
         pin_action.toggled.connect(self.toggle_pin)
         self.user_context_menu_container["pin_action"] = pin_action
 
-        self.user_context_menu.addSeparator()
-        quit_action: QAction = self.user_context_menu.addAction("Quit")
+        self.context_menu.addSeparator()
+        quit_action: QAction = self.context_menu.addAction("Quit")
         quit_action.triggered.connect(self.close)
         self.user_context_menu_container["quit_action"] = quit_action
 
         # 每次弹出前同步勾选态
-        self.user_context_menu.aboutToShow.connect(self.sync_context_menu_state)
+        self.context_menu.aboutToShow.connect(self.sync_context_menu_state)
 
     def sync_context_menu_state(self) -> None:
         """把菜单勾选态对齐到当前状态"""
@@ -306,21 +308,45 @@ class FloatingIsland(QWidget):
             self.PANEL_THICKNESS if self.edge.horizontal else self.ISLAND_LENGTH
         )
 
-    def refresh_screen_geometry(self) -> None:
-        """刷新所在屏幕几何(多显示器跟随当前屏)。"""
-        screen = QApplication.screenAt(self.geometry().center())
-        if screen is None:
-            screen = QApplication.primaryScreen()
+    def reference_center_point(self) -> typing.Optional[QPoint]:
+        """首次定位的参考点: 优先宿主窗口所在屏幕, 否则返回 None 走默认路径"""
+        anchor = self.parentWidget()
+        # 未显示的窗口几何不可信, 此时宁可退回浮岛自身中心
+        if anchor is None or not anchor.isVisible():
+            return None
+        anchor.geometry()
+        return anchor.frameGeometry().center()
 
-        # availableGeometry 避开任务栏
-        geo = screen.availableGeometry()
-        if geo != self.screen_geometry:
-            self.screen_geometry = geo
+    @staticmethod
+    def screen_bounds(screen: QScreen) -> QRect:
+        """停靠基准区域: 默认避开任务栏。
+        若浮岛只在宿主全屏时出现, 应覆写为 screen.geometry(),
+        让浮岛贴物理屏幕边缘而不是任务栏边缘。
+        """
+        return screen.availableGeometry()
+
+    def refresh_screen_geometry(
+        self, reference_point: typing.Optional[QPoint] = None
+    ) -> None:
+        """刷新所在屏幕几何(多显示器跟随当前屏)。"""
+        if reference_point is None:
+            point = self.geometry().center()
+        else:
+            point = reference_point
+        screen = QApplication.screenAt(point)
+        if screen is None:
+            # 点落在虚拟桌面空隙或屏幕外时保持现有屏幕, 避免跳回主屏
+            screen = self.screen() or QApplication.primaryScreen()
+        # 停靠基准区域由 screen_bounds() 决定
+        # 默认避开任务栏
+        geo = self.screen_bounds(screen)
+        if geo != self.dock_bounds:
+            self.dock_bounds = geo
             self.update_rects()
 
     def recenter(self) -> None:
         """沿停靠边居中。"""
-        geo = self.screen_geometry
+        geo = self.dock_bounds
         along = self.along_length()
         if self.edge.horizontal:
             self.slide_pos = geo.x() + (geo.width() - along) // 2
@@ -329,7 +355,7 @@ class FloatingIsland(QWidget):
 
     def edge_coord(self) -> int:
         """停靠边在法向上的坐标(下/右边取屏幕内侧的边界线)。"""
-        geo = self.screen_geometry
+        geo = self.dock_bounds
         if self.edge is IslandEdge.TOP:
             return geo.top()
         if self.edge is IslandEdge.BOTTOM:
@@ -347,7 +373,7 @@ class FloatingIsland(QWidget):
 
     def update_rects(self) -> None:
         """按当前停靠边重算展开/收缩矩形(绝对坐标), 并钳位滑动轴。"""
-        geo = self.screen_geometry
+        geo = self.dock_bounds
         along = self.along_length()
         perp = self.thickness()
         # 收缩态至少 1px, 避免零尺寸窗口
@@ -400,7 +426,7 @@ class FloatingIsland(QWidget):
 
     def gaps_to_edges(self, rect: QRect) -> dict[IslandEdge, int]:
         """矩形到四条边的间隙。"""
-        geo = self.screen_geometry
+        geo = self.dock_bounds
         return {
             IslandEdge.TOP: rect.top() - geo.top(),
             IslandEdge.BOTTOM: geo.bottom() - rect.bottom(),
@@ -707,7 +733,7 @@ class FloatingIsland(QWidget):
             return
 
         self.is_hidden = False
-        self.refresh_screen_geometry()
+        self.refresh_screen_geometry(self.reference_center_point())
         # 只钳位不重新居中, 否则 hide/show 往返会抹掉用户拖好的位置
         self.update_rects()
         super().show()
@@ -740,7 +766,7 @@ class FloatingIsland(QWidget):
         event.accept()
 
     def contextMenuEvent(self, event: QContextMenuEvent) -> None:
-        self.user_context_menu.exec(event.globalPos())
+        self.context_menu.exec(event.globalPos())
 
     def changeEvent(self, event: QEvent) -> None:
         if event.type() == QEvent.Type.LanguageChange and self._initialized:

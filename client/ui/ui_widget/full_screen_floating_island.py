@@ -1,7 +1,7 @@
 import typing
 
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon, QCursor
+from PySide6.QtCore import Qt, QSize, QRect
+from PySide6.QtGui import QIcon, QCursor, QScreen
 from PySide6.QtWidgets import (
     QApplication,
     QWidget,
@@ -32,6 +32,10 @@ class FullScreenFloatingIsland(FloatingIsland):
         super().__init__(parent)
         self.popup_menu = QMenu(self)
         self.retranslate()
+
+    @staticmethod
+    def screen_bounds(screen: QScreen) -> QRect:
+        return screen.geometry()
 
     def init_user_widgets(self) -> None:
         # Pin 固定按钮

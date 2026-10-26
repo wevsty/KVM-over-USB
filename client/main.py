@@ -713,7 +713,7 @@ class AppMainWindow(MainWindow):
         # controller_check_connection_timer.start()
 
         # 全屏模式设置
-        self.fullscreen_island = FullScreenFloatingIsland()
+        self.fullscreen_island = FullScreenFloatingIsland(self)
         self.init_floating_island()
         self.fullscreen_island.hide()
         # self.available_retranslate.append(self.fullscreen_island)
