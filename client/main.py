@@ -69,6 +69,7 @@ from controller.general import ControllerGeneralDevice
 from data.keyboard_code_converter import (
     qt_key_event_to_hid_code,
     os_scancode_code_to_hid_code,
+    key_name_to_hid_code,
 )
 from data.keyboard_key_name_to_hid_code import KEY_NAME_TO_HID_CODE
 from data.keyboard_shift_symbol import SHIFT_SYMBOL
@@ -299,13 +300,7 @@ class QtTimerManager:
 class KeyboardCodeData:
     def __init__(self):
         # dict[key_name, hid_code]
-        self.key_name_to_hid_code: dict[str, int] = dict()
-        # 载入数据
-        self.load_keyboard_code_data()
-
-    # 载入键盘代码数据
-    def load_keyboard_code_data(self):
-        self.key_name_to_hid_code = KEY_NAME_TO_HID_CODE
+        self.key_name_to_hid_code: dict[str, int] = KEY_NAME_TO_HID_CODE
 
     # 转换 scan code 到 hid code
     @staticmethod
@@ -329,15 +324,11 @@ class KeyboardCodeData:
         return status, hid_code
 
     # 转换 key name 到 hid code
-    def convert_key_name_to_hid_code(self, key_name: str) -> tuple[bool, int]:
-        status: bool = False
-        hid_code: int | None = self.key_name_to_hid_code.get(key_name, None)
-        if hid_code is None:
+    @staticmethod
+    def convert_key_name_to_hid_code(key_name: str) -> tuple[bool, int]:
+        status, hid_code = key_name_to_hid_code(key_name)
+        if not status:
             logger.warning(f"Unknown key name: {key_name}")
-            hid_code: int = 0
-            return status, hid_code
-        else:
-            status = True
         return status, hid_code
 
 
@@ -951,7 +942,7 @@ class AppMainWindow(MainWindow):
             lambda: self.paste_board_dialog.exec()
         )
         self.paste_board_dialog.send_string_signal.connect(
-            self.keyboard_send_string
+            self.keyboard_send_text
         )
         self.action_quick_paste.triggered.connect(self.quick_paste_toggle)
         self.action_indicator_light.triggered.connect(
@@ -1396,14 +1387,51 @@ class AppMainWindow(MainWindow):
             return
         self.keyboard_simulation_click(hid_code)
 
-    # 使用键盘发送字符串
-    def keyboard_send_string(self, data: str):
-        self.user_input_block(True)
+    # 使用键盘发送字符
+    def keyboard_send_character(self, character: str):
+        if len(character) == 0:
+            return
+        if len(character) > 1:
+            character = character[0]
+
         # 获取必要的 hid code
         status, shift_hid_code = (
             self.keyboard_code_data.convert_key_name_to_hid_code("shift")
         )
         assert status is not False
+
+        # 检测是否需要shift
+        shift_flag = False
+        # 如果是需要shift的符号
+        if character in SHIFT_SYMBOL:
+            shift_flag = True
+        # 如果是大写字母
+        if character.isupper():
+            shift_flag = True
+
+        status, key_code = self.keyboard_code_data.convert_key_name_to_hid_code(
+            character
+        )
+        if not status:
+            logger.error(f"character key code not found: {character}")
+            return
+
+        if shift_flag:
+            self.keyboard_simulation_press(shift_hid_code)
+            self.keyboard_simulation_press(key_code)
+            self.controller_sleep_ms(self.config.paste_board["interval"])
+            self.keyboard_simulation_release(shift_hid_code)
+            self.keyboard_simulation_release(key_code)
+        else:
+            self.keyboard_simulation_press(key_code)
+            self.controller_sleep_ms(self.config.paste_board["interval"])
+            self.keyboard_simulation_release(key_code)
+        return
+
+    # 使用键盘发送字符串
+    def keyboard_send_text(self, data: str):
+        self.user_input_block(True)
+
         status, caps_lock_hid_code = (
             self.keyboard_code_data.convert_key_name_to_hid_code("caps_lock")
         )
@@ -1417,35 +1445,7 @@ class AppMainWindow(MainWindow):
         self.send_keyboard_buffer()
 
         for character in data:
-            if not character.isascii():
-                logger.critical(f"Character not supported: {character}")
-                continue
-            shift_flag = False
-            # 如果是需要shift的符号
-            if character in SHIFT_SYMBOL:
-                shift_flag = True
-            # 如果是大写字母
-            if character.isupper():
-                shift_flag = True
-            status, key_code = (
-                self.keyboard_code_data.convert_key_name_to_hid_code(character)
-            )
-            if not status:
-                logger.critical(f"character key code not found: {character}")
-                continue
-            if shift_flag:
-                self.keyboard_simulation_press(shift_hid_code)
-                self.keyboard_simulation_press(key_code)
-                self.keyboard_simulation_release(shift_hid_code)
-                self.keyboard_simulation_release(key_code)
-            else:
-                self.keyboard_simulation_press(key_code)
-                self.keyboard_simulation_release(key_code)
-            self.controller_sleep_ms(self.config.paste_board["interval"])
-
-        # 再次强制清空缓冲区
-        self.clear_keyboard_buffer()
-        self.send_keyboard_buffer()
+            self.keyboard_send_character(character)
 
         self.user_input_block(False)
 
@@ -1472,7 +1472,7 @@ class AppMainWindow(MainWindow):
         self.clear_keyboard_buffer()
         self.send_keyboard_buffer()
 
-        self.keyboard_send_string(text)
+        self.keyboard_send_text(text)
 
     # 发送请求同步键盘指示灯状态
     def sync_indicator_triggered(self):
@@ -2243,8 +2243,16 @@ class AppMainWindow(MainWindow):
         self, event: keyboard_hook.HookKeyboardEvent
     ) -> bool:
         logger.debug(
-            f"keyboard hook: vk({hex(event.vk_code)}) scan_code({hex(event.scan_code)})"
+            f"keyboard down hook: vk({hex(event.vk_code)}) scan_code({hex(event.scan_code)})"
         )
+        # 远程控制软件(如 rustdesk for android)通过 KEYEVENTF_UNICODE 注入的字符
+        # 会以 VK_PACKET 形式出现，真正的 Unicode 编码由 scan_code 携带
+        # 仅当字符能映射到 HID 键码时才转发，其余 Unicode 字符直接忽略。
+        if event.is_packet:
+            char = event.unicode_char
+            if char is not None:
+                self.keyboard_send_character(char)
+            return False
         scan_code = event.scan_code
         status, hid_code = (
             self.keyboard_code_data.convert_scan_code_to_hid_code(scan_code)
@@ -2264,6 +2272,9 @@ class AppMainWindow(MainWindow):
     def hook_keyboard_up_event(
         self, event: keyboard_hook.HookKeyboardEvent
     ) -> bool:
+        # VK_PACKET 事件已在按下时处理，所以弹起时直接全部拦截即可
+        if event.is_packet:
+            return False
         scan_code = event.scan_code
         status, hid_code = (
             self.keyboard_code_data.convert_scan_code_to_hid_code(scan_code)
@@ -2584,6 +2595,7 @@ class AppMainWindow(MainWindow):
         status, hid_code = (
             self.keyboard_code_data.convert_qt_key_event_to_hid_code(event)
         )
+        # logger.debug(f"handle_key_press_with_event: {hex(hid_code)}")
         if status:
             self.handle_key_press_with_hid_code(hid_code)
         return status
@@ -2596,6 +2608,7 @@ class AppMainWindow(MainWindow):
         status, hid_code = (
             self.keyboard_code_data.convert_qt_key_event_to_hid_code(event)
         )
+        # logger.debug(f"handle_key_release_event: {hex(hid_code)}")
         if status:
             self.handle_key_release_with_hid_code(hid_code)
         status = True

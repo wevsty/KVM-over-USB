@@ -1,4 +1,4 @@
-KEY_NAME_TO_HID_CODE = {
+KEY_NAME_TO_HID_CODE: dict[str, int] = {
     "": 0x00,
     "a": 0x04,
     "b": 0x05,

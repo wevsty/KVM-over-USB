@@ -2,13 +2,13 @@ import platform
 
 from PySide6.QtGui import QKeyEvent
 
+from data.keyboard_key_name_to_hid_code import KEY_NAME_TO_HID_CODE
 from data.keyboard_os_key_code_to_hid_code import (
     WINDOWS_SCANCODE_TO_HID_CODE,
     XCB_KEY_CODE_TO_HID_CODE,
     MACOS_VIRTUAL_KEY_CODE_TO_HID_CODE,
     QT_KEY_VALUE_TO_HID_CODE,
 )
-from data.keyboard_text_to_hid_code import TEXT_TO_HID_CODE
 
 
 def qt_key_event_to_hid_code(event: QKeyEvent) -> tuple[bool, int]:
@@ -18,26 +18,20 @@ def qt_key_event_to_hid_code(event: QKeyEvent) -> tuple[bool, int]:
     if system_name == "Windows":
         vk_code = event.nativeVirtualKey()
         key_code = event.nativeScanCode()
-        if vk_code == 0xe7:  # VK_PACKET
+        # VK_PACKET 0xE7
+        if vk_code == 0xE7:
             text_data = event.text()
-            hid_code = TEXT_TO_HID_CODE.get(text_data, None)
-            status = True
+            hid_code = KEY_NAME_TO_HID_CODE.get(text_data, None)
         else:
-            if key_code != 0:
-                hid_code = WINDOWS_SCANCODE_TO_HID_CODE.get(key_code, None)
-                status = True
+            hid_code = WINDOWS_SCANCODE_TO_HID_CODE.get(key_code, None)
     elif system_name == "Linux":
         key_code = event.nativeScanCode()
-        if key_code != 0:
-            hid_code = XCB_KEY_CODE_TO_HID_CODE.get(key_code, None)
-            status = True
+        hid_code = XCB_KEY_CODE_TO_HID_CODE.get(key_code, None)
     elif system_name == "Darwin":
         # MacOS 下 nativeScanCode() 无法正常工作
         # 选择使用 nativeVirtualKey() 替代
         key_code = event.nativeVirtualKey()
-        if key_code != 0:
-            hid_code = MACOS_VIRTUAL_KEY_CODE_TO_HID_CODE.get(key_code, None)
-            status = True
+        hid_code = MACOS_VIRTUAL_KEY_CODE_TO_HID_CODE.get(key_code, None)
     else:
         pass
     if hid_code is not None:
@@ -90,6 +84,16 @@ def os_scancode_code_to_hid_code(key_code: int) -> tuple[bool, int]:
     else:
         pass
 
+    if hid_code is not None:
+        status = True
+    else:
+        hid_code: int = 0x00
+    return status, hid_code
+
+
+def key_name_to_hid_code(key_name: str) -> tuple[bool, int]:
+    status: bool = False
+    hid_code = KEY_NAME_TO_HID_CODE.get(key_name, None)
     if hid_code is not None:
         status = True
     else:
