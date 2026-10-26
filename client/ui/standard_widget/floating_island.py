@@ -5,7 +5,8 @@
 
 import enum
 import sys
-from typing import Optional, cast
+import typing
+from collections import UserDict
 
 from PySide6.QtCore import (
     QEvent,
@@ -79,6 +80,36 @@ class IslandEdge(enum.Enum):
         return self in (IslandEdge.TOP, IslandEdge.BOTTOM)
 
 
+# Key Type
+KT = typing.TypeVar("KT")
+# Value Type
+VT = typing.TypeVar("VT")
+
+
+class QObjectStoreDict(UserDict[KT, VT]):
+
+    def get_action(self, key: KT) -> QAction:
+        value = self.data[key]
+        if isinstance(value, QAction):
+            return value
+        else:
+            raise KeyError("Value type does not match the expected")
+
+    def get_menu(self, key: KT) -> QMenu:
+        value = self.data[key]
+        if isinstance(value, QMenu):
+            return value
+        else:
+            raise KeyError("Value type does not match the expected")
+
+    def get_widget(self, key: KT) -> QWidget:
+        value = self.data[key]
+        if isinstance(value, QWidget):
+            return value
+        else:
+            raise KeyError("Value type does not match the expected")
+
+
 class FloatingIsland(QWidget):
     """独立顶层浮岛"""
 
@@ -119,7 +150,7 @@ class FloatingIsland(QWidget):
 
     def __init__(
         self,
-        parent: Optional[QWidget] = None,
+        parent: typing.Optional[QWidget] = None,
         edge: IslandEdge = IslandEdge.TOP,
     ) -> None:
         self._initialized = False
@@ -145,7 +176,7 @@ class FloatingIsland(QWidget):
         self.is_closing = False
         self.drag_offset = QPoint()
         self.press_global = QPoint()
-        self.pressed_child: Optional[QWidget] = None
+        self.pressed_child: typing.Optional[QWidget] = None
         # 按下瞬间的厚度, 作换边吸附带(不随 self.edge 变化)
         self.press_thickness = 0
         self.idle_ticks = 0
@@ -168,16 +199,17 @@ class FloatingIsland(QWidget):
         self.setMinimumSize(0, 0)
 
         # 登记控件
-        self.user_widgets: dict[str, QWidget] = {}
+        self.user_widgets: QObjectStoreDict[str, QWidget] = QObjectStoreDict()
         self._drag_targets: set[QWidget] = set()
         self.init_user_widgets()
         # len(self.user_widgets.values()) 和 len(self._drag_targets) 应该相等。
         # 如果不等说明添加 init_user_widgets 的实现存在问题。
         assert len(self.user_widgets.values()) == len(self._drag_targets)
-        self.context_menu: QMenu
-        self.context_menu_dicts: dict[str, QMenu] = {}
-        self.context_menu_actions: dict[str, QAction] = {}
-        self.init_context_menu()
+        self.user_context_menu: QMenu = QMenu(self)
+        self.user_context_menu_container: QObjectStoreDict[str, QObject] = (
+            QObjectStoreDict()
+        )
+        self.init_user_context_menu()
         self.setStyleSheet(self.DEFAULT_STYLE)
 
         # ---- 伸缩动画 ----
@@ -203,10 +235,10 @@ class FloatingIsland(QWidget):
     def init_user_widgets(self) -> None:
         pass
 
-    def init_context_menu(self) -> None:
-        self.context_menu = QMenu(self)
-        dock_menu = self.context_menu.addMenu("Dock to")
-        self.context_menu_dicts["dock_menu"] = dock_menu
+    def init_user_context_menu(self) -> None:
+        self.user_context_menu.clear()
+        dock_menu = self.user_context_menu.addMenu("Dock to")
+        self.user_context_menu_container["dock_menu"] = dock_menu
 
         for edge_enum, action_id in self.EDGE_ACTION_IDS.items():
             action_text = edge_enum.value.capitalize()
@@ -216,31 +248,31 @@ class FloatingIsland(QWidget):
             action.triggered.connect(
                 lambda checked=False, target=edge_enum: self.dock_to(target)
             )
-            self.context_menu_actions[action_id] = action
+            self.user_context_menu_container[action_id] = action
 
-        self.context_menu.addSeparator()
-        pin_action: QAction = self.context_menu.addAction("Pin")
+        self.user_context_menu.addSeparator()
+        pin_action: QAction = self.user_context_menu.addAction("Pin")
         pin_action.setCheckable(True)
         pin_action.setChecked(self.is_pinned)
         pin_action.toggled.connect(self.toggle_pin)
-        self.context_menu_actions["pin_action"] = pin_action
+        self.user_context_menu_container["pin_action"] = pin_action
 
-        self.context_menu.addSeparator()
-        quit_action: QAction = self.context_menu.addAction("Quit")
+        self.user_context_menu.addSeparator()
+        quit_action: QAction = self.user_context_menu.addAction("Quit")
         quit_action.triggered.connect(self.close)
-        self.context_menu_actions["quit_action"] = quit_action
+        self.user_context_menu_container["quit_action"] = quit_action
 
         # 每次弹出前同步勾选态
-        self.context_menu.aboutToShow.connect(self.sync_context_menu_state)
+        self.user_context_menu.aboutToShow.connect(self.sync_context_menu_state)
 
     def sync_context_menu_state(self) -> None:
         """把菜单勾选态对齐到当前状态"""
-        pin_action = self.context_menu_actions["pin_action"]
+        pin_action = self.user_context_menu_container.get_action("pin_action")
         with QSignalBlocker(pin_action):
             pin_action.setChecked(self.is_pinned)
 
         for edge_enum, action_id in self.EDGE_ACTION_IDS.items():
-            action = self.context_menu_actions[action_id]
+            action = self.user_context_menu_container.get_action(action_id)
             action.setChecked(edge_enum is self.edge)
 
     # ------------------------------------------------------------------
@@ -501,7 +533,7 @@ class FloatingIsland(QWidget):
         is_left = event.button() == Qt.MouseButton.LeftButton
 
         if event_type == QEvent.Type.MouseButtonPress and is_left:
-            self.pressed_child = cast(QWidget, obj)
+            self.pressed_child = typing.cast(QWidget, obj)
             self._handle_press(event.globalPosition().toPoint())
             # 放行, 让按钮维持自身的按下/悬停状态
             return False
@@ -708,7 +740,7 @@ class FloatingIsland(QWidget):
         event.accept()
 
     def contextMenuEvent(self, event: QContextMenuEvent) -> None:
-        self.context_menu.exec(event.globalPos())
+        self.user_context_menu.exec(event.globalPos())
 
     def changeEvent(self, event: QEvent) -> None:
         if event.type() == QEvent.Type.LanguageChange and self._initialized:
@@ -716,7 +748,9 @@ class FloatingIsland(QWidget):
         super().changeEvent(event)
 
     def retranslate(self) -> None:
-        self.context_menu_dicts["dock_menu"].setTitle(self.tr("Dock to"))
+        self.user_context_menu_container.get_menu("dock_menu").setTitle(
+            self.tr("Dock to")
+        )
         edge_actions_text: dict[str, str] = {
             self.EDGE_ACTION_IDS[IslandEdge.TOP]: self.tr("Top"),
             self.EDGE_ACTION_IDS[IslandEdge.BOTTOM]: self.tr("Bottom"),
@@ -724,15 +758,19 @@ class FloatingIsland(QWidget):
             self.EDGE_ACTION_IDS[IslandEdge.RIGHT]: self.tr("Right"),
         }
         for action_id, text in edge_actions_text.items():
-            self.context_menu_actions[action_id].setText(text)
-        self.context_menu_actions["pin_action"].setText(self.tr("Pin"))
-        self.context_menu_actions["quit_action"].setText(self.tr("Quit"))
+            self.user_context_menu_container.get_action(action_id).setText(text)
+        self.user_context_menu_container.get_action("pin_action").setText(
+            self.tr("Pin")
+        )
+        self.user_context_menu_container.get_action("quit_action").setText(
+            self.tr("Quit")
+        )
 
 
 class ExampleFloatingIsland(FloatingIsland):
     def __init__(
         self,
-        parent: Optional[QWidget] = None,
+        parent: typing.Optional[QWidget] = None,
         edge: IslandEdge = IslandEdge.TOP,
     ) -> None:
         # 类型声明: 实例在 init_user_widgets() 中创建
