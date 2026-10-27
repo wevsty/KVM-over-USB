@@ -2592,8 +2592,9 @@ class AppMainWindow(MainWindow):
         status: bool = False
         if event.isAutoRepeat():
             return status
-        # 由 keyboard_send_character 内部处理大写字母 / 符号所需的 shift
-        if event.nativeVirtualKey() == 0xE7:
+        # Windows 下 VK_PACKET 特殊处理
+        virutal_key = event.nativeVirtualKey()
+        if platform.system() == "Windows" and virutal_key == 0xE7:
             text = event.text()
             if text:
                 self.keyboard_send_character(text)
@@ -2611,7 +2612,9 @@ class AppMainWindow(MainWindow):
         status: bool = False
         if event.isAutoRepeat():
             return status
-        if event.nativeVirtualKey() == 0xE7:  # VK_PACKET 已在按下时完整发送
+        # VK_PACKET
+        virutal_key = event.nativeVirtualKey()
+        if platform.system() == "Windows" and virutal_key == 0xE7:
             return True
         status, hid_code = (
             self.keyboard_code_data.convert_qt_key_event_to_hid_code(event)
