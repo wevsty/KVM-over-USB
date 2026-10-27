@@ -1,5 +1,5 @@
 ﻿attrs==26.1.0
-black==26.10.0
+black==26.10.1
 click==8.5.0
 colorama==0.4.6
 flake8==7.4.1
@@ -12,7 +12,7 @@ mypy-extensions==1.1.0
 nuitka==4.3.1
 packaging==26.3
 pathspec==1.1.1
-platformdirs==4.12.4
+platformdirs==4.13.6
 pych9329==0.1.8
 pycodestyle==2.15.0
 pyflakes==4.0.3
@@ -26,4 +26,4 @@ pytokens==0.4.1
 pywin32==312
 pyyaml==6.0.3
 shiboken6==6.12.0
-win32-setctime==1.2.0
+win32-setctime==1.2.1

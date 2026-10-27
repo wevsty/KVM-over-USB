@@ -2,7 +2,7 @@
 authors = [
     {name = "wevsty", email = "ty@wevs.org"},
 ]
-requires-python = "<3.16,>=3.12"
+requires-python = "<3.16,>=3.14"
 dependencies = [
     "pyyaml<7.0.0,>=6.0.3",
     "loguru<1.0.0,>=0.7.2",
@@ -21,7 +21,7 @@ description = "simple USB KVM client"
 
 [dependency-groups]
 dev = [
-    "black<27.0,>=26.1.0",
+    "black<27.0,>=26.1.1",
     "isort<10.0.0,>=9.0.2",
     "flake8-bugbear<27.0.0,>=26.9.9",
 ]

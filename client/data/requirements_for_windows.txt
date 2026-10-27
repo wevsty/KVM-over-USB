@@ -11,4 +11,4 @@ pyside6-webengine==6.12.0.140
 pywin32==312
 pyyaml==6.0.3
 shiboken6==6.12.0
-win32-setctime==1.2.0
+win32-setctime==1.2.1
