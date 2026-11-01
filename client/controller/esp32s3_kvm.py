@@ -125,7 +125,7 @@ class KvmProtocol:
         return self._configure(KvmCommand.RESET)
 
     def keyboard(
-            self, modifier: int, keycodes: typing.Sequence[int]
+        self, modifier: int, keycodes: typing.Sequence[int]
     ) -> "KvmProtocol":
         """§8：modifier 位图 + 最多 6 个 HID Usage ID（不足补 0）"""
         slots: list[int] = [0] * self.KEYCODE_SLOTS
@@ -135,7 +135,7 @@ class KvmProtocol:
         return self._configure(KvmCommand.KEYBOARD, payload)
 
     def mouse_relative(
-            self, buttons: int, dx: int, dy: int, wheel: int
+        self, buttons: int, dx: int, dy: int, wheel: int
     ) -> "KvmProtocol":
         """§9：dx 右为正、dy 下为正、wheel 上为正（int8 自动截断）"""
         payload: bytes = bytes(
@@ -149,7 +149,7 @@ class KvmProtocol:
         return self._configure(KvmCommand.MOUSE_RELATIVE, payload)
 
     def mouse_absolute(
-            self, buttons: int, x: int, y: int, wheel: int
+        self, buttons: int, x: int, y: int, wheel: int
     ) -> "KvmProtocol":
         """§10：x / y 为 0~32767（越界自动截断）"""
         payload: bytes = bytes((int(buttons) & 0xFF,))
@@ -177,15 +177,15 @@ class KvmProtocol:
                 f"got {len(self._payload)}"
             )
         body: bytes = (
-                bytes((self.VERSION, int(self._command)))
-                + len(self._payload).to_bytes(2, "little")
-                + self._payload
+            bytes((self.VERSION, int(self._command)))
+            + len(self._payload).to_bytes(2, "little")
+            + self._payload
         )
         checksum: bytes = self.fnv1a32(body).to_bytes(4, "little")
         return self.MAGIC + body + checksum
 
     def _configure(
-            self, command: KvmCommand, payload: bytes = b""
+        self, command: KvmCommand, payload: bytes = b""
     ) -> "KvmProtocol":
         self._command = command
         self._payload = payload
@@ -259,7 +259,7 @@ class KvmProtocol:
             version: int = self._buffer[self.OFFSET_VERSION]
             command_type: int = self._buffer[self.OFFSET_COMMAND]
             payload_length: int = int.from_bytes(
-                bytes(self._buffer[self.OFFSET_LENGTH: self.OFFSET_PAYLOAD]),
+                bytes(self._buffer[self.OFFSET_LENGTH : self.OFFSET_PAYLOAD]),
                 "little",
             )
             if version != self.VERSION or payload_length > self.MAX_PAYLOAD:
@@ -271,7 +271,7 @@ class KvmProtocol:
             if available < total:
                 return messages
             checksum: int = self.fnv1a32(
-                bytes(self._buffer[self.OFFSET_VERSION: payload_end])
+                bytes(self._buffer[self.OFFSET_VERSION : payload_end])
             )
             received: int = int.from_bytes(
                 bytes(self._buffer[payload_end:total]), "little"
@@ -281,7 +281,7 @@ class KvmProtocol:
                 del self._buffer[:1]
                 continue
             payload: bytes = bytes(
-                self._buffer[self.OFFSET_PAYLOAD: payload_end]
+                self._buffer[self.OFFSET_PAYLOAD : payload_end]
             )
             del self._buffer[:total]
             message: KvmMessage | None = self._build_message(
@@ -306,7 +306,7 @@ class KvmProtocol:
         return matched
 
     def _build_message(
-            self, command_type: int, payload: bytes
+        self, command_type: int, payload: bytes
     ) -> "KvmMessage | None":
         """TYPE 与 PAYLOAD 长度自洽性检查（不符按 §15.2 B 类丢弃）"""
         try:
@@ -520,7 +520,7 @@ class ControllerEsp32s3Kvm(ControllerDeviceBase):
     # 设备事件（命令名与 ControllerCh9329 完全一致）
     ######################################################################
     def device_event(
-            self, command: str, buffer: typing.Any
+        self, command: str, buffer: typing.Any
     ) -> tuple[str, int, typing.Any]:
         status_code: int = self.generate_status_code(True)
         reply: typing.Any = None
@@ -588,7 +588,7 @@ class ControllerEsp32s3Kvm(ControllerDeviceBase):
     def _wait_reset_silence(self) -> bool:
         """§14.6 第 3~4 步：等待复位完成，PING 无响应即认为确实重启"""
         time.sleep(self.RESET_SETTLE)
-        self._flush_input()          # 丢掉 bootloader 上电日志
+        self._flush_input()  # 丢掉 bootloader 上电日志
         return self._ping() is None
 
     ######################################################################
@@ -643,10 +643,10 @@ class ControllerEsp32s3Kvm(ControllerDeviceBase):
         return self._protocol.feed(data)
 
     def _wait_response(
-            self,
-            expected: KvmCommand,
-            timeout: float | None = None,
-            matcher: typing.Callable[[KvmMessage], bool] | None = None,
+        self,
+        expected: KvmCommand,
+        timeout: float | None = None,
+        matcher: typing.Callable[[KvmMessage], bool] | None = None,
     ) -> KvmMessage | None:
         """在 timeout 内等待指定 TYPE 的响应，其余消息丢弃并记日志"""
         deadline: float = time.monotonic() + (
