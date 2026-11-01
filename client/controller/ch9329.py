@@ -162,10 +162,10 @@ class ControllerCh9329(ControllerDeviceBase):
 
         if buffer.wheel == MouseWheelStateEnum.UP:
             # 滚轮向上
-            wheel = -1
+            wheel = 1
         elif buffer.wheel == MouseWheelStateEnum.DOWN:
             # 滚轮向下
-            wheel = 1
+            wheel = -1
         else:
             # 滚轮不动
             wheel = 0
@@ -218,10 +218,10 @@ class ControllerCh9329(ControllerDeviceBase):
 
         if buffer.wheel == MouseWheelStateEnum.UP:
             # 滚轮向上
-            wheel = -1
+            wheel = 1
         elif buffer.wheel == MouseWheelStateEnum.DOWN:
             # 滚轮向下
-            wheel = 1
+            wheel = -1
         else:
             # 滚轮不动
             wheel = 0

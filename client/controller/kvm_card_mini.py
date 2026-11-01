@@ -140,9 +140,9 @@ class KvmCardMiniHidBuffer:
         # 填充滚轮信息
         wheel_bit = 7
         mouse_wheel_state = buffer.wheel
-        if mouse_wheel_state == MouseWheelStateEnum.DOWN:
+        if mouse_wheel_state == MouseWheelStateEnum.UP:
             hid_buffer[wheel_bit] = 0x01
-        elif mouse_wheel_state == MouseWheelStateEnum.UP:
+        elif mouse_wheel_state == MouseWheelStateEnum.DOWN:
             hid_buffer[wheel_bit] = 0xFF
         else:
             hid_buffer[wheel_bit] = 0x00
@@ -198,9 +198,9 @@ class KvmCardMiniHidBuffer:
         # 填充滚轮信息
         wheel_bit = 5
         mouse_wheel_state = buffer.wheel
-        if mouse_wheel_state == MouseWheelStateEnum.DOWN:
+        if mouse_wheel_state == MouseWheelStateEnum.UP:
             hid_buffer[wheel_bit] = 0x01
-        elif mouse_wheel_state == MouseWheelStateEnum.UP:
+        elif mouse_wheel_state == MouseWheelStateEnum.DOWN:
             hid_buffer[wheel_bit] = 0xFF
         else:
             hid_buffer[wheel_bit] = 0x00
