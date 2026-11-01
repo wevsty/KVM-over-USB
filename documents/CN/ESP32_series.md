@@ -10,19 +10,27 @@ ESP32 是由乐鑫信息科技 (Espressif Systems) 开发的一系列系统级�
 
 此类开发板在各个网上购物平台均可以购买到，售价大约 30 到 40 元人民币。
 
-> 注意：ESP32 系列芯片/开发板具有很多版本。
+> [!NOTE]
+> ESP32 系列芯片/开发板具有很多版本。
+> 
 > 乐鑫官方推出的 ESP32-S3 开发板名字为 ESP32-S3-DevKitC-1 。
+> 
 > 但与此同时市场上具备各种第三方兼容开发板，这些开发板通常基于 ESP32-S3-WROOM-1 制作但可能有不一样的命名比如 ESP32-S3-N16R8 。
+> 
 > 第三方开发板通常和 ESP32-S3-DevKitC-1 引脚相兼容，固件上也可通用，可以根据个人喜好和需要自行选择合适的开发板。
+>
 > 第三方开发板可能因为使用CH340/CH343系列的 uart 转换芯片需要安装对应驱动。
+> 
 > 部分第三方开发板可能需要自行连接开发板上提供的 USB OTG 触点原生接口才可以兼容 USB OTG 。
 
 ## 实物参考图片
 
 乐鑫官方参考图片：
+
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/documents/images/esp32-s3-devkitc-1_v2_annotated_photo.png)
 
 硬件实物图（带外壳）：
+
 ![image](https://github.com/wevsty/KVM-over-USB/blob/main/documents/images/esp32_hardware_photos.jpg)
 
 ## 连接方式
