@@ -2475,9 +2475,9 @@ class AppMainWindow(MainWindow):
             return
         y = event.angleDelta().y()
         if y == 120:
-            self.mouse_buffer.wheel = MouseWheelStateEnum.DOWN
-        elif y == -120:
             self.mouse_buffer.wheel = MouseWheelStateEnum.UP
+        elif y == -120:
+            self.mouse_buffer.wheel = MouseWheelStateEnum.DOWN
         else:
             self.mouse_buffer.wheel = MouseWheelStateEnum.STOP
         self.mouse_report_scroll()

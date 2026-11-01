@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab_video">
       <attribute name="title">
@@ -82,6 +82,11 @@
          <item>
           <property name="text">
            <string notr="true">kvm-card-mini</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>esp32s3-kvm</string>
           </property>
          </item>
         </widget>

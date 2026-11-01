@@ -76,6 +76,7 @@ class Ui_SettingsDialog(object):
         self.combo_box_controller_type = QComboBox(self.tab_controller)
         self.combo_box_controller_type.addItem(u"ch9329")
         self.combo_box_controller_type.addItem(u"kvm-card-mini")
+        self.combo_box_controller_type.addItem("")
         self.combo_box_controller_type.setObjectName(u"combo_box_controller_type")
 
         self.gridLayout_2.addWidget(self.combo_box_controller_type, 0, 1, 1, 1)
@@ -156,7 +157,7 @@ class Ui_SettingsDialog(object):
         self.button_box.accepted.connect(SettingsDialog.accept)
         self.button_box.rejected.connect(SettingsDialog.reject)
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         self.combo_box_com_port.setCurrentIndex(0)
 
 
@@ -170,6 +171,7 @@ class Ui_SettingsDialog(object):
         self.label_resolution.setText(QCoreApplication.translate("SettingsDialog", u"Resolution", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_video), QCoreApplication.translate("SettingsDialog", u"Video", None))
         self.label_controller_type.setText(QCoreApplication.translate("SettingsDialog", u"Controller type", None))
+        self.combo_box_controller_type.setItemText(2, QCoreApplication.translate("SettingsDialog", u"esp32s3-kvm", None))
 
         self.label_com_port.setText(QCoreApplication.translate("SettingsDialog", u"COM port :", None))
         self.combo_box_com_port.setItemText(0, QCoreApplication.translate("SettingsDialog", u"auto", None))

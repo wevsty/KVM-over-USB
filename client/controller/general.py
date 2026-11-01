@@ -6,6 +6,7 @@ from PySide6.QtCore import QThread
 from controller.base import ControllerDeviceBase
 from controller.ch9329 import ControllerCh9329
 from controller.kvm_card_mini import ControllerKvmCardMini
+from controller.esp32s3_kvm import ControllerEsp32s3Kvm
 
 
 class ControllerGeneralDevice(ControllerDeviceBase):
@@ -13,6 +14,7 @@ class ControllerGeneralDevice(ControllerDeviceBase):
         self.controller_dict: dict[str, type[ControllerDeviceBase]] = {
             "ch9329": ControllerCh9329,
             "kvm-card-mini": ControllerKvmCardMini,
+            "esp32s3-kvm": ControllerEsp32s3Kvm,
         }
         self.controller_type: str = ""
         self.controller: ControllerDeviceBase | None = None
