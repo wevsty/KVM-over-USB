@@ -1,0 +1,60 @@
+# Normalize line endings: files are stored with LF in the repository,
+# regardless of the platform or core.autocrlf setting.
+
+* text=auto eol=lf
+
+# --- Explicit LF for source code, docs and config ---
+*.py        text eol=lf
+*.pyi       text eol=lf
+*.md        text eol=lf
+*.txt       text eol=lf
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.toml      text eol=lf
+*.cfg       text eol=lf
+*.ini       text eol=lf
+*.c         text eol=lf
+*.h         text eol=lf
+*.cpp       text eol=lf
+*.hpp       text eol=lf
+*.s         text eol=lf
+*.ld        text eol=lf
+*.sh        text eol=lf
+Makefile    text eol=lf
+*.svg       text eol=lf
+*.css       text eol=lf
+*.html      text eol=lf
+*.qrc       text eol=lf
+
+# --- Windows-only scripts must keep CRLF ---
+*.ps1       text eol=crlf
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# --- Binary assets (never convert or diff as text) ---
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.bmp       binary
+*.ico       binary
+*.icns      binary
+*.bin       binary
+*.hex       binary
+*.elf       binary
+*.zip       binary
+*.7z        binary
+*.gz        binary
+*.pdf       binary
+*.qm        binary
+*.a         binary
+*.o         binary
+
+# --- Linguist: keep docs out of language stats and mark third-party SDK code ---
+documents/**                                   linguist-documentation
+firmware/KVM-Card-Mini-Firmware/RVMSIS/**       linguist-vendored
+firmware/KVM-Card-Mini-Firmware/Startup/**     linguist-vendored
+firmware/KVM-Card-Mini-Firmware/StdPeriphDriver/** linguist-vendored
+firmware/KVM-Card-Mini-Firmware/Lib/**         linguist-vendored
