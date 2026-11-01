@@ -8,7 +8,7 @@
 
 一个简单、开源的 KVM-over-USB 解决方案。
 
-📖 英文文档 (English version)：[README_en.md](https://github.com/wevsty/KVM-over-USB/blob/main/documents/README_en.md)
+📖 英文文档 (English version)：[README.md](https://github.com/wevsty/KVM-over-USB/blob/main/documents/EN/README.md)
 
 ## 目录
 
@@ -52,7 +52,7 @@
 
 ### ESP32 系列
 
-详情参见文档：[KVM-Card-Mini 系列](https://github.com/wevsty/KVM-over-USB/blob/main/documents/CN/ESP32_series.md)
+详情参见文档：[ESP32 系列](https://github.com/wevsty/KVM-over-USB/blob/main/documents/CN/ESP32_series.md)
 
 ## 软件
 
