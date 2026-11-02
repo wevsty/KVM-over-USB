@@ -2,7 +2,7 @@
  * 全工程共用的日志开关与宏。
  * 发布态两个开关必须为 0：COM5 与协议通道共用 UART0（docs/PROTOCOL.md §16.1）。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #pragma once

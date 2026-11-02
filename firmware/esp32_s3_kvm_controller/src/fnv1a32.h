@@ -1,7 +1,7 @@
 /*
  * FNV-1a-32 哈希（参数见 docs/PROTOCOL.md §7.1）。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #pragma once

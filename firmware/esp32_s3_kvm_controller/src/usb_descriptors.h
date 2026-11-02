@@ -2,7 +2,7 @@
  * USB 描述符接口：接口号 / 端点号 / 报告长度等常量。
  * 键盘必须是 Interface 0（BIOS 兼容），CDC ACM 放最后。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #pragma once

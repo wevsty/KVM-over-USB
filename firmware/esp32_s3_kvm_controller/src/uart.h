@@ -2,7 +2,7 @@
  * UART0（GPIO43/44 → CH343 → COM5）底层接口：初始化、读、写、TX 排空。
  * 上层只通过本头文件访问 UART，不直接使用 driver/uart.h。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #pragma once

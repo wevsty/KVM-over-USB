@@ -2,7 +2,7 @@
  * PASSTHROUGH / CONTROL 模式状态（docs/PROTOCOL.md §4）。
  * 只保存当前模式；切换由分发表驱动，本模块不做任何自动切换。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #pragma once

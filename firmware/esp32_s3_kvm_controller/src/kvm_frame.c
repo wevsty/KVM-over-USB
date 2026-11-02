@@ -1,7 +1,7 @@
 /*
  * 协议帧组帧实现（docs/PROTOCOL.md §5.1 / §7）。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #include "kvm_frame.h"

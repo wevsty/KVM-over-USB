@@ -2,7 +2,7 @@
  * USB HID 实现：TinyUSB 回调 + 键盘 LED 状态缓存 + HID 报告发送。
  * 报告只在 CONTROL 下、由收到的帧触发发送（第 10 / 11 条）；SET_REPORT 只缓存不回发。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #include "hid.h"

@@ -1,7 +1,7 @@
 /*
  * PASSTHROUGH / CONTROL 模式状态实现（docs/PROTOCOL.md §4）。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #include "mode.h"

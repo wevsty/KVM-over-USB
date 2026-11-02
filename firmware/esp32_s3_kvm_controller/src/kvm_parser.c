@@ -2,7 +2,7 @@
  * 流式帧解析器实现（docs/PROTOCOL.md §13.3 / §13.5）。
  * 滑窗 + MAGIC 扫描 + A/B 类判定；两个出口由 kvm_parser_init() 注入。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #include "kvm_parser.h"

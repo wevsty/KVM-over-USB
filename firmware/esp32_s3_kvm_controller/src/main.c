@@ -2,7 +2,7 @@
  * 应用入口：USB 复合设备（HID 键盘/鼠标 + CDC ACM）初始化、
  * UART0 ↔ CDC 透传任务、协议帧分发表（模式机 + 键鼠 + PONG/状态回复）。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #include <stdbool.h>

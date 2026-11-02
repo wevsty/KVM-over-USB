@@ -2,7 +2,7 @@
  * UART0（GPIO43/44 → CH343 → COM5）底层实现：初始化、读写、TX 排空。
  * 端口固定 UART_NUM_0，与控制台共用；引脚保持芯片默认，禁止改作他用。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #include "uart.h"

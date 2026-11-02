@@ -2,7 +2,7 @@
  * USB 描述符定义：HID 键盘（Interface 0）+ HID 鼠标（Interface 1）+ CDC ACM（2/3）。
  * 结构取自 ESP-IDF v6.1 示例 examples/peripherals/usb/device/tusb_hid。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #include "usb_descriptors.h"

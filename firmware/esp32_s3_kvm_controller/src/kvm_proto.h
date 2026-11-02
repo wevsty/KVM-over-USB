@@ -2,7 +2,7 @@
  * KVM 协议常量（依据 docs/PROTOCOL.md v1.4）：帧结构、TYPE、PAYLOAD 长度、超时。
  * 协议已冻结（AGENTS.md 第 7 条）：数值禁止擅自修改。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #pragma once

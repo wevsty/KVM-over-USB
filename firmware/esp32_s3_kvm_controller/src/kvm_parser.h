@@ -3,7 +3,7 @@
  * 只判定"是不是帧"，不认识模式机、CDC 与分发表。
  * feed() / poll() 必须在同一任务里调用（内部不加锁）。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #pragma once

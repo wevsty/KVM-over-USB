@@ -1,7 +1,7 @@
 /*
  * USB HID 接口：键盘 LED 状态缓存 + 键盘/鼠标报告发送。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #pragma once

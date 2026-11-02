@@ -1,7 +1,7 @@
 /*
  * FNV-1a-32 实现（docs/PROTOCOL.md §7.3）。
  *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ * SPDX-License-Identifier: MIT
  */
 
 #include "fnv1a32.h"
